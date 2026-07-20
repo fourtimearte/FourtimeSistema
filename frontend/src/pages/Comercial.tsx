@@ -14,16 +14,14 @@ function Inp({ value, onChange, list, placeholder, mono }: { value: string; onCh
   return <input value={value} list={list} placeholder={placeholder} onChange={e => onChange(e.target.value)}
     style={{ height: 'var(--control-h-lg)', width: '100%', padding: '0 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 14, outline: 'none', fontFamily: mono ? 'var(--font-mono)' : undefined }} />
 }
-function Field({ label, children, hint, full }: { label: string; children: React.ReactNode; hint?: string; full?: boolean }) {
-  return <div style={{ display: 'flex', flexDirection: 'column', gap: 5, gridColumn: full ? '1/-1' : undefined }}>
-    <label style={fieldLbl}>{label}</label>{children}{hint && <span style={{ fontSize: 11, color: 'var(--text-subtle)' }}>{hint}</span>}
-  </div>
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}><label style={fieldLbl}>{label}</label>{children}</div>
 }
 function toISO(br: string) { const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? `${m[3]}-${m[2]}-${m[1]}` : '' }
 function fromISO(iso: string) { const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : iso }
 
 export default function Comercial() {
-  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, aprovarPedido, toggleDinheiro, semDinheiro, toast, undo, redo, past, future } = useApp()
+  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, toggleHeaderObsTag, aprovarPedido, toggleDinheiro, semDinheiro, toast, undo, redo, past, future } = useApp()
   const p: Pedido | undefined = pedidos[curPed]
   const [viewImg, setViewImg] = useState<string | null>(null)
 
@@ -61,10 +59,9 @@ export default function Comercial() {
       <datalist id="dl-pag">{PAGAMENTOS.map(v => <option key={v} value={v} />)}</datalist>
 
       <PageHead crumb="Atendimento · Editor" title="Comercial"
-        desc="Editor de orçamento nativo — eficiente no celular e no desktop, com as funções do v172. O documento A4 sai fiel na impressão/PDF."
+        desc="Editor de orçamento nativo — eficiente no celular e no desktop, com as funções do v172. O A4 sai fiel na impressão/PDF."
         actions={<Btn size="sm" variant="primary" onClick={novoOrcamento}><Plus size={16} />Novo orçamento</Btn>} />
 
-      {/* abas de documento (estilo kit: ativa vermelha) */}
       <div style={tabbar}>
         {pedidos.map((o, i) => (
           <button key={o.pedido} onClick={() => setCurPed(i)} style={{ ...tab, ...(i === curPed ? tabOn : {}) }}>
@@ -87,11 +84,10 @@ export default function Comercial() {
           {!p.aprovado && <Btn size="sm" variant="primary" onClick={aprovar}><Check size={14} />Aprovar</Btn>}
         </div>
 
-        {/* DADOS DO PEDIDO — mantido */}
         <div style={card}>
           <h3 style={cardH}>Dados do pedido</h3>
           <div style={grid}>
-            <Field label="Cliente" hint="digite para buscar no CRM"><Inp value={p.cliente} onChange={onCliente} list="dl-clientes" placeholder="Ex.: Escola João XXIII" /></Field>
+            <Field label="Cliente"><Inp value={p.cliente} onChange={onCliente} list="dl-clientes" placeholder="Ex.: Escola João XXIII" /></Field>
             <Field label="CPF / CNPJ"><Inp value={p.cpf} onChange={v => updateHeader(curPed, 'cpf', v)} mono /></Field>
             <Field label="Departamento"><Inp value={p.depto} onChange={v => updateHeader(curPed, 'depto', v)} list="dl-dep" /></Field>
             <Field label="Embalagem"><Inp value={p.embalagem} onChange={v => updateHeader(curPed, 'embalagem', v)} list="dl-emb" /></Field>
@@ -100,7 +96,12 @@ export default function Comercial() {
             <Field label="Entrega"><Inp value={p.entrega} onChange={v => updateHeader(curPed, 'entrega', v)} placeholder="dd/mm/aaaa" /></Field>
             <Field label="Envio"><input type="date" value={toISO(p.envio)} onChange={e => updateHeader(curPed, 'envio', fromISO(e.target.value))} style={dateInp} /></Field>
             <Field label="Pagamento"><Inp value={p.pagamento} onChange={v => updateHeader(curPed, 'pagamento', v)} list="dl-pag" /></Field>
-            <Field label="Observações do pedido" full><textarea value={p.obs} onChange={e => updateHeader(curPed, 'obs', e.target.value)} rows={2} style={ta} /></Field>
+            <Field label="Observações">
+              <div style={{ display: 'flex', gap: 5, marginBottom: 5 }}>
+                {OBS_TAGS.map(o => { const on = (p.obsTags ?? []).includes(o.tag); return <button key={o.tag} onClick={() => toggleHeaderObsTag(curPed, o.tag)} style={{ height: 22, padding: '0 8px', borderRadius: 999, fontSize: 10, fontWeight: 800, cursor: 'pointer', border: on ? 'none' : '1.5px solid var(--border-strong)', background: on ? o.cor : 'transparent', color: on ? '#fff' : 'var(--text-muted)' }}>{o.tag}</button> })}
+              </div>
+              <textarea value={p.obs} onChange={e => updateHeader(curPed, 'obs', e.target.value)} rows={2} style={ta} />
+            </Field>
           </div>
         </div>
 
@@ -115,12 +116,12 @@ export default function Comercial() {
       </>}
 
       {viewImg && <ImgViewer src={viewImg} onClose={() => setViewImg(null)} />}
-      <style>{'@media(max-width:820px){.lay-grid{grid-template-columns:1fr!important}}'}</style>
+      <style>{CSS}</style>
     </div>
   )
 }
 
-/* ---------- Módulo de Layout: 2/3 imagem · 1/3 ficha ---------- */
+/* ---------- Módulo de Layout ---------- */
 function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pIdx: number; lIdx: number; layout: Layout; canDelete: boolean; semDinheiro: boolean; onView: (s: string) => void }) {
   const s = useApp(); const l = layout
   function selRef(v: string, opt?: { sub?: string }) {
@@ -132,66 +133,80 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
 
   return (
     <div style={card}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-        <span style={lnum}>L-{String(lIdx + 1).padStart(2, '0')}</span>
-        <div style={{ flex: 1, minWidth: 180 }}>
-          <Combo value={l.ref} onSelect={selRef} placeholder="Referência da peça" options={REFERENCIAS.map(r => ({ label: r.nome, value: r.nome, sub: r.cod }))} />
-        </div>
-        <div style={seg}>
-          {(['adulto', 'infantil'] as const).map(g => <button key={g} onClick={() => s.setGrade(pIdx, lIdx, g)} style={{ ...segB, ...(l.grade === g ? segBOn : {}) }}>{g === 'adulto' ? 'Adulto' : 'Infantil'}</button>)}
-        </div>
-        <button onClick={() => s.duplicateLayout(pIdx, lIdx)} title="Duplicar layout" style={iconBtn}><Copy size={15} /></button>
-        {canDelete && <button onClick={() => s.deleteLayout(pIdx, lIdx)} title="Excluir layout" style={iconBtn}><Trash2 size={15} /></button>}
-      </div>
-
-      <div className="lay-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 18, alignItems: 'start' }}>
-        {/* IMAGEM (2/3) — tamanho inteiro */}
+      <div className="lay-grid" style={{ display: 'grid', gridTemplateColumns: '1.7fr 1.3fr', gap: 18, alignItems: 'start' }}>
+        {/* COLUNA ESQUERDA (1.7): Referência (topo) + imagem */}
         <div tabIndex={0} onPaste={e => { const it = [...e.clipboardData.items].find(i => i.type.startsWith('image/')); if (it) readImg(it.getAsFile() ?? undefined) }} style={{ outline: 'none' }}>
-          <label style={fieldLbl}>Imagem do produto <span style={{ fontWeight: 400, color: 'var(--text-subtle)' }}>· clique e cole (Ctrl+V)</span></label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <span style={lnum}>L-{String(lIdx + 1).padStart(2, '0')}</span>
+            <div style={{ flex: 1 }}><Combo value={l.ref} onSelect={selRef} placeholder="Referência da peça" options={REFERENCIAS.map(r => ({ label: r.nome, value: r.nome, sub: r.cod }))} /></div>
+            <button onClick={() => s.duplicateLayout(pIdx, lIdx)} title="Duplicar layout" style={iconBtn}><Copy size={15} /></button>
+            {canDelete && <button onClick={() => s.deleteLayout(pIdx, lIdx)} title="Excluir layout" style={iconBtn}><Trash2 size={15} /></button>}
+          </div>
           {l.img
-            ? <div style={{ position: 'relative', marginTop: 5 }}>
+            ? <div style={{ position: 'relative' }}>
                 <img src={l.img} onClick={() => onView(l.img!)} style={{ width: '100%', maxHeight: 460, objectFit: 'contain', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', cursor: 'zoom-in', display: 'block' }} />
                 <button onClick={() => s.setImg(pIdx, lIdx, null)} title="Limpar imagem" style={{ ...iconBtn, position: 'absolute', top: 8, right: 8, background: 'var(--bg-surface)' }}><X size={14} /></button>
               </div>
             : <label onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); readImg(e.dataTransfer.files?.[0]) }} style={imgDrop}>
                 <ImagePlus size={26} /><span style={{ fontSize: 13, marginTop: 6 }}>Enviar imagem</span>
-                <span style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 2 }}>clique ou arraste o arquivo</span>
+                <span style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 2 }}>clique, arraste ou cole (Ctrl+V)</span>
                 <input type="file" accept="image/*" onChange={e => readImg(e.target.files?.[0] ?? undefined)} style={{ display: 'none' }} />
               </label>}
         </div>
 
-        {/* FICHA (1/3): tecido · cor · design · tabela · obs */}
-        <div>
-          <label style={fieldLbl}>Tecido(s)</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 5 }}>
-            {l.tecidos.map((t, ti) => (
-              <div key={ti} style={{ display: 'flex', gap: 6 }}>
-                <div style={{ flex: 1 }}><Combo value={t} onSelect={v => s.setTecido(pIdx, lIdx, ti, v)} placeholder="Tecido" options={TECIDOS.map(x => ({ label: x, value: x }))} /></div>
-                {l.tecidos.length > 1 && <button onClick={() => s.removeTecido(pIdx, lIdx, ti)} title="Remover tecido" style={iconBtn}><X size={14} /></button>}
-              </div>
-            ))}
+        {/* COLUNA DIREITA (1.3): ficha — vira grid no modo sem-dinheiro */}
+        <div className={'ficha' + (semDinheiro ? ' sd' : '')}>
+          {/* 1 · tecido */}
+          <div>
+            <label style={fieldLbl}>Tecido(s)</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 5 }}>
+              {l.tecidos.map((t, ti) => {
+                const last = ti === l.tecidos.length - 1
+                return (
+                  <div key={ti} style={{ display: 'flex', gap: 6 }}>
+                    <div style={{ flex: 1 }}><Combo value={t} onSelect={v => s.setTecido(pIdx, lIdx, ti, v)} placeholder="Tecido" options={TECIDOS.map(x => ({ label: x, value: x }))} /></div>
+                    {l.tecidos.length > 1 && <button onClick={() => s.removeTecido(pIdx, lIdx, ti)} title="Remover" style={miniBtn}><X size={14} /></button>}
+                    {last && <button onClick={() => s.addTecido(pIdx, lIdx)} title="Adicionar tecido" style={{ ...miniBtn, color: 'var(--primary)', borderColor: 'var(--primary)' }}><Plus size={15} /></button>}
+                  </div>
+                )
+              })}
+            </div>
           </div>
-          <button onClick={() => s.addTecido(pIdx, lIdx)} style={addBtn}><Plus size={13} />Adicionar tecido</button>
-
-          <label style={{ ...fieldLbl, marginTop: 14 }}>Cor</label>
-          <div style={{ marginTop: 5 }}>
-            <Combo value={l.cor} leftSwatch={l.corHex} placeholder="Cor" options={CORES.map(c => ({ label: c.nome, value: c.nome, hex: c.hex }))}
-              onSelect={(v, opt) => s.patchLayout(pIdx, lIdx, { cor: v, corHex: opt?.hex ?? corHexPorNome(v) })} />
+          {/* 2 · cor (selecionada no campo) */}
+          <div>
+            <label style={fieldLbl}>Cor</label>
+            <div style={{ marginTop: 5 }}>
+              <Combo value={l.cor} leftSwatch={l.corHex} placeholder="Selecione a cor" options={CORES.map(c => ({ label: c.nome, value: c.nome, hex: c.hex }))}
+                onSelect={(v, opt) => s.patchLayout(pIdx, lIdx, { cor: v, corHex: opt?.hex ?? corHexPorNome(v) })} />
+            </div>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
-            {CORES.map(c => <button key={c.hex} title={c.nome} onClick={() => s.patchLayout(pIdx, lIdx, { cor: c.nome, corHex: c.hex })} style={{ width: 20, height: 20, borderRadius: 5, border: '1px solid var(--border-strong)', background: c.hex, cursor: 'pointer' }} />)}
-          </div>
-
+          {/* 3 · design */}
           <DesignEditor pIdx={pIdx} lIdx={lIdx} layout={l} />
+          {/* 4 · tabela */}
           <SizeTable pIdx={pIdx} lIdx={lIdx} layout={l} semDinheiro={semDinheiro} />
-
-          <label style={{ ...fieldLbl, marginTop: 14 }}>Observações</label>
-          <div style={{ display: 'flex', gap: 6, margin: '6px 0' }}>
-            {OBS_TAGS.map(o => { const on = l.obsTags.includes(o.tag); return <button key={o.tag} onClick={() => s.toggleObsTag(pIdx, lIdx, o.tag)} style={{ height: 24, padding: '0 9px', borderRadius: 999, fontSize: 10, fontWeight: 800, cursor: 'pointer', border: on ? 'none' : '1.5px solid var(--border-strong)', background: on ? o.cor : 'transparent', color: on ? '#fff' : 'var(--text-muted)' }}>{o.tag}</button> })}
+          {/* 5 · observações do layout */}
+          <div>
+            <label style={fieldLbl}>Observações da peça</label>
+            <textarea value={l.obs} onChange={e => s.setObs(pIdx, lIdx, e.target.value)} rows={2} placeholder="Observações desta peça…" style={{ ...ta, marginTop: 5 }} />
           </div>
-          <textarea value={l.obs} onChange={e => s.setObs(pIdx, lIdx, e.target.value)} rows={2} placeholder="Observações desta peça…" style={ta} />
         </div>
       </div>
+    </div>
+  )
+}
+
+/* ---------- Visualizador (zoom/pan) ---------- */
+function ImgViewer({ src, onClose }: { src: string; onClose: () => void }) {
+  const [z, setZ] = useState(1); const [tx, setTx] = useState(0); const [ty, setTy] = useState(0)
+  const drag = useRef<{ x: number; y: number } | null>(null)
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [onClose])
+  function onWheel(e: React.WheelEvent) { const nz = Math.min(6, Math.max(1, z * (e.deltaY < 0 ? 1.15 : 0.87))); setZ(nz); if (nz === 1) { setTx(0); setTy(0) } }
+  return (
+    <div style={imgModal} onMouseDown={e => { if (e.target === e.currentTarget) onClose() }} onWheel={onWheel}
+      onMouseMove={e => { if (drag.current) { setTx(t => t + (e.clientX - drag.current!.x)); setTy(t => t + (e.clientY - drag.current!.y)); drag.current = { x: e.clientX, y: e.clientY } } }} onMouseUp={() => (drag.current = null)}>
+      <img src={src} draggable={false} onMouseDown={e => { if (z > 1) { e.preventDefault(); drag.current = { x: e.clientX, y: e.clientY } } }}
+        style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 8, transform: `translate(${tx}px,${ty}px) scale(${z})`, cursor: z > 1 ? 'grab' : 'zoom-out', transition: drag.current ? 'none' : 'transform .08s' }} />
+      <div style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', color: '#fff', fontSize: 12, opacity: .8 }}>roda = zoom · arrastar = mover · Esc = fechar</div>
     </div>
   )
 }
@@ -202,7 +217,7 @@ function DesignEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layo
   const [openTag, setOpenTag] = useState<TecnicaKey | null>(null)
   const [q, setQ] = useState('')
   return (
-    <div style={{ marginTop: 14 }}>
+    <div>
       <label style={fieldLbl}>Design (define a rota de produção)</label>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
         {DESIGN_ORDER.map(tag => {
@@ -243,43 +258,28 @@ function DesignEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layo
   )
 }
 
-/* ---------- Visualizador de imagem (zoom com roda + pan arrastando) ---------- */
-function ImgViewer({ src, onClose }: { src: string; onClose: () => void }) {
-  const [z, setZ] = useState(1); const [tx, setTx] = useState(0); const [ty, setTy] = useState(0)
-  const drag = useRef<{ x: number; y: number } | null>(null)
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [onClose])
-  function onWheel(e: React.WheelEvent) { const nz = Math.min(6, Math.max(1, z * (e.deltaY < 0 ? 1.15 : 0.87))); setZ(nz); if (nz === 1) { setTx(0); setTy(0) } }
-  return (
-    <div style={imgModal} onMouseDown={e => { if (e.target === e.currentTarget) onClose() }} onWheel={onWheel}
-      onMouseMove={e => { if (drag.current) { setTx(t => t + (e.clientX - drag.current!.x)); setTy(t => t + (e.clientY - drag.current!.y)); drag.current = { x: e.clientX, y: e.clientY } } }}
-      onMouseUp={() => (drag.current = null)}>
-      <img src={src} draggable={false}
-        onMouseDown={e => { if (z > 1) { e.preventDefault(); drag.current = { x: e.clientX, y: e.clientY } } }}
-        style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 8, transform: `translate(${tx}px,${ty}px) scale(${z})`, cursor: z > 1 ? 'grab' : 'zoom-out', transition: drag.current ? 'none' : 'transform .08s' }} />
-      <div style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', color: '#fff', fontSize: 12, opacity: .8 }}>roda = zoom · arrastar = mover · Esc = fechar</div>
-    </div>
-  )
-}
-
-/* ---------- Tabela de tamanhos (compacta, adulto/infantil auto-modificável) ---------- */
+/* ---------- Tabela de tamanhos (toggle adulto/infantil no cabeçalho Tam) ---------- */
 function SizeTable({ pIdx, lIdx, layout, semDinheiro }: { pIdx: number; lIdx: number; layout: Layout; semDinheiro: boolean }) {
   const s = useApp(); const l = layout
   const linhas = ordemTamanhos(l)
   const outras = (l.grade === 'adulto' ? TAM_INFANTIL : TAM_ADULTO).filter(t => l.tamanhos[t] === undefined)
   let totQ = 0, totV = 0
   return (
-    <div style={{ marginTop: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 8 }}>
-        <label style={fieldLbl}>Tabela de tamanhos · {l.grade}</label>
-        {outras.length > 0 && <select value="" onChange={e => { if (e.target.value) s.setSize(pIdx, lIdx, e.target.value, 'qtd', 0) }} style={miniSel}>
-          <option value="">+ {l.grade === 'adulto' ? 'infantil' : 'adulto'}</option>
-          {outras.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>}
-      </div>
-      <table style={stbl}>
+    <div>
+      <table style={{ ...stbl, width: semDinheiro ? 'auto' : '100%' }}>
         <thead><tr>
-          <th style={{ ...stTh, textAlign: 'left' }}>Tam</th><th style={stTh}>Qtd</th>
-          {!semDinheiro && <th style={stTh}>Uni</th>}{!semDinheiro && <th style={stTh}>Total</th>}
+          <th style={{ ...stTh, textAlign: 'left', minWidth: 74 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              Tam
+              <span style={tamModo}>
+                {(['adulto', 'infantil'] as const).map(g => <button key={g} onClick={() => s.setGrade(pIdx, lIdx, g)} title={g} style={{ ...tamModoB, ...(l.grade === g ? tamModoBOn : {}) }}>{g === 'adulto' ? 'A' : 'I'}</button>)}
+              </span>
+              {outras.length > 0 && <select value="" onChange={e => { if (e.target.value) s.setSize(pIdx, lIdx, e.target.value, 'qtd', 0) }} style={miniSel} title="Adicionar tamanho da outra grade">
+                <option value="">+</option>{outras.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>}
+            </span>
+          </th>
+          <th style={stTh}>Qtd</th>{!semDinheiro && <th style={stTh}>Uni</th>}{!semDinheiro && <th style={stTh}>Total</th>}
         </tr></thead>
         <tbody>
           {linhas.map(tam => {
@@ -288,7 +288,7 @@ function SizeTable({ pIdx, lIdx, layout, semDinheiro }: { pIdx: number; lIdx: nu
             const cs: CSSProperties = cross ? (l.grade === 'adulto' ? { background: 'var(--sig-inf-bg)', color: 'var(--sig-inf-fg)' } : { background: 'var(--sig-adu-bg)', color: 'var(--sig-adu-fg)' }) : {}
             return (
               <tr key={tam}>
-                <td style={{ ...stTd, textAlign: 'left', fontFamily: 'var(--font-ui)', fontWeight: 600, ...cs }}>{tam}</td>
+                <td style={{ ...stTd, textAlign: 'left', fontFamily: 'var(--font-ui)', fontWeight: cross ? 700 : 600, ...cs }}>{tam}</td>
                 <td style={{ ...stTd, ...cs }}><input type="number" inputMode="numeric" value={t.qtd || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'qtd', parseFloat(e.target.value) || 0)} style={cellInp} /></td>
                 {!semDinheiro && <td style={{ ...stTd, ...cs }}><input type="number" inputMode="decimal" value={t.uni || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'uni', parseFloat(e.target.value) || 0)} style={cellInp} /></td>}
                 {!semDinheiro && <td style={{ ...stTd, ...cs }}>{money(t.qtd * t.uni)}</td>}
@@ -310,27 +310,39 @@ function SizeTable({ pIdx, lIdx, layout, semDinheiro }: { pIdx: number; lIdx: nu
 const card: CSSProperties = { background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--sh-1)', padding: 16, marginBottom: 12 }
 const cardH: CSSProperties = { fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: 'var(--text-muted)', marginBottom: 12 }
 const fieldLbl: CSSProperties = { fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }
-const grid: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 12 }
+const grid: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 12 }
 const actionBar: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px', boxShadow: 'var(--sh-1)', position: 'sticky', top: 66, zIndex: 20 }
-/* tabs estilo kit */
-const tabbar: CSSProperties = { display: 'flex', gap: 3, overflowX: 'auto', borderBottom: '1px solid var(--border)', marginBottom: 12, paddingBottom: 0 }
+const tabbar: CSSProperties = { display: 'flex', gap: 3, overflowX: 'auto', borderBottom: '1px solid var(--border)', marginBottom: 12 }
 const tab: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', border: '1px solid var(--border)', borderBottom: 'none', borderRadius: '8px 8px 0 0', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative', top: 1 }
 const tabOn: CSSProperties = { background: 'var(--primary)', color: 'var(--primary-fg)', borderColor: 'var(--primary)', top: 0 }
 const tabNew: CSSProperties = { width: 34, height: 34, borderRadius: '8px 8px 0 0', border: '1px solid var(--border)', borderBottom: 'none', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18, lineHeight: 1 }
 const lnum: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: '#fff', background: 'var(--set-comercial)', borderRadius: 999, padding: '3px 10px', flex: '0 0 auto' }
 const iconBtn: CSSProperties = { width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
+const miniBtn: CSSProperties = { width: 'var(--control-h-lg)', height: 'var(--control-h-lg)', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
 const undoBtn: CSSProperties = { width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
-const addBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8, height: 32, padding: '0 12px', border: '1px dashed var(--border-strong)', borderRadius: 8, background: 'transparent', color: 'var(--text-muted)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }
 const addBtnInline: CSSProperties = { border: 'none', background: 'none', color: 'var(--primary)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }
-const seg: CSSProperties = { display: 'flex', background: 'var(--bg-muted)', borderRadius: 999, padding: 3, gap: 2 }
-const segB: CSSProperties = { fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 999, cursor: 'pointer', color: 'var(--text-muted)', border: 'none', background: 'none' }
-const segBOn: CSSProperties = { background: 'var(--bg-surface)', color: 'var(--text)', boxShadow: 'var(--sh-1)' }
-const stbl: CSSProperties = { borderCollapse: 'collapse', width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, marginTop: 2 }
-const stTh: CSSProperties = { border: '1px solid var(--border)', padding: '4px 5px', textAlign: 'center', background: 'var(--bg-muted)', color: 'var(--text-muted)', fontWeight: 600, fontSize: 10 }
+const tamModo: CSSProperties = { display: 'inline-flex', background: 'var(--bg-muted)', borderRadius: 6, padding: 2, gap: 1 }
+const tamModoB: CSSProperties = { width: 18, height: 18, fontSize: 10, fontWeight: 700, borderRadius: 4, border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }
+const tamModoBOn: CSSProperties = { background: 'var(--primary)', color: '#fff' }
+const stbl: CSSProperties = { borderCollapse: 'separate', borderSpacing: 0, fontFamily: 'var(--font-mono)', fontSize: 12, marginTop: 2 }
+const stTh: CSSProperties = { border: '1px solid var(--border)', padding: '3px 5px', textAlign: 'center', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', fontWeight: 600, fontSize: 10 }
 const stTd: CSSProperties = { border: '1px solid var(--border)', padding: '2px 4px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }
-const cellInp: CSSProperties = { width: '100%', minWidth: 40, height: 28, padding: '0 4px', border: 'none', background: 'transparent', color: 'inherit', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 12, outline: 'none', textAlign: 'center' }
+const cellInp: CSSProperties = { width: '100%', minWidth: 42, height: 28, padding: '0 4px', border: 'none', background: 'transparent', color: 'inherit', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 12, outline: 'none', textAlign: 'center' }
 const ta: CSSProperties = { width: '100%', padding: '8px 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 13, outline: 'none', resize: 'vertical' }
 const dateInp: CSSProperties = { height: 'var(--control-h-lg)', width: '100%', padding: '0 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 14, outline: 'none' }
-const miniSel: CSSProperties = { height: 28, padding: '0 6px', border: '1px solid var(--border-strong)', borderRadius: 6, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 11, outline: 'none' }
-const imgDrop: CSSProperties = { display: 'grid', placeItems: 'center', gap: 2, minHeight: 240, marginTop: 5, border: '1.5px dashed var(--border-strong)', borderRadius: 10, color: 'var(--text-muted)', cursor: 'pointer', background: 'var(--bg-surface-2)', textAlign: 'center', padding: 20 }
+const miniSel: CSSProperties = { height: 22, padding: '0 4px', border: '1px solid var(--border-strong)', borderRadius: 6, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 11, outline: 'none' }
+const imgDrop: CSSProperties = { display: 'grid', placeItems: 'center', gap: 2, minHeight: 240, border: '1.5px dashed var(--border-strong)', borderRadius: 10, color: 'var(--text-muted)', cursor: 'pointer', background: 'var(--bg-surface-2)', textAlign: 'center', padding: 20 }
 const imgModal: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', zIndex: 95, display: 'grid', placeItems: 'center', cursor: 'zoom-out' }
+
+const CSS = `
+.ficha{display:flex;flex-direction:column;gap:14px}
+@media(min-width:821px){
+  .ficha.sd{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto 1fr;column-gap:14px;row-gap:12px;align-items:start}
+  .ficha.sd>:nth-child(4){grid-column:1;grid-row:1 / span 4}
+  .ficha.sd>:nth-child(1){grid-column:2;grid-row:1}
+  .ficha.sd>:nth-child(2){grid-column:2;grid-row:2}
+  .ficha.sd>:nth-child(3){grid-column:2;grid-row:3}
+  .ficha.sd>:nth-child(5){grid-column:2;grid-row:4;align-self:stretch}
+}
+@media(max-width:820px){.lay-grid{grid-template-columns:1fr!important}}
+`

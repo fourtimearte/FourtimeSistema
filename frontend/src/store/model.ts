@@ -73,7 +73,7 @@ export interface Layout {
 export type Status = 'rascunho' | 'aprovado' | 'producao' | 'entregue'
 export interface Pedido {
   pedido: string; clienteId: number | null; cliente: string; cpf: string; vendedor: string; contato: string
-  depto: string; embalagem: string; entrega: string; envio: string; pagamento: string; obs: string
+  depto: string; embalagem: string; entrega: string; envio: string; pagamento: string; obs: string; obsTags?: string[]
   status: Status; aprovado: boolean; late?: boolean; layouts: Layout[]
 }
 export interface KCard { id: string; pedido: string; cliente: string; tec: TecnicaKey; station: string; prazo: string; late: boolean; val: number; artes: number }

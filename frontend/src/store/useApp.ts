@@ -25,6 +25,7 @@ interface AppState {
   undo: () => void; redo: () => void
   updateHeader: (idx: number, field: keyof Pedido, value: string) => void
   patchPedido: (idx: number, partial: Partial<Pedido>) => void
+  toggleHeaderObsTag: (idx: number, tag: string) => void
   patchLayout: (pIdx: number, lIdx: number, partial: Partial<Layout>) => void
   addLayout: (pIdx: number) => void
   duplicateLayout: (pIdx: number, lIdx: number) => void
@@ -56,7 +57,7 @@ function roteia(pedidos: Pedido[]): KCard[] {
   return cards
 }
 function novoPedido(seq: number, perfil: string): Pedido {
-  return { pedido: 'PD' + String(seq).padStart(6, '0'), clienteId: null, cliente: '', cpf: '', vendedor: perfil === 'Comercial' ? '' : perfil, contato: '', depto: '', embalagem: '', entrega: '', envio: '', pagamento: '50% sinal + saldo', obs: '', status: 'rascunho', aprovado: false, layouts: [novoLayout()] }
+  return { pedido: 'PD' + String(seq).padStart(6, '0'), clienteId: null, cliente: '', cpf: '', vendedor: perfil === 'Comercial' ? '' : perfil, contato: '', depto: '', embalagem: '', entrega: '', envio: '', pagamento: '50% sinal + saldo', obs: '', obsTags: [], status: 'rascunho', aprovado: false, layouts: [novoLayout()] }
 }
 
 export const useApp = create<AppState>((set, get) => {
@@ -109,6 +110,7 @@ export const useApp = create<AppState>((set, get) => {
 
     updateHeader: (idx, field, value) => edit(idx, ped => { (ped[idx] as any)[field] = value }),
     patchPedido: (idx, partial) => edit(idx, ped => Object.assign(ped[idx], partial)),
+    toggleHeaderObsTag: (idx, tag) => edit(idx, ped => { const o = ped[idx].obsTags ?? (ped[idx].obsTags = []); const i = o.indexOf(tag); if (i >= 0) o.splice(i, 1); else o.push(tag) }),
     patchLayout: (pIdx, lIdx, partial) => edit(pIdx, ped => Object.assign(ped[pIdx].layouts[lIdx], partial)),
     addLayout: (pIdx) => edit(pIdx, ped => { ped[pIdx].layouts.push(novoLayout()) }),
     duplicateLayout: (pIdx, lIdx) => { edit(pIdx, ped => ped[pIdx].layouts.splice(lIdx + 1, 0, clone(ped[pIdx].layouts[lIdx]))); get().toast('Layout duplicado') },

@@ -29,7 +29,12 @@ export default function PrintDoc() {
           </div>
         ))}
       </div>
-      {p.obs && <div style={{ fontSize: 11, color: '#7C3A06', background: '#FBF0DF', padding: '5px 8px', borderRadius: 4, marginBottom: 6 }}>{p.obs}</div>}
+      {((p.obsTags && p.obsTags.length) || p.obs) && (
+        <div style={{ fontSize: 11, color: '#7C3A06', background: '#FBF0DF', padding: '5px 8px', borderRadius: 4, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          {(p.obsTags ?? []).map(t => <b key={t} style={{ color: t === 'URGENTE' ? '#C6161B' : '#B45309' }}>{t}</b>)}
+          {p.obs && <span>{p.obs}</span>}
+        </div>
+      )}
 
       {p.layouts.map((l, li) => (
         <div key={li} style={lay}>
@@ -39,7 +44,6 @@ export default function PrintDoc() {
               <div style={{ fontSize: 15, fontWeight: 600, margin: '8px 0 10px' }}>{l.ref}</div>
               {l.img ? <img src={l.img} style={{ width: '100%', maxHeight: 220, objectFit: 'contain', borderRadius: 8, border: '1px solid #E4E8ED' }} />
                 : <div style={img}>sem imagem</div>}
-              {l.obsTags.length > 0 && <div style={{ marginTop: 6 }}>{l.obsTags.map(t => <span key={t} style={{ fontSize: 10, fontWeight: 800, color: '#C6161B', marginRight: 6 }}>{t}</span>)}</div>}
               {l.obs && <div style={{ fontSize: 11, color: '#39424E', marginTop: 4 }}>{l.obs}</div>}
             </div>
             <div>
