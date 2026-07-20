@@ -63,3 +63,31 @@ export function PageHead({ crumb, title, desc, actions }: { crumb: string; title
 }
 
 export const kpiGrid: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(210px,1fr))', gap: 16, marginBottom: 32 }
+
+export const thStyle: CSSProperties = { textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid var(--border)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.04em', color: 'var(--text-muted)', background: 'var(--bg-surface-2)', fontWeight: 600, position: 'sticky', top: 0 }
+export const tdStyle: CSSProperties = { textAlign: 'left', padding: '10px 12px', borderBottom: '1px solid var(--border)' }
+
+type BadgeKind = 'neutral' | 'success' | 'info' | 'warning' | 'danger'
+export function Badge({ kind = 'neutral', children }: { kind?: BadgeKind; children: ReactNode }) {
+  const bg: Record<BadgeKind, string> = { neutral: 'var(--bg-muted)', success: 'var(--success-bg)', info: 'var(--info-bg)', warning: 'var(--warning-bg)', danger: 'var(--danger-bg)' }
+  const fg: Record<BadgeKind, string> = { neutral: 'var(--text-muted)', success: 'var(--success-fg)', info: 'var(--info-fg)', warning: 'var(--warning-fg)', danger: 'var(--danger-fg)' }
+  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 22, padding: '0 9px', borderRadius: 999, fontSize: 11, fontWeight: 600, background: bg[kind], color: fg[kind] }}>
+    <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor' }} />{children}
+  </span>
+}
+
+export function Drawer({ open, onClose, accent, title, sub, children }: { open: boolean; onClose: () => void; accent?: string; title: ReactNode; sub?: ReactNode; children: ReactNode }) {
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(14,17,22,.45)', zIndex: 55, opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none', transition: 'opacity .2s' }} />
+      <aside style={{ position: 'fixed', top: 0, right: 0, height: '100vh', width: 440, maxWidth: '94vw', zIndex: 60, background: 'var(--bg-surface)', borderLeft: '1px solid var(--border)', transform: open ? 'none' : 'translateX(100%)', transition: 'transform .2s var(--ease)', display: 'flex', flexDirection: 'column', boxShadow: 'var(--sh-4)' }}>
+        <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--border)', borderTop: '4px solid ' + (accent || 'var(--primary)'), display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <div style={{ flex: 1 }}><h2 style={{ fontSize: 18 }}>{title}</h2>{sub && <div className="mono" style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>{sub}</div>}</div>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', cursor: 'pointer' }}>✕</button>
+        </div>
+        <div style={{ padding: '18px 20px', overflowY: 'auto', flex: 1, fontSize: 13 }}>{open ? children : null}</div>
+      </aside>
+    </>
+  )
+}
+export const drawerH4: CSSProperties = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', margin: '16px 0 8px' }
