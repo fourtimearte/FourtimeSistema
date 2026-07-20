@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Plus, Box, Layers, Check, AlertTriangle } from 'lucide-react'
 import { useApp } from '../store/useApp'
-import { INSUMOS, REFERENCIAS, moneyK } from '../store/model'
+import { INSUMOS, REFERENCIAS, moneyK, layoutPecas } from '../store/model'
 import { PageHead, Btn, Panel, Kpi, kpiGrid, Badge, thStyle, tdStyle } from '../components/ui'
 
 export default function Estoque() {
@@ -17,7 +17,7 @@ export default function Estoque() {
   const needs: Record<number, { qtd: number; un: string }> = {}
   if (pedido) pedido.layouts.forEach(l => {
     const r = REFERENCIAS.find(x => x.cod === l.refCod); if (!r) return
-    const pcs = l.tamanhos.reduce((s, t) => s + t.qtd, 0)
+    const pcs = layoutPecas(l)
     r.bom.forEach(b => { if (!needs[b.insumoId]) needs[b.insumoId] = { qtd: 0, un: b.un }; needs[b.insumoId].qtd += b.qtd * pcs })
   })
   const needKeys = Object.keys(needs).map(Number)
