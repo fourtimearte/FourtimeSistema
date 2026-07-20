@@ -1,12 +1,13 @@
 import { useState, type CSSProperties } from 'react'
-import { Plus, Save, Printer, Check, Trash2, FileText, Copy, X, ImagePlus, Search } from 'lucide-react'
+import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search } from 'lucide-react'
 import { useApp } from '../store/useApp'
 import {
-  REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, TEM_CODIGO, CORES, corHexPorNome,
+  REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, TEM_CODIGO, CORES, TECIDOS, corHexPorNome,
   DTF_CORES, SB_CORES, codigoHex, TAM_ADULTO, TAM_INFANTIL, isInfantil, ordemTamanhos, OBS_TAGS,
   pedTotais, money, type Pedido, type Layout, type TecnicaKey,
 } from '../store/model'
 import { PageHead, Btn, Badge, cvar } from '../components/ui'
+import Combo from '../components/Combo'
 
 function Inp({ value, onChange, list, placeholder, mono }: { value: string; onChange: (v: string) => void; list?: string; placeholder?: string; mono?: boolean }) {
   return <input value={value} list={list} placeholder={placeholder} onChange={e => onChange(e.target.value)}
@@ -14,10 +15,11 @@ function Inp({ value, onChange, list, placeholder, mono }: { value: string; onCh
 }
 function Field({ label, children, hint, full }: { label: string; children: React.ReactNode; hint?: string; full?: boolean }) {
   return <div style={{ display: 'flex', flexDirection: 'column', gap: 5, gridColumn: full ? '1/-1' : undefined }}>
-    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{label}</label>{children}
-    {hint && <span style={{ fontSize: 11, color: 'var(--text-subtle)' }}>{hint}</span>}
+    <label style={fieldLbl}>{label}</label>{children}{hint && <span style={{ fontSize: 11, color: 'var(--text-subtle)' }}>{hint}</span>}
   </div>
 }
+function toISO(br: string) { const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? `${m[3]}-${m[2]}-${m[1]}` : '' }
+function fromISO(iso: string) { const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : iso }
 
 export default function Comercial() {
   const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, aprovarPedido, toggleDinheiro, semDinheiro, toast } = useApp()
@@ -41,18 +43,19 @@ export default function Comercial() {
   return (
     <div>
       <datalist id="dl-clientes">{CLIENTES.map(c => <option key={c.id} value={c.nome} />)}</datalist>
-      <datalist id="dl-refs">{REFERENCIAS.map(r => <option key={r.cod} value={r.nome}>{r.cod}</option>)}</datalist>
 
       <PageHead crumb="Atendimento · Editor" title="Comercial"
-        desc="Editor de orçamento nativo — eficiente no celular e no desktop, com todas as funções do editor. O documento A4 sai fiel na impressão/PDF."
+        desc="Editor de orçamento nativo — eficiente no celular e no desktop, com as funções do v172. O documento A4 sai fiel na impressão/PDF."
         actions={<Btn size="sm" variant="primary" onClick={novoOrcamento}><Plus size={16} />Novo orçamento</Btn>} />
 
-      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 8, marginBottom: 12 }}>
+      {/* abas de documento (estilo kit: ativa vermelha) */}
+      <div style={tabbar}>
         {pedidos.map((o, i) => (
-          <button key={o.pedido} onClick={() => setCurPed(i)} style={{ ...pill, ...(i === curPed ? pillOn : {}) }}>
-            <FileText size={13} />{o.cliente || '(novo)'}<span className="mono" style={{ opacity: .7, fontSize: 10 }}>{o.pedido.slice(-4)}</span>
+          <button key={o.pedido} onClick={() => setCurPed(i)} style={{ ...tab, ...(i === curPed ? tabOn : {}) }}>
+            {o.cliente || '(novo)'} <span className="mono" style={{ opacity: .7, fontSize: 10 }}>{o.pedido.slice(-4)}</span>
           </button>
         ))}
+        <button onClick={novoOrcamento} style={tabNew} title="Novo orçamento">+</button>
       </div>
 
       {!p ? <div style={card}><div style={{ textAlign: 'center', color: 'var(--text-subtle)', padding: 20 }}>Nenhum orçamento. Clique em “Novo orçamento”.</div></div> : <>
@@ -66,6 +69,7 @@ export default function Comercial() {
           {!p.aprovado && <Btn size="sm" variant="primary" onClick={aprovar}><Check size={14} />Aprovar</Btn>}
         </div>
 
+        {/* DADOS DO PEDIDO — mantido */}
         <div style={card}>
           <h3 style={cardH}>Dados do pedido</h3>
           <div style={grid}>
@@ -93,28 +97,28 @@ export default function Comercial() {
       </>}
 
       {viewImg && <div onClick={() => setViewImg(null)} style={imgModal}><img src={viewImg} style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 8 }} /></div>}
+      <style>{'@media(max-width:820px){.lay-grid{grid-template-columns:1fr!important}}'}</style>
     </div>
   )
 }
 
-/* ---------- Layout card ---------- */
+/* ---------- Módulo de Layout: 2/3 imagem · 1/3 ficha ---------- */
 function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pIdx: number; lIdx: number; layout: Layout; canDelete: boolean; semDinheiro: boolean; onView: (s: string) => void }) {
-  const s = useApp()
-  const l = layout
-  function onRef(v: string) {
-    const m = REFERENCIAS.find(r => r.cod.toLowerCase() === v.trim().toLowerCase() || r.nome.toLowerCase() === v.trim().toLowerCase())
+  const s = useApp(); const l = layout
+  function selRef(v: string, opt?: { sub?: string }) {
+    const m = REFERENCIAS.find(r => r.cod === opt?.sub || r.nome.toLowerCase() === v.trim().toLowerCase())
     if (m) s.patchLayout(pIdx, lIdx, { refCod: m.cod, ref: m.nome, design: m.design.map(t => ({ tag: t, cores: [] })) })
     else s.patchLayout(pIdx, lIdx, { ref: v })
   }
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0]; if (!f) return
-    const r = new FileReader(); r.onload = () => s.setImg(pIdx, lIdx, String(r.result)); r.readAsDataURL(f)
-  }
+  function readImg(f?: File) { if (!f) return; const r = new FileReader(); r.onload = () => s.setImg(pIdx, lIdx, String(r.result)); r.readAsDataURL(f) }
+
   return (
     <div style={card}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
         <span style={lnum}>L-{String(lIdx + 1).padStart(2, '0')}</span>
-        <div style={{ flex: 1, minWidth: 160 }}><Inp value={l.ref} onChange={onRef} list="dl-refs" placeholder="Referência da peça" /></div>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <Combo value={l.ref} onSelect={selRef} placeholder="Referência da peça" options={REFERENCIAS.map(r => ({ label: r.nome, value: r.nome, sub: r.cod }))} />
+        </div>
         <div style={seg}>
           {(['adulto', 'infantil'] as const).map(g => <button key={g} onClick={() => s.setGrade(pIdx, lIdx, g)} style={{ ...segB, ...(l.grade === g ? segBOn : {}) }}>{g === 'adulto' ? 'Adulto' : 'Infantil'}</button>)}
         </div>
@@ -122,62 +126,65 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
         {canDelete && <button onClick={() => s.deleteLayout(pIdx, lIdx)} title="Excluir layout" style={iconBtn}><Trash2 size={15} /></button>}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(160px,1fr) 2fr', gap: 16 }} className="lay-grid">
-        {/* imagem */}
+      <div className="lay-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 18, alignItems: 'start' }}>
+        {/* IMAGEM (2/3) — tamanho inteiro */}
         <div>
           <label style={fieldLbl}>Imagem do produto</label>
-          <div style={{ marginTop: 5 }}>
-            {l.img
-              ? <div style={{ position: 'relative' }}>
-                  <img src={l.img} onClick={() => onView(l.img!)} style={{ width: '100%', height: 150, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)', cursor: 'zoom-in' }} />
-                  <button onClick={() => s.setImg(pIdx, lIdx, null)} style={{ ...iconBtn, position: 'absolute', top: 6, right: 6, background: 'var(--bg-surface)' }}><X size={14} /></button>
-                </div>
-              : <label style={imgDrop}><ImagePlus size={22} /><span style={{ fontSize: 12, marginTop: 4 }}>Enviar imagem</span><input type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} /></label>}
-          </div>
+          {l.img
+            ? <div style={{ position: 'relative', marginTop: 5 }}>
+                <img src={l.img} onClick={() => onView(l.img!)} style={{ width: '100%', maxHeight: 460, objectFit: 'contain', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', cursor: 'zoom-in', display: 'block' }} />
+                <button onClick={() => s.setImg(pIdx, lIdx, null)} title="Limpar imagem" style={{ ...iconBtn, position: 'absolute', top: 8, right: 8, background: 'var(--bg-surface)' }}><X size={14} /></button>
+              </div>
+            : <label onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); readImg(e.dataTransfer.files?.[0]) }} style={imgDrop}>
+                <ImagePlus size={26} /><span style={{ fontSize: 13, marginTop: 6 }}>Enviar imagem</span>
+                <span style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 2 }}>clique ou arraste o arquivo</span>
+                <input type="file" accept="image/*" onChange={e => readImg(e.target.files?.[0] ?? undefined)} style={{ display: 'none' }} />
+              </label>}
         </div>
 
-        {/* ficha */}
+        {/* FICHA (1/3): tecido · cor · design · tabela · obs */}
         <div>
           <label style={fieldLbl}>Tecido(s)</label>
-          {l.tecidos.map((t, ti) => (
-            <div key={ti} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-              <div style={{ flex: 1 }}><Inp value={t} onChange={v => s.setTecido(pIdx, lIdx, ti, v)} placeholder="Ex.: Dry-fit PET" /></div>
-              {l.tecidos.length > 1 && <button onClick={() => s.removeTecido(pIdx, lIdx, ti)} style={iconBtn}><X size={14} /></button>}
-            </div>
-          ))}
-          <button onClick={() => s.addTecido(pIdx, lIdx)} style={linkBtn}>+ tecido</button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 5 }}>
+            {l.tecidos.map((t, ti) => (
+              <div key={ti} style={{ display: 'flex', gap: 6 }}>
+                <div style={{ flex: 1 }}><Combo value={t} onSelect={v => s.setTecido(pIdx, lIdx, ti, v)} placeholder="Tecido" options={TECIDOS.map(x => ({ label: x, value: x }))} /></div>
+                {l.tecidos.length > 1 && <button onClick={() => s.removeTecido(pIdx, lIdx, ti)} title="Remover tecido" style={iconBtn}><X size={14} /></button>}
+              </div>
+            ))}
+          </div>
+          <button onClick={() => s.addTecido(pIdx, lIdx)} style={addBtn}><Plus size={13} />Adicionar tecido</button>
 
-          <label style={{ ...fieldLbl, marginTop: 12 }}>Cor</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 5 }}>
-            <span style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border-strong)', background: l.corHex, flex: '0 0 auto' }} />
-            <Inp value={l.cor} onChange={v => s.patchLayout(pIdx, lIdx, { cor: v, corHex: corHexPorNome(v) })} placeholder="Cor" />
+          <label style={{ ...fieldLbl, marginTop: 14 }}>Cor</label>
+          <div style={{ marginTop: 5 }}>
+            <Combo value={l.cor} leftSwatch={l.corHex} placeholder="Cor" options={CORES.map(c => ({ label: c.nome, value: c.nome, hex: c.hex }))}
+              onSelect={(v, opt) => s.patchLayout(pIdx, lIdx, { cor: v, corHex: opt?.hex ?? corHexPorNome(v) })} />
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
-            {CORES.map(c => <button key={c.hex} title={c.nome} onClick={() => s.patchLayout(pIdx, lIdx, { cor: c.nome, corHex: c.hex })} style={{ width: 22, height: 22, borderRadius: 6, border: '1px solid var(--border-strong)', background: c.hex, cursor: 'pointer' }} />)}
+            {CORES.map(c => <button key={c.hex} title={c.nome} onClick={() => s.patchLayout(pIdx, lIdx, { cor: c.nome, corHex: c.hex })} style={{ width: 20, height: 20, borderRadius: 5, border: '1px solid var(--border-strong)', background: c.hex, cursor: 'pointer' }} />)}
           </div>
 
           <DesignEditor pIdx={pIdx} lIdx={lIdx} layout={l} />
+          <SizeTable pIdx={pIdx} lIdx={lIdx} layout={l} semDinheiro={semDinheiro} />
+
+          <label style={{ ...fieldLbl, marginTop: 14 }}>Observações</label>
+          <div style={{ display: 'flex', gap: 6, margin: '6px 0' }}>
+            {OBS_TAGS.map(o => { const on = l.obsTags.includes(o.tag); return <button key={o.tag} onClick={() => s.toggleObsTag(pIdx, lIdx, o.tag)} style={{ height: 24, padding: '0 9px', borderRadius: 999, fontSize: 10, fontWeight: 800, cursor: 'pointer', border: on ? 'none' : '1.5px solid var(--border-strong)', background: on ? o.cor : 'transparent', color: on ? '#fff' : 'var(--text-muted)' }}>{o.tag}</button> })}
+          </div>
+          <textarea value={l.obs} onChange={e => s.setObs(pIdx, lIdx, e.target.value)} rows={2} placeholder="Observações desta peça…" style={ta} />
         </div>
       </div>
-
-      <SizeTable pIdx={pIdx} lIdx={lIdx} layout={l} semDinheiro={semDinheiro} />
-
-      <label style={{ ...fieldLbl, marginTop: 14 }}>Observações do layout</label>
-      <div style={{ display: 'flex', gap: 6, marginTop: 6, marginBottom: 6 }}>
-        {OBS_TAGS.map(o => { const on = l.obsTags.includes(o.tag); return <button key={o.tag} onClick={() => s.toggleObsTag(pIdx, lIdx, o.tag)} style={{ height: 26, padding: '0 10px', borderRadius: 999, fontSize: 11, fontWeight: 800, cursor: 'pointer', border: on ? 'none' : '1.5px solid var(--border-strong)', background: on ? o.cor : 'transparent', color: on ? '#fff' : 'var(--text-muted)' }}>{o.tag}</button> })}
-      </div>
-      <textarea value={l.obs} onChange={e => s.setObs(pIdx, lIdx, e.target.value)} rows={2} placeholder="Observações desta peça…" style={ta} />
     </div>
   )
 }
 
-/* ---------- Design (tags + código de cor DTF/Subli) ---------- */
+/* ---------- Design ---------- */
 function DesignEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layout: Layout }) {
   const s = useApp()
   const [openTag, setOpenTag] = useState<TecnicaKey | null>(null)
   const [q, setQ] = useState('')
   return (
-    <div style={{ marginTop: 12 }}>
+    <div style={{ marginTop: 14 }}>
       <label style={fieldLbl}>Design (define a rota de produção)</label>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
         {DESIGN_ORDER.map(tag => {
@@ -186,7 +193,6 @@ function DesignEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layo
             style={{ height: 30, padding: '0 12px', borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: on ? '1.5px solid transparent' : '1.5px solid var(--border-strong)', background: on ? cvar(TECNICAS[tag].cor) : 'transparent', color: on ? '#fff' : 'var(--text-muted)' }}>{TECNICAS[tag].label}</button>
         })}
       </div>
-      {/* tokens de código para DTF/Subli ativos */}
       {layout.design.filter(d => TEM_CODIGO.includes(d.tag)).map(d => (
         <div key={d.tag} style={{ marginTop: 8, border: '1px solid var(--border)', borderRadius: 8, padding: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -197,7 +203,7 @@ function DesignEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layo
                 <button onClick={() => s.removeDesignCor(pIdx, lIdx, d.tag, code)} style={{ border: 'none', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}>×</button>
               </span>
             ))}
-            <button onClick={() => { setOpenTag(openTag === d.tag ? null : d.tag); setQ('') }} style={linkBtn}>+ cor</button>
+            <button onClick={() => { setOpenTag(openTag === d.tag ? null : d.tag); setQ('') }} style={addBtnInline}>+ cor</button>
           </div>
           {openTag === d.tag && (
             <div style={{ marginTop: 8 }}>
@@ -219,67 +225,75 @@ function DesignEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layo
   )
 }
 
-/* ---------- Tabela de tamanhos (adulto/infantil, auto-modificável) ---------- */
+/* ---------- Tabela de tamanhos (compacta, adulto/infantil auto-modificável) ---------- */
 function SizeTable({ pIdx, lIdx, layout, semDinheiro }: { pIdx: number; lIdx: number; layout: Layout; semDinheiro: boolean }) {
-  const s = useApp()
-  const l = layout
+  const s = useApp(); const l = layout
   const linhas = ordemTamanhos(l)
   const outras = (l.grade === 'adulto' ? TAM_INFANTIL : TAM_ADULTO).filter(t => l.tamanhos[t] === undefined)
-  const cols = semDinheiro ? '1fr 90px' : '1fr 80px 90px 1fr'
   let totQ = 0, totV = 0
   return (
     <div style={{ marginTop: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <label style={fieldLbl}>Tabela de tamanhos · grade {l.grade}</label>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 8 }}>
+        <label style={fieldLbl}>Tabela de tamanhos · {l.grade}</label>
         {outras.length > 0 && <select value="" onChange={e => { if (e.target.value) s.setSize(pIdx, lIdx, e.target.value, 'qtd', 0) }} style={miniSel}>
-          <option value="">+ tam. {l.grade === 'adulto' ? 'infantil' : 'adulto'}</option>
+          <option value="">+ {l.grade === 'adulto' ? 'infantil' : 'adulto'}</option>
           {outras.map(t => <option key={t} value={t}>{t}</option>)}
         </select>}
       </div>
-      <div style={{ ...sizeRow(cols), color: 'var(--text-subtle)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em' }}>
-        <span>Tam</span><span>Qtd</span>{!semDinheiro && <span>Uni</span>}{!semDinheiro && <span style={{ textAlign: 'right' }}>Total</span>}
-      </div>
-      {linhas.map(tam => {
-        const t = l.tamanhos[tam] ?? { qtd: 0, uni: 0 }; totQ += t.qtd; totV += t.qtd * t.uni
-        const cross = (l.grade === 'adulto' && isInfantil(tam)) || (l.grade === 'infantil' && !isInfantil(tam))
-        const crossStyle: CSSProperties = cross ? (l.grade === 'adulto' ? { background: 'var(--sig-inf-bg)', color: 'var(--sig-inf-fg)' } : { background: 'var(--sig-adu-bg)', color: 'var(--sig-adu-fg)' }) : {}
-        return (
-          <div key={tam} style={{ ...sizeRow(cols), ...crossStyle, borderRadius: 6, paddingLeft: cross ? 6 : 0 }}>
-            <span style={{ fontWeight: 600, fontSize: 13 }}>{tam}{cross ? ' •' : ''}</span>
-            <input type="number" inputMode="numeric" value={t.qtd || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'qtd', parseFloat(e.target.value) || 0)} style={numInp} />
-            {!semDinheiro && <input type="number" inputMode="decimal" value={t.uni || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'uni', parseFloat(e.target.value) || 0)} style={numInp} />}
-            {!semDinheiro && <span className="mono" style={{ textAlign: 'right', fontSize: 13, alignSelf: 'center' }}>{money(t.qtd * t.uni)}</span>}
-          </div>
-        )
-      })}
-      <div style={{ ...sizeRow(cols), borderTop: '1px solid var(--border)', paddingTop: 8, marginTop: 4, fontWeight: 700 }}>
-        <span>Total</span><span className="mono">{totQ}</span>{!semDinheiro && <span>—</span>}{!semDinheiro && <span className="mono" style={{ textAlign: 'right' }}>{money(totV)}</span>}
-      </div>
+      <table style={stbl}>
+        <thead><tr>
+          <th style={{ ...stTh, textAlign: 'left' }}>Tam</th><th style={stTh}>Qtd</th>
+          {!semDinheiro && <th style={stTh}>Uni</th>}{!semDinheiro && <th style={stTh}>Total</th>}
+        </tr></thead>
+        <tbody>
+          {linhas.map(tam => {
+            const t = l.tamanhos[tam] ?? { qtd: 0, uni: 0 }; totQ += t.qtd; totV += t.qtd * t.uni
+            const cross = (l.grade === 'adulto' && isInfantil(tam)) || (l.grade === 'infantil' && !isInfantil(tam))
+            const cs: CSSProperties = cross ? (l.grade === 'adulto' ? { background: 'var(--sig-inf-bg)', color: 'var(--sig-inf-fg)' } : { background: 'var(--sig-adu-bg)', color: 'var(--sig-adu-fg)' }) : {}
+            return (
+              <tr key={tam}>
+                <td style={{ ...stTd, textAlign: 'left', fontFamily: 'var(--font-ui)', fontWeight: 600, ...cs }}>{tam}</td>
+                <td style={{ ...stTd, ...cs }}><input type="number" inputMode="numeric" value={t.qtd || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'qtd', parseFloat(e.target.value) || 0)} style={cellInp} /></td>
+                {!semDinheiro && <td style={{ ...stTd, ...cs }}><input type="number" inputMode="decimal" value={t.uni || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'uni', parseFloat(e.target.value) || 0)} style={cellInp} /></td>}
+                {!semDinheiro && <td style={{ ...stTd, ...cs }}>{money(t.qtd * t.uni)}</td>}
+              </tr>
+            )
+          })}
+        </tbody>
+        <tfoot><tr>
+          <td style={{ ...stTd, textAlign: 'left', fontWeight: 700, background: 'var(--bg-muted)' }}>Total</td>
+          <td style={{ ...stTd, fontWeight: 700, background: 'var(--bg-muted)' }}>{totQ}</td>
+          {!semDinheiro && <td style={{ ...stTd, background: 'var(--bg-muted)' }}>—</td>}
+          {!semDinheiro && <td style={{ ...stTd, fontWeight: 700, background: 'var(--bg-muted)' }}>{money(totV)}</td>}
+        </tr></tfoot>
+      </table>
     </div>
   )
 }
-
-/* datas */
-function toISO(br: string) { const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? `${m[3]}-${m[2]}-${m[1]}` : '' }
-function fromISO(iso: string) { const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : iso }
 
 const card: CSSProperties = { background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--sh-1)', padding: 16, marginBottom: 12 }
 const cardH: CSSProperties = { fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: 'var(--text-muted)', marginBottom: 12 }
 const fieldLbl: CSSProperties = { fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }
 const grid: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 12 }
 const actionBar: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px', boxShadow: 'var(--sh-1)', position: 'sticky', top: 66, zIndex: 20 }
-const pill: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 999, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto' }
-const pillOn: CSSProperties = { background: 'var(--set-comercial)', borderColor: 'var(--set-comercial)', color: '#fff' }
+/* tabs estilo kit */
+const tabbar: CSSProperties = { display: 'flex', gap: 3, overflowX: 'auto', borderBottom: '1px solid var(--border)', marginBottom: 12, paddingBottom: 0 }
+const tab: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', border: '1px solid var(--border)', borderBottom: 'none', borderRadius: '8px 8px 0 0', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative', top: 1 }
+const tabOn: CSSProperties = { background: 'var(--primary)', color: 'var(--primary-fg)', borderColor: 'var(--primary)', top: 0 }
+const tabNew: CSSProperties = { width: 34, height: 34, borderRadius: '8px 8px 0 0', border: '1px solid var(--border)', borderBottom: 'none', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18, lineHeight: 1 }
 const lnum: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: '#fff', background: 'var(--set-comercial)', borderRadius: 999, padding: '3px 10px', flex: '0 0 auto' }
 const iconBtn: CSSProperties = { width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
-const linkBtn: CSSProperties = { border: 'none', background: 'none', color: 'var(--primary)', fontWeight: 600, fontSize: 12, cursor: 'pointer', padding: '4px 0' }
+const addBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8, height: 32, padding: '0 12px', border: '1px dashed var(--border-strong)', borderRadius: 8, background: 'transparent', color: 'var(--text-muted)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }
+const addBtnInline: CSSProperties = { border: 'none', background: 'none', color: 'var(--primary)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }
 const seg: CSSProperties = { display: 'flex', background: 'var(--bg-muted)', borderRadius: 999, padding: 3, gap: 2 }
 const segB: CSSProperties = { fontSize: 12, fontWeight: 600, padding: '5px 12px', borderRadius: 999, cursor: 'pointer', color: 'var(--text-muted)', border: 'none', background: 'none' }
 const segBOn: CSSProperties = { background: 'var(--bg-surface)', color: 'var(--text)', boxShadow: 'var(--sh-1)' }
-const sizeRow = (cols: string): CSSProperties => ({ display: 'grid', gridTemplateColumns: cols, gap: 8, alignItems: 'center', padding: '4px 0' })
-const numInp: CSSProperties = { height: 36, width: '100%', padding: '0 8px', border: '1px solid var(--border-strong)', borderRadius: 6, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 13, outline: 'none', textAlign: 'center' }
+const stbl: CSSProperties = { borderCollapse: 'collapse', width: '100%', fontFamily: 'var(--font-mono)', fontSize: 12, marginTop: 2 }
+const stTh: CSSProperties = { border: '1px solid var(--border)', padding: '4px 5px', textAlign: 'center', background: 'var(--bg-muted)', color: 'var(--text-muted)', fontWeight: 600, fontSize: 10 }
+const stTd: CSSProperties = { border: '1px solid var(--border)', padding: '2px 4px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }
+const cellInp: CSSProperties = { width: '100%', minWidth: 40, height: 28, padding: '0 4px', border: 'none', background: 'transparent', color: 'inherit', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 12, outline: 'none', textAlign: 'center' }
 const ta: CSSProperties = { width: '100%', padding: '8px 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 13, outline: 'none', resize: 'vertical' }
 const dateInp: CSSProperties = { height: 'var(--control-h-lg)', width: '100%', padding: '0 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 14, outline: 'none' }
-const miniSel: CSSProperties = { height: 30, padding: '0 8px', border: '1px solid var(--border-strong)', borderRadius: 6, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 12, outline: 'none' }
-const imgDrop: CSSProperties = { display: 'grid', placeItems: 'center', gap: 4, height: 150, border: '1.5px dashed var(--border-strong)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', background: 'var(--bg-surface-2)' }
+const miniSel: CSSProperties = { height: 28, padding: '0 6px', border: '1px solid var(--border-strong)', borderRadius: 6, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 11, outline: 'none' }
+const imgDrop: CSSProperties = { display: 'grid', placeItems: 'center', gap: 2, minHeight: 240, marginTop: 5, border: '1.5px dashed var(--border-strong)', borderRadius: 10, color: 'var(--text-muted)', cursor: 'pointer', background: 'var(--bg-surface-2)', textAlign: 'center', padding: 20 }
 const imgModal: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', zIndex: 95, display: 'grid', placeItems: 'center', cursor: 'zoom-out' }

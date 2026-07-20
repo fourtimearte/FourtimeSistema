@@ -49,6 +49,8 @@ export function corHexPorNome(nome: string): string {
   return CORES.find(x => x.nome.toLowerCase() === nome.trim().toLowerCase())?.hex ?? '#98A3B0'
 }
 export const OBS_TAGS = [{ tag: 'URGENTE', cor: 'var(--danger)' }, { tag: 'ATRASADO', cor: 'var(--warning)' }]
+/* catálogo de tecidos p/ autocomplete (Banco de Dados do v172) */
+export const TECIDOS = ['Dry-fit 100% poliéster', 'Dry-fit PET', 'Malha PV (Poliviscose)', 'Piquet', 'Helanca light', 'Dry premium', 'Ribana', 'Algodão penteado 30.1', 'Poliéster', 'Moletom flanelado', 'Tactel', 'Oxford']
 
 /* ---- tipos ---- */
 export interface Cliente { id: number; nome: string; doc: string; contato: string; endereco: string; vendedor: string; segmento: string }
