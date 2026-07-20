@@ -49,8 +49,12 @@ export function corHexPorNome(nome: string): string {
   return CORES.find(x => x.nome.toLowerCase() === nome.trim().toLowerCase())?.hex ?? '#98A3B0'
 }
 export const OBS_TAGS = [{ tag: 'URGENTE', cor: 'var(--danger)' }, { tag: 'ATRASADO', cor: 'var(--warning)' }]
-/* catálogo de tecidos p/ autocomplete (Banco de Dados do v172) */
+/* catálogos p/ autocomplete (Banco de Dados do v172) */
 export const TECIDOS = ['Dry-fit 100% poliéster', 'Dry-fit PET', 'Malha PV (Poliviscose)', 'Piquet', 'Helanca light', 'Dry premium', 'Ribana', 'Algodão penteado 30.1', 'Poliéster', 'Moletom flanelado', 'Tactel', 'Oxford']
+export const VENDEDORES = ['Henrique', 'Daniele', 'Kevelin', 'Planejamento', 'Arte']
+export const DEPARTAMENTOS = ['Uniformes', 'Esporte', 'Comércio', 'Academia', 'Faculdade', 'Escola', 'Eventos', 'Corporativo']
+export const EMBALAGENS = ['Saco individual', 'Caixa', 'A granel', 'Sacola personalizada']
+export const PAGAMENTOS = ['À vista', '50% sinal + saldo', '30/60', 'Pix', 'Cartão 3x', 'Boleto']
 
 /* ---- tipos ---- */
 export interface Cliente { id: number; nome: string; doc: string; contato: string; endereco: string; vendedor: string; segmento: string }
@@ -157,6 +161,19 @@ export function ordemTamanhos(l: Layout): string[] {
   const base = l.grade === 'adulto' ? TAM_ADULTO : TAM_INFANTIL
   const cross = (l.grade === 'adulto' ? TAM_INFANTIL : TAM_ADULTO).filter(t => (l.tamanhos[t]?.qtd ?? 0) > 0 || l.tamanhos[t] !== undefined)
   return l.grade === 'adulto' ? [...cross, ...base] : [...base, ...cross]
+}
+/** validação antes de aprovar/imprimir (v172 §20): Ref, Tecido, Cor, Design por layout + Departamento */
+export function validarPedido(p: Pedido): string[] {
+  const errs: string[] = []
+  if (!p.depto.trim()) errs.push('Departamento (cabeçalho)')
+  p.layouts.forEach((l, i) => {
+    const n = 'L-' + String(i + 1).padStart(2, '0')
+    if (!l.ref.trim() || l.ref === 'Nova referência') errs.push('Referência (' + n + ')')
+    if (!l.tecidos.some(t => t.trim())) errs.push('Tecido (' + n + ')')
+    if (!l.cor.trim()) errs.push('Cor (' + n + ')')
+    if (!l.design.length) errs.push('Design (' + n + ')')
+  })
+  return errs
 }
 export function insumoNome(id: number) { return INSUMOS.find(i => i.id === id)?.nome ?? '?' }
 export function bomCusto(r: Referencia) { return r.bom.reduce((s, b) => { const i = INSUMOS.find(x => x.id === b.insumoId); return s + (i ? i.custo * b.qtd : 0) }, 0) }

@@ -1,8 +1,9 @@
-import { useState, type CSSProperties } from 'react'
-import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search } from 'lucide-react'
+import { useState, useEffect, useRef, type CSSProperties } from 'react'
+import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2 } from 'lucide-react'
 import { useApp } from '../store/useApp'
 import {
   REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, TEM_CODIGO, CORES, TECIDOS, corHexPorNome,
+  VENDEDORES, DEPARTAMENTOS, EMBALAGENS, PAGAMENTOS, validarPedido,
   DTF_CORES, SB_CORES, codigoHex, TAM_ADULTO, TAM_INFANTIL, isInfantil, ordemTamanhos, OBS_TAGS,
   pedTotais, money, type Pedido, type Layout, type TecnicaKey,
 } from '../store/model'
@@ -22,9 +23,19 @@ function toISO(br: string) { const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); 
 function fromISO(iso: string) { const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : iso }
 
 export default function Comercial() {
-  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, aprovarPedido, toggleDinheiro, semDinheiro, toast } = useApp()
+  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, aprovarPedido, toggleDinheiro, semDinheiro, toast, undo, redo, past, future } = useApp()
   const p: Pedido | undefined = pedidos[curPed]
   const [viewImg, setViewImg] = useState<string | null>(null)
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement
+      if (el && /^(INPUT|TEXTAREA)$/.test(el.tagName)) return
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo() }
+      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); redo() }
+    }
+    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h)
+  }, [undo, redo])
 
   function onCliente(v: string) {
     const m = CLIENTES.find(c => c.nome.toLowerCase() === v.trim().toLowerCase())
@@ -33,7 +44,8 @@ export default function Comercial() {
   }
   function aprovar() {
     if (!p) return
-    if (!p.cliente) { toast('Preencha o cliente antes de aprovar'); return }
+    const faltas = validarPedido(p)
+    if (faltas.length) { toast('Falta preencher: ' + faltas.slice(0, 3).join(' · ') + (faltas.length > 3 ? '…' : '')); return }
     const tecs = aprovarPedido(p.pedido)
     if (!tecs) { toast('Adicione ao menos uma técnica que roteia'); return }
     toast('Aprovado — rota: ' + tecs.map(t => TECNICAS[t].label).join(' + ') + ' → Kanban')
@@ -43,6 +55,10 @@ export default function Comercial() {
   return (
     <div>
       <datalist id="dl-clientes">{CLIENTES.map(c => <option key={c.id} value={c.nome} />)}</datalist>
+      <datalist id="dl-vend">{VENDEDORES.map(v => <option key={v} value={v} />)}</datalist>
+      <datalist id="dl-dep">{DEPARTAMENTOS.map(v => <option key={v} value={v} />)}</datalist>
+      <datalist id="dl-emb">{EMBALAGENS.map(v => <option key={v} value={v} />)}</datalist>
+      <datalist id="dl-pag">{PAGAMENTOS.map(v => <option key={v} value={v} />)}</datalist>
 
       <PageHead crumb="Atendimento · Editor" title="Comercial"
         desc="Editor de orçamento nativo — eficiente no celular e no desktop, com as funções do v172. O documento A4 sai fiel na impressão/PDF."
@@ -63,6 +79,8 @@ export default function Comercial() {
           <span className="mono" style={{ fontWeight: 600 }}>{p.pedido}</span>
           {p.aprovado ? <Badge kind="info">em produção</Badge> : <Badge kind="neutral">rascunho</Badge>}
           <span style={{ marginLeft: 'auto' }} />
+          <button onClick={undo} disabled={!past.length} title="Desfazer (Ctrl+Z)" style={{ ...undoBtn, opacity: past.length ? 1 : .4 }}><Undo2 size={15} /></button>
+          <button onClick={redo} disabled={!future.length} title="Refazer (Ctrl+Shift+Z)" style={{ ...undoBtn, opacity: future.length ? 1 : .4 }}><Redo2 size={15} /></button>
           <Btn size="sm" onClick={toggleDinheiro}>{semDinheiro ? 'Mostrar R$' : 'Ocultar R$'}</Btn>
           <Btn size="sm" onClick={() => toast('Salvo (.ft) — protótipo')}><Save size={14} />Salvar</Btn>
           <Btn size="sm" onClick={() => window.print()}><Printer size={14} />PDF</Btn>
@@ -75,13 +93,13 @@ export default function Comercial() {
           <div style={grid}>
             <Field label="Cliente" hint="digite para buscar no CRM"><Inp value={p.cliente} onChange={onCliente} list="dl-clientes" placeholder="Ex.: Escola João XXIII" /></Field>
             <Field label="CPF / CNPJ"><Inp value={p.cpf} onChange={v => updateHeader(curPed, 'cpf', v)} mono /></Field>
-            <Field label="Departamento"><Inp value={p.depto} onChange={v => updateHeader(curPed, 'depto', v)} /></Field>
-            <Field label="Embalagem"><Inp value={p.embalagem} onChange={v => updateHeader(curPed, 'embalagem', v)} /></Field>
-            <Field label="Vendedor"><Inp value={p.vendedor} onChange={v => updateHeader(curPed, 'vendedor', v)} /></Field>
+            <Field label="Departamento"><Inp value={p.depto} onChange={v => updateHeader(curPed, 'depto', v)} list="dl-dep" /></Field>
+            <Field label="Embalagem"><Inp value={p.embalagem} onChange={v => updateHeader(curPed, 'embalagem', v)} list="dl-emb" /></Field>
+            <Field label="Vendedor"><Inp value={p.vendedor} onChange={v => updateHeader(curPed, 'vendedor', v)} list="dl-vend" /></Field>
             <Field label="Contato"><Inp value={p.contato} onChange={v => updateHeader(curPed, 'contato', v)} mono /></Field>
             <Field label="Entrega"><Inp value={p.entrega} onChange={v => updateHeader(curPed, 'entrega', v)} placeholder="dd/mm/aaaa" /></Field>
             <Field label="Envio"><input type="date" value={toISO(p.envio)} onChange={e => updateHeader(curPed, 'envio', fromISO(e.target.value))} style={dateInp} /></Field>
-            <Field label="Pagamento"><Inp value={p.pagamento} onChange={v => updateHeader(curPed, 'pagamento', v)} /></Field>
+            <Field label="Pagamento"><Inp value={p.pagamento} onChange={v => updateHeader(curPed, 'pagamento', v)} list="dl-pag" /></Field>
             <Field label="Observações do pedido" full><textarea value={p.obs} onChange={e => updateHeader(curPed, 'obs', e.target.value)} rows={2} style={ta} /></Field>
           </div>
         </div>
@@ -96,7 +114,7 @@ export default function Comercial() {
         </div>
       </>}
 
-      {viewImg && <div onClick={() => setViewImg(null)} style={imgModal}><img src={viewImg} style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 8 }} /></div>}
+      {viewImg && <ImgViewer src={viewImg} onClose={() => setViewImg(null)} />}
       <style>{'@media(max-width:820px){.lay-grid{grid-template-columns:1fr!important}}'}</style>
     </div>
   )
@@ -128,8 +146,8 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
 
       <div className="lay-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 18, alignItems: 'start' }}>
         {/* IMAGEM (2/3) — tamanho inteiro */}
-        <div>
-          <label style={fieldLbl}>Imagem do produto</label>
+        <div tabIndex={0} onPaste={e => { const it = [...e.clipboardData.items].find(i => i.type.startsWith('image/')); if (it) readImg(it.getAsFile() ?? undefined) }} style={{ outline: 'none' }}>
+          <label style={fieldLbl}>Imagem do produto <span style={{ fontWeight: 400, color: 'var(--text-subtle)' }}>· clique e cole (Ctrl+V)</span></label>
           {l.img
             ? <div style={{ position: 'relative', marginTop: 5 }}>
                 <img src={l.img} onClick={() => onView(l.img!)} style={{ width: '100%', maxHeight: 460, objectFit: 'contain', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', cursor: 'zoom-in', display: 'block' }} />
@@ -225,6 +243,24 @@ function DesignEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layo
   )
 }
 
+/* ---------- Visualizador de imagem (zoom com roda + pan arrastando) ---------- */
+function ImgViewer({ src, onClose }: { src: string; onClose: () => void }) {
+  const [z, setZ] = useState(1); const [tx, setTx] = useState(0); const [ty, setTy] = useState(0)
+  const drag = useRef<{ x: number; y: number } | null>(null)
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [onClose])
+  function onWheel(e: React.WheelEvent) { const nz = Math.min(6, Math.max(1, z * (e.deltaY < 0 ? 1.15 : 0.87))); setZ(nz); if (nz === 1) { setTx(0); setTy(0) } }
+  return (
+    <div style={imgModal} onMouseDown={e => { if (e.target === e.currentTarget) onClose() }} onWheel={onWheel}
+      onMouseMove={e => { if (drag.current) { setTx(t => t + (e.clientX - drag.current!.x)); setTy(t => t + (e.clientY - drag.current!.y)); drag.current = { x: e.clientX, y: e.clientY } } }}
+      onMouseUp={() => (drag.current = null)}>
+      <img src={src} draggable={false}
+        onMouseDown={e => { if (z > 1) { e.preventDefault(); drag.current = { x: e.clientX, y: e.clientY } } }}
+        style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 8, transform: `translate(${tx}px,${ty}px) scale(${z})`, cursor: z > 1 ? 'grab' : 'zoom-out', transition: drag.current ? 'none' : 'transform .08s' }} />
+      <div style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', color: '#fff', fontSize: 12, opacity: .8 }}>roda = zoom · arrastar = mover · Esc = fechar</div>
+    </div>
+  )
+}
+
 /* ---------- Tabela de tamanhos (compacta, adulto/infantil auto-modificável) ---------- */
 function SizeTable({ pIdx, lIdx, layout, semDinheiro }: { pIdx: number; lIdx: number; layout: Layout; semDinheiro: boolean }) {
   const s = useApp(); const l = layout
@@ -283,6 +319,7 @@ const tabOn: CSSProperties = { background: 'var(--primary)', color: 'var(--prima
 const tabNew: CSSProperties = { width: 34, height: 34, borderRadius: '8px 8px 0 0', border: '1px solid var(--border)', borderBottom: 'none', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18, lineHeight: 1 }
 const lnum: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: '#fff', background: 'var(--set-comercial)', borderRadius: 999, padding: '3px 10px', flex: '0 0 auto' }
 const iconBtn: CSSProperties = { width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
+const undoBtn: CSSProperties = { width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
 const addBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8, height: 32, padding: '0 12px', border: '1px dashed var(--border-strong)', borderRadius: 8, background: 'transparent', color: 'var(--text-muted)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }
 const addBtnInline: CSSProperties = { border: 'none', background: 'none', color: 'var(--primary)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }
 const seg: CSSProperties = { display: 'flex', background: 'var(--bg-muted)', borderRadius: 999, padding: 3, gap: 2 }
