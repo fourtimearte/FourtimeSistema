@@ -8,11 +8,8 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
-    # SPA: qualquer rota cai no index.html (refresh não dá 404)
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+    # Sem rewrite custom: o Render serve o index.html na raiz por padrão.
+    # (A navegação do app é por estado, não por URL — não precisa de SPA fallback.)
     # Quando o Supabase entrar (Fase 3), as chaves públicas vêm aqui:
     # envVars:
     #   - key: VITE_SUPABASE_URL
