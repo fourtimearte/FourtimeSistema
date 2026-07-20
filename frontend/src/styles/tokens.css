@@ -1,0 +1,40 @@
+/* =====================================================================
+   PERSONIFOUR — DESIGN TOKENS (fonte única da verdade)
+   Copiado verbatim do design kit v5. NÃO renomear tokens — só acrescentar.
+   O tailwind.preset.ts espelha estes nomes: bg-set-dtf === var(--set-dtf).
+   ===================================================================== */
+:root{
+  --n-0:#FFFFFF;--n-25:#FBFCFD;--n-50:#F6F8FA;--n-100:#EEF1F4;--n-150:#E4E8ED;--n-200:#D6DCE3;
+  --n-300:#BAC3CD;--n-400:#98A3B0;--n-500:#6A7686;--n-600:#4F5A69;--n-700:#39424E;--n-800:#252B33;--n-900:#161A20;--n-950:#0E1116;
+  --red-50:#FEF2F2;--red-100:#FDE3E4;--red-200:#FBC9CB;--red-300:#F49A9E;--red-400:#E85A60;--red-500:#C6161B;--red-600:#A81015;--red-700:#870C10;--red-800:#6B0A0D;--red-900:#4E080A;
+  --success:#12805C;--success-bg:#E6F5EF;--success-fg:#0B5A40;
+  --info:#2563EB;--info-bg:#E7EEFE;--info-fg:#1A46A8;
+  --warning:#B45309;--warning-bg:#FBF0DF;--warning-fg:#7C3A06;
+  --danger:#C6161B;--danger-bg:#FDE7E8;--danger-fg:#8A0F13;
+  --set-comercial:#2563EB;--set-arte:#7C3AED;--set-dtf:#DB2777;--set-sublimacao:#0E7490;--set-silk:#047857;--set-corte:#C2410C;--set-bordado:#B45309;--set-costura:#4F46E5;--set-embalagem:#0F766E;--set-expedicao:#475569;--set-estoque:#9333EA;--set-financeiro:#15803D;
+  --sig-inf-bg:#FCE8E9;--sig-inf-fg:#C6161B;--sig-adu-bg:#E3EEFB;--sig-adu-fg:#12213F;
+  --font-ui:'IBM Plex Sans',system-ui,sans-serif;--font-mono:'IBM Plex Mono',ui-monospace,monospace;--font-doc:'Roboto',sans-serif;
+  --mov-rapido:120ms;--mov-medio:200ms;--mov-lento:320ms;--ease:cubic-bezier(.2,.7,.3,1);--ease-reveal:cubic-bezier(.16,1,.3,1);
+  --grad-brand:linear-gradient(135deg,#E5484D 0%,#C6161B 52%,#9E0E13 100%);
+  --sb-thumb:#CBD3DD;--sb-thumb-hover:#AEB8C4;--sb-size:10px;
+  --sh-1:0 1px 2px rgba(16,20,28,.06),0 1px 1px rgba(16,20,28,.04);
+  --sh-2:0 2px 6px rgba(16,20,28,.08),0 1px 2px rgba(16,20,28,.05);
+  --sh-3:0 8px 24px rgba(16,20,28,.10),0 2px 6px rgba(16,20,28,.06);
+  --sh-4:0 18px 48px rgba(16,20,28,.18),0 4px 12px rgba(16,20,28,.10);
+  --control-h:36px;--control-h-sm:30px;--control-h-lg:42px;--control-px:14px;--tap-min:36px;
+  --bg-app:var(--n-50);--bg-surface:var(--n-0);--bg-surface-2:var(--n-25);--bg-muted:var(--n-100);--bg-hover:var(--n-100);
+  --border:var(--n-150);--border-strong:var(--n-200);--text:var(--n-900);--text-muted:#5D6775;--text-subtle:#68727E;
+  --primary:var(--red-500);--primary-hover:var(--red-600);--primary-fg:#fff;--ring:rgba(198,22,27,.35);--focus:var(--red-500);--alert:var(--red-500);--alert-bg:var(--red-50);
+  --nav-bg:#141821;--nav-fg:#AEB6C2;--nav-fg-strong:#F3F5F8;--nav-hover:rgba(255,255,255,.06);--nav-border:rgba(255,255,255,.07);--nav-group:#727C8B;
+}
+[data-density="comfort"]{--control-h:44px;--control-h-sm:38px;--control-h-lg:52px;--control-px:16px;--tap-min:44px;}
+[data-theme="dark"]{
+  --bg-app:var(--n-950);--bg-surface:#171B22;--bg-surface-2:#1C212A;--bg-muted:#222834;--bg-hover:#232A36;--border:#2A313D;--border-strong:#39424E;
+  --text:#EDF0F4;--text-muted:#9AA5B3;--text-subtle:#828D9C;--primary:#F26A6F;--primary-hover:#F58589;--primary-fg:#1a0708;--ring:rgba(242,106,111,.4);--focus:#F26A6F;--alert:#F26A6F;--alert-bg:#2C1416;
+  --success:#34D399;--success-bg:#0F2A22;--success-fg:#8EE9C7;--info:#60A5FA;--info-bg:#122036;--info-fg:#A9CBFB;--warning:#FBBF24;--warning-bg:#2C2410;--warning-fg:#F5D98A;--danger:#F87171;--danger-bg:#2C1416;--danger-fg:#F6ABAB;
+  --sig-inf-bg:#3A1D1F;--sig-inf-fg:#F49A9E;--sig-adu-bg:#152238;--sig-adu-fg:#A9CBFB;
+  --sh-1:0 1px 2px rgba(0,0,0,.4);--sh-2:0 2px 6px rgba(0,0,0,.45);--sh-3:0 8px 24px rgba(0,0,0,.5);--sh-4:0 18px 48px rgba(0,0,0,.6);
+  --nav-bg:#0D1015;--nav-border:rgba(255,255,255,.06);--sb-thumb:rgba(255,255,255,.16);--sb-thumb-hover:rgba(255,255,255,.30);
+}
+[data-accent="off"]{--primary:var(--n-800);--primary-hover:var(--n-900);--primary-fg:#fff;--ring:rgba(80,90,105,.4);--focus:var(--n-700);}
+[data-theme="dark"][data-accent="off"]{--primary:var(--n-200);--primary-hover:#fff;--primary-fg:var(--n-950);}

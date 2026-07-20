@@ -1,0 +1,21 @@
+# Render Blueprint — Fourtime Sistema (frontend React, Static Site)
+# Fase 1: só o frontend. Sobe como site estático (dados fictícios, sem backend ainda).
+# Backend (Supabase) entra na Fase 3 e não passa pelo Render — é serviço gerenciado.
+services:
+  - type: web
+    name: fourtime-sistema
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    # SPA: qualquer rota cai no index.html (refresh não dá 404)
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    # Quando o Supabase entrar (Fase 3), as chaves públicas vêm aqui:
+    # envVars:
+    #   - key: VITE_SUPABASE_URL
+    #     sync: false
+    #   - key: VITE_SUPABASE_ANON_KEY
+    #     sync: false

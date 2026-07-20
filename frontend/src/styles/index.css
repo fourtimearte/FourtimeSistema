@@ -1,0 +1,31 @@
+@import './tokens.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base fora do Tailwind (usa os tokens direto) */
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  background: var(--bg-app);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* scrollbar custom (reutilizável) */
+* { scrollbar-width: thin; scrollbar-color: var(--sb-thumb) transparent; }
+*::-webkit-scrollbar { width: var(--sb-size); height: var(--sb-size); }
+*::-webkit-scrollbar-thumb { background: var(--sb-thumb); border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
+.sidenav { scrollbar-color: rgba(255,255,255,.18) transparent; }
+
+/* animações nomeadas (subset do catálogo v5) */
+@keyframes a-surgir { from { opacity: 0 } to { opacity: 1 } }
+@keyframes a-subir { from { opacity: 0; transform: translateY(18px) } to { opacity: 1; transform: none } }
+@keyframes spin { to { transform: rotate(360deg) } }
+.play-surgir { animation: a-surgir .28s var(--ease-reveal) both; }
+.play-subir { animation: a-subir .45s var(--ease-reveal) both; }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; transition-duration: .001ms !important } }
