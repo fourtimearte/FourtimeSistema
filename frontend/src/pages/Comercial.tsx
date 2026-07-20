@@ -1,17 +1,39 @@
-import { FileText, Plus, Save, Printer, Check, Trash2, Image as ImageIcon } from 'lucide-react'
+import type { CSSProperties } from 'react'
+import { Plus, Save, Printer, Check, Trash2, FileText } from 'lucide-react'
 import { useApp } from '../store/useApp'
-import { DESIGN_ORDER, TECNICAS, pedTotais, money, type Pedido, type TecnicaKey } from '../store/model'
+import {
+  REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, CORES, corHexPorNome,
+  pedTotais, money, type Pedido, type TecnicaKey,
+} from '../store/model'
 import { PageHead, Btn, Badge, cvar } from '../components/ui'
 
-function Editable({ value, onCommit, style, className }: { value: string; onCommit: (v: string) => void; style?: React.CSSProperties; className?: string }) {
-  return <div contentEditable suppressContentEditableWarning className={className} style={style}
-    onBlur={e => { const v = e.currentTarget.textContent?.trim() ?? ''; if (v !== value) onCommit(v) }}>{value || '—'}</div>
+/* input controlado, mobile-friendly */
+function Inp({ value, onChange, list, placeholder, type, mono }: { value: string; onChange: (v: string) => void; list?: string; placeholder?: string; type?: string; mono?: boolean }) {
+  return <input value={value} list={list} placeholder={placeholder} type={type || 'text'} inputMode={type === 'number' ? 'decimal' : undefined}
+    onChange={e => onChange(e.target.value)}
+    style={{ height: 'var(--control-h-lg)', width: '100%', padding: '0 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 14, outline: 'none', fontFamily: mono ? 'var(--font-mono)' : undefined }} />
+}
+function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+  return <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>{label}</label>
+    {children}{hint && <span style={{ fontSize: 11, color: 'var(--text-subtle)' }}>{hint}</span>}
+  </div>
 }
 
 export default function Comercial() {
-  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, updateLayout, updateSize, addLayout, deleteLayout, toggleDesign, aprovarPedido, toast } = useApp()
+  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, patchLayout, updateSize, addLayout, deleteLayout, toggleDesign, aprovarPedido, toast } = useApp()
   const p: Pedido | undefined = pedidos[curPed]
 
+  function onCliente(v: string) {
+    const match = CLIENTES.find(c => c.nome.toLowerCase() === v.trim().toLowerCase())
+    if (match) patchPedido(curPed, { cliente: match.nome, clienteId: match.id, contato: match.contato, vendedor: match.vendedor })
+    else updateHeader(curPed, 'cliente', v)
+  }
+  function onRef(li: number, v: string) {
+    const match = REFERENCIAS.find(r => r.cod.toLowerCase() === v.trim().toLowerCase() || r.nome.toLowerCase() === v.trim().toLowerCase())
+    if (match) patchLayout(curPed, li, { refCod: match.cod, ref: match.nome, design: [...match.design] })
+    else patchLayout(curPed, li, { ref: v })
+  }
   function aprovar() {
     if (!p) return
     if (!p.cliente) { toast('Preencha o cliente antes de aprovar'); return }
@@ -20,157 +42,121 @@ export default function Comercial() {
     toast('Aprovado — rota: ' + tecs.map(t => TECNICAS[t].label).join(' + ') + ' → Kanban')
   }
 
+  const tot = p ? pedTotais(p) : { pecas: 0, valor: 0 }
+
   return (
     <div>
+      <datalist id="dl-clientes">{CLIENTES.map(c => <option key={c.id} value={c.nome} />)}</datalist>
+      <datalist id="dl-refs">{REFERENCIAS.map(r => <option key={r.cod} value={r.nome}>{r.cod}</option>)}</datalist>
+
       <PageHead crumb="Atendimento · Editor" title="Comercial"
-        desc="Pedidos e o editor de orçamento. Edite os campos direto na folha A4. As tags de Design de cada layout definem a rota — clique nelas e depois em Aprovar para o pedido entrar no Kanban."
-        actions={<>
-          <Btn size="sm" onClick={() => toast('Abrir .ft (protótipo)')}><FileText size={16} />Abrir</Btn>
-          <Btn size="sm" variant="primary" onClick={novoOrcamento}><Plus size={16} />Novo orçamento</Btn>
-        </>} />
+        desc="Editor de orçamento nativo — eficiente no celular e no desktop. Escolha um cliente/referência para autocompletar, ajuste os layouts e clique em PDF para o documento A4."
+        actions={<Btn size="sm" variant="primary" onClick={novoOrcamento}><Plus size={16} />Novo orçamento</Btn>} />
 
-      <div style={wrap} className="ed-wrap">
-        <aside style={orclist}>
-          <div style={orclistH}>Orçamentos</div>
-          {pedidos.map((o, i) => (
-            <div key={o.pedido} onClick={() => setCurPed(i)} style={{ ...orcitem, ...(i === curPed ? orcitemOn : {}) }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>{o.cliente || '(sem cliente)'}</span>
-              <span className="mono" style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
-                {o.pedido} · R$ {money(pedTotais(o).valor)}
-                {o.aprovado ? <Badge kind="info">produção</Badge> : <Badge kind="neutral">rascunho</Badge>}
-              </span>
-            </div>
-          ))}
-        </aside>
-
-        <section style={stage}>
-          {!p ? <div style={{ padding: 30, textAlign: 'center', color: 'var(--text-subtle)' }}>Nenhum orçamento. Clique em “Novo orçamento”.</div> : <>
-            <div style={toolbar}>
-              <div style={{ display: 'flex', gap: 2, flex: 1, overflowX: 'auto' }}>
-                {pedidos.slice(0, 4).map((x, i) => (
-                  <div key={x.pedido} onClick={() => setCurPed(i)} style={{ ...etab, ...(i === curPed ? etabOn : {}) }}><FileText size={13} />{(x.cliente || x.pedido).slice(0, 16)}</div>
-                ))}
-              </div>
-              <Btn size="sm" onClick={() => toast('Modo com/sem dinheiro (protótipo)')}>R$</Btn>
-              <Btn size="sm" onClick={() => toast('Salvo no Drive (protótipo)')}><Save size={14} />Salvar</Btn>
-              {p.aprovado
-                ? <Btn size="sm" onClick={() => toast('Gerando PDF (protótipo)')}><Printer size={14} />PDF</Btn>
-                : <Btn size="sm" variant="primary" onClick={aprovar}><Check size={14} />Aprovar → Kanban</Btn>}
-            </div>
-
-            <div className="a4">
-              <div className="a4-head">
-                <div className="a4-logo"><div className="lg">F</div><div>FOURTIME<small>Personalização esportiva</small></div></div>
-                <div className="a4-code">Pedido Nº<b>{p.pedido}</b></div>
-              </div>
-              <div className="a4-fields">
-                {([['Cliente', 'cliente'], ['Vendedor', 'vendedor'], ['Entrega', 'entrega'], ['Departamento', 'depto'], ['Contato', 'contato'], ['Pagamento', 'pagamento']] as [string, keyof Pedido][]).map(([lbl, f]) => (
-                  <div className="a4-f" key={f}><label>{lbl}</label><Editable className="v" value={String(p[f] ?? '')} onCommit={v => updateHeader(curPed, f, v)} /></div>
-                ))}
-              </div>
-              <div className="a4-warn">{p.aprovado ? '✔ Orçamento aprovado · em produção — rota gerada pelas tags de Design' : '⚠ Rascunho · aprove para gerar a rota de produção'}</div>
-
-              {p.layouts.map((l, li) => {
-                let sub = 0
-                return (
-                  <div className="lay" key={li}>
-                    {p.layouts.length > 1 && <button className="lay-del" onClick={() => deleteLayout(curPed, li)}><Trash2 size={13} /></button>}
-                    <div className="lay-l">
-                      <span className="lnum">L-{String(li + 1).padStart(2, '0')}</span>
-                      <Editable className="ref" value={l.ref} onCommit={v => updateLayout(curPed, li, 'ref', v)} />
-                      <div className="lay-img"><ImageIcon size={34} /></div>
-                    </div>
-                    <div className="lay-r">
-                      <div className="grp-lbl">Tecido</div><Editable className="row" value={l.tecido} onCommit={v => updateLayout(curPed, li, 'tecido', v)} />
-                      <div className="grp-lbl">Cor</div>
-                      <div className="row"><span className="corline"><i style={{ background: l.corHex }} /><Editable value={l.cor} onCommit={v => updateLayout(curPed, li, 'cor', v)} style={{ display: 'inline' }} /></span></div>
-                      <div className="grp-lbl">Design (define a rota)</div>
-                      <div className="desgn">
-                        {DESIGN_ORDER.map(tag => {
-                          const on = l.design.includes(tag)
-                          return <span key={tag} onClick={() => toggleDesign(curPed, li, tag)} className="dtag" style={on ? { background: cvar(TECNICAS[tag].cor), color: '#fff' } : { background: '#EEF1F4', color: '#98A3B0', border: '1.5px solid #E4E8ED' }}>{TECNICAS[tag].label}</span>
-                        })}
-                      </div>
-                      <table className="sizetbl">
-                        <thead><tr><th style={{ textAlign: 'left' }}>Tam</th><th>Qtd</th><th>Uni</th><th>Total</th></tr></thead>
-                        <tbody>
-                          {l.tamanhos.map((t, ti) => { const tot = t.qtd * t.uni; sub += tot; return (
-                            <tr key={ti}>
-                              <td className="lbl">{t.tam}{t.inf ? ' · inf' : ''}</td>
-                              <td className={t.inf ? 'inf' : ''} contentEditable suppressContentEditableWarning onBlur={e => updateSize(curPed, li, ti, 'qtd', parseFloat(e.currentTarget.textContent!.replace(',', '.')) || 0)}>{t.qtd}</td>
-                              <td className={t.inf ? 'inf' : ''} contentEditable suppressContentEditableWarning onBlur={e => updateSize(curPed, li, ti, 'uni', parseFloat(e.currentTarget.textContent!.replace(/\./g, '').replace(',', '.')) || 0)}>{money(t.uni)}</td>
-                              <td className={t.inf ? 'inf' : ''}>{money(tot)}</td>
-                            </tr>
-                          ) })}
-                        </tbody>
-                        <tfoot><tr><td className="lbl">Total</td><td>{l.tamanhos.reduce((s, t) => s + t.qtd, 0)}</td><td>—</td><td>{money(sub)}</td></tr></tfoot>
-                      </table>
-                    </div>
-                  </div>
-                )
-              })}
-
-              <button className="a4-addlay" onClick={() => addLayout(curPed)}><Plus size={14} style={{ verticalAlign: -2 }} /> Adicionar layout</button>
-              <div className="a4-foot"><span>Fourtime · CNPJ 00.000.000/0001-00 · Goiânia-GO</span><span className="tot">{pedTotais(p).pecas} pçs · R$ {money(pedTotais(p).valor)}</span></div>
-            </div>
-          </>}
-        </section>
+      {/* seletor de pedidos (pills, rolagem horizontal) */}
+      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 8, marginBottom: 12 }}>
+        {pedidos.map((o, i) => (
+          <button key={o.pedido} onClick={() => setCurPed(i)} style={{ ...pill, ...(i === curPed ? pillOn : {}) }}>
+            <FileText size={13} />{o.cliente || '(novo)'}<span className="mono" style={{ opacity: .7, fontSize: 10 }}>{o.pedido.slice(-4)}</span>
+          </button>
+        ))}
       </div>
-      <style>{A4CSS}</style>
+
+      {!p ? <div style={card}><div style={{ textAlign: 'center', color: 'var(--text-subtle)', padding: 20 }}>Nenhum orçamento. Clique em “Novo orçamento”.</div></div> : <>
+        {/* barra de ação */}
+        <div style={actionBar}>
+          <span className="mono" style={{ fontWeight: 600 }}>{p.pedido}</span>
+          {p.aprovado ? <Badge kind="info">em produção</Badge> : <Badge kind="neutral">rascunho</Badge>}
+          <span style={{ marginLeft: 'auto' }} />
+          <Btn size="sm" onClick={() => toast('Salvo (.ft) — protótipo')}><Save size={14} />Salvar</Btn>
+          <Btn size="sm" onClick={() => window.print()}><Printer size={14} />PDF</Btn>
+          {!p.aprovado && <Btn size="sm" variant="primary" onClick={aprovar}><Check size={14} />Aprovar</Btn>}
+        </div>
+
+        {/* dados do pedido */}
+        <div style={card}>
+          <h3 style={cardH}>Dados do pedido</h3>
+          <div style={grid}>
+            <Field label="Cliente" hint="digite para buscar no CRM"><Inp value={p.cliente} onChange={onCliente} list="dl-clientes" placeholder="Ex.: Escola João XXIII" /></Field>
+            <Field label="Vendedor"><Inp value={p.vendedor} onChange={v => updateHeader(curPed, 'vendedor', v)} /></Field>
+            <Field label="Contato"><Inp value={p.contato} onChange={v => updateHeader(curPed, 'contato', v)} mono /></Field>
+            <Field label="Departamento"><Inp value={p.depto} onChange={v => updateHeader(curPed, 'depto', v)} /></Field>
+            <Field label="Entrega"><Inp value={p.entrega} onChange={v => updateHeader(curPed, 'entrega', v)} placeholder="dd/mm/aaaa" /></Field>
+            <Field label="Pagamento"><Inp value={p.pagamento} onChange={v => updateHeader(curPed, 'pagamento', v)} /></Field>
+          </div>
+        </div>
+
+        {/* layouts */}
+        {p.layouts.map((l, li) => (
+          <div style={card} key={li}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <span style={lnum}>L-{String(li + 1).padStart(2, '0')}</span>
+              <div style={{ flex: 1 }}><Inp value={l.ref} onChange={v => onRef(li, v)} list="dl-refs" placeholder="Referência da peça" /></div>
+              {p.layouts.length > 1 && <button onClick={() => deleteLayout(curPed, li)} style={delBtn}><Trash2 size={15} /></button>}
+            </div>
+            <div style={grid}>
+              <Field label="Tecido"><Inp value={l.tecido} onChange={v => patchLayout(curPed, li, { tecido: v })} placeholder="Ex.: Dry-fit PET" /></Field>
+              <Field label="Cor">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border-strong)', background: l.corHex, flex: '0 0 auto' }} />
+                  <Inp value={l.cor} onChange={v => patchLayout(curPed, li, { cor: v, corHex: corHexPorNome(v) })} placeholder="Cor" />
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
+                  {CORES.map(c => <button key={c.hex} title={c.nome} onClick={() => patchLayout(curPed, li, { cor: c.nome, corHex: c.hex })} style={{ width: 22, height: 22, borderRadius: 6, border: '1px solid var(--border-strong)', background: c.hex, cursor: 'pointer' }} />)}
+                </div>
+              </Field>
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Design (define a rota de produção)</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                {DESIGN_ORDER.map(tag => {
+                  const on = l.design.includes(tag)
+                  return <button key={tag} onClick={() => toggleDesign(curPed, li, tag)}
+                    style={{ height: 30, padding: '0 12px', borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: on ? '1.5px solid transparent' : '1.5px solid var(--border-strong)', background: on ? cvar(TECNICAS[tag].cor) : 'transparent', color: on ? '#fff' : 'var(--text-muted)' }}>{TECNICAS[tag].label}</button>
+                })}
+              </div>
+            </div>
+
+            {/* grade de tamanhos */}
+            <div style={{ marginTop: 14 }}>
+              <div style={{ ...sizeRow, color: 'var(--text-subtle)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                <span>Tam</span><span>Qtd</span><span>Uni (R$)</span><span style={{ textAlign: 'right' }}>Total</span>
+              </div>
+              {l.tamanhos.map((t, ti) => (
+                <div style={sizeRow} key={ti}>
+                  <span style={{ fontWeight: 600, fontSize: 13 }}>{t.tam}{t.inf ? <span style={{ color: 'var(--danger)', fontSize: 10 }}> inf</span> : ''}</span>
+                  <input type="number" inputMode="numeric" value={t.qtd || ''} onChange={e => updateSize(curPed, li, ti, 'qtd', parseFloat(e.target.value) || 0)} style={numInp} />
+                  <input type="number" inputMode="decimal" value={t.uni || ''} onChange={e => updateSize(curPed, li, ti, 'uni', parseFloat(e.target.value) || 0)} style={numInp} />
+                  <span className="mono" style={{ textAlign: 'right', fontSize: 13, alignSelf: 'center' }}>{money(t.qtd * t.uni)}</span>
+                </div>
+              ))}
+              <div style={{ ...sizeRow, borderTop: '1px solid var(--border)', paddingTop: 8, marginTop: 4, fontWeight: 700 }}>
+                <span>Total</span><span className="mono">{l.tamanhos.reduce((s, t) => s + t.qtd, 0)}</span><span>—</span>
+                <span className="mono" style={{ textAlign: 'right' }}>{money(l.tamanhos.reduce((s, t) => s + t.qtd * t.uni, 0))}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <Btn onClick={() => addLayout(curPed)} style={{ margin: '4px auto 20px', display: 'flex' }}><Plus size={16} />Adicionar layout</Btn>
+
+        <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Total do orçamento</span>
+          <span className="mono" style={{ fontSize: 18, fontWeight: 700 }}>{tot.pecas} pçs · R$ {money(tot.valor)}</span>
+        </div>
+      </>}
     </div>
   )
 }
 
-const wrap: React.CSSProperties = { display: 'grid', gridTemplateColumns: '230px 1fr', gap: 24, alignItems: 'start' }
-const orclist: React.CSSProperties = { background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--sh-1)', overflow: 'hidden' }
-const orclistH: React.CSSProperties = { padding: '11px 13px', borderBottom: '1px solid var(--border)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: 'var(--text-muted)' }
-const orcitem: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 2, padding: '10px 13px', borderBottom: '1px solid var(--border)', cursor: 'pointer', borderLeft: '3px solid transparent' }
-const orcitemOn: React.CSSProperties = { background: 'color-mix(in srgb,var(--set-comercial) 8%,transparent)', borderLeftColor: 'var(--set-comercial)' }
-const stage: React.CSSProperties = { background: 'var(--bg-muted)', border: '1px solid var(--border)', borderRadius: 12, padding: 16 }
-const toolbar: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14, flexWrap: 'wrap' }
-const etab: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 7, padding: '0 13px', height: 32, border: '1px solid var(--border)', borderBottom: 'none', borderRadius: '6px 6px 0 0', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }
-const etabOn: React.CSSProperties = { background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }
-
-const A4CSS = `
-@media(max-width:900px){.ed-wrap{grid-template-columns:1fr!important}}
-.a4{background:#fff;color:#161A20;width:100%;max-width:760px;margin:0 auto;border-radius:6px;box-shadow:var(--sh-3);font-family:var(--font-doc);overflow:hidden}
-.a4-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:2px solid #C6161B}
-.a4-logo{display:flex;align-items:center;gap:9px;font-family:var(--font-ui);font-weight:700;color:#161A20}
-.a4-logo .lg{width:34px;height:34px;border-radius:8px;background:var(--grad-brand);color:#fff;display:grid;place-items:center;font-weight:700}
-.a4-logo small{display:block;font-weight:500;font-size:10px;color:#6A7686}
-.a4-code{font-family:var(--font-mono);font-size:12px;color:#6A7686;text-align:right}
-.a4-code b{display:block;color:#161A20;font-size:14px}
-.a4-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 20px;padding:14px 20px;border-bottom:1px solid #E4E8ED;font-family:var(--font-ui)}
-@media(max-width:560px){.a4-fields{grid-template-columns:1fr 1fr}}
-.a4-f{display:flex;flex-direction:column;padding:5px 0}
-.a4-f label{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#98A3B0;font-weight:700}
-.a4-f .v{font-size:13px;color:#161A20;font-weight:500;min-height:18px;outline:none;border-bottom:1px dashed transparent}
-.a4-f .v:focus{border-bottom-color:#C6161B;background:#FEF2F2}
-.a4-warn{background:#FBF0DF;color:#7C3A06;font-family:var(--font-ui);font-size:11px;font-weight:600;padding:5px 20px;border-bottom:1px solid #E4E8ED}
-.lay{display:grid;grid-template-columns:2fr 1fr;gap:16px;padding:16px 20px;border-bottom:1px solid #EEF1F4;position:relative}
-@media(max-width:560px){.lay{grid-template-columns:1fr}}
-.lay-l .lnum{font-family:var(--font-mono);font-size:11px;font-weight:700;color:#fff;background:var(--set-comercial);border-radius:999px;padding:2px 9px;display:inline-block;margin-bottom:8px}
-.lay-l .ref{font-family:var(--font-ui);font-size:15px;font-weight:600;color:#161A20;margin-bottom:10px;outline:none}
-.lay-l .ref:focus{background:#FEF2F2}
-.lay-img{height:180px;border-radius:8px;background:linear-gradient(135deg,#EEF1F4,#D6DCE3);display:grid;place-items:center;color:#98A3B0;border:1px solid #E4E8ED}
-.lay-del{position:absolute;top:12px;right:14px;width:24px;height:24px;border-radius:6px;border:1px solid #E4E8ED;background:#fff;color:#98A3B0;cursor:pointer;display:grid;place-items:center}
-.lay-del:hover{color:#C6161B;border-color:#F49A9E}
-.lay-r{font-family:var(--font-ui)}
-.lay-r .grp-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#98A3B0;font-weight:700;margin:0 0 4px}
-.lay-r .row{font-size:12px;color:#39424E;margin-bottom:9px;outline:none}
-.lay-r .row:focus{background:#FEF2F2}
-.lay-r .corline{display:inline-flex;align-items:center;gap:6px;font-size:12px}
-.lay-r .corline i{width:13px;height:13px;border-radius:4px;border:1px solid #D6DCE3}
-.desgn{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
-.dtag{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:999px;font-size:10px;font-weight:700;cursor:pointer;user-select:none;box-sizing:border-box}
-.sizetbl{border-collapse:collapse;font-family:var(--font-mono);font-size:11px;width:100%;margin-top:2px}
-.sizetbl th,.sizetbl td{border:1px solid #E4E8ED;padding:4px 6px;text-align:center}
-.sizetbl thead th{background:#F6F8FA;color:#6A7686;font-weight:600;font-size:10px}
-.sizetbl td.lbl{text-align:left;font-family:var(--font-ui);color:#161A20;font-weight:500}
-.sizetbl td.inf{background:#FCE8E9;color:#C6161B;font-weight:600}
-.sizetbl td[contenteditable]:focus{background:#FEF2F2;outline:none}
-.sizetbl tfoot td{background:#F6F8FA;font-weight:700;color:#161A20}
-.a4-addlay{margin:12px auto;display:block;background:var(--bg-surface);border:1px solid var(--border-strong);color:var(--text);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-ui)}
-.a4-foot{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;font-family:var(--font-ui);font-size:11px;color:#6A7686}
-.a4-foot .tot{font-family:var(--font-mono);font-weight:700;color:#161A20;font-size:13px}
-`
+const card: CSSProperties = { background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--sh-1)', padding: 16, marginBottom: 12 }
+const cardH: CSSProperties = { fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: 'var(--text-muted)', marginBottom: 12 }
+const grid: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 12 }
+const actionBar: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px', boxShadow: 'var(--sh-1)', position: 'sticky', top: 66, zIndex: 20 }
+const pill: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 999, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto' }
+const pillOn: CSSProperties = { background: 'var(--set-comercial)', borderColor: 'var(--set-comercial)', color: '#fff' }
+const lnum: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: '#fff', background: 'var(--set-comercial)', borderRadius: 999, padding: '3px 10px', flex: '0 0 auto' }
+const delBtn: CSSProperties = { width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
+const sizeRow: CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 80px 90px 1fr', gap: 8, alignItems: 'center', padding: '4px 0' }
+const numInp: CSSProperties = { height: 36, width: '100%', padding: '0 8px', border: '1px solid var(--border-strong)', borderRadius: 6, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 13, outline: 'none', textAlign: 'center' }

@@ -9,6 +9,7 @@ import CRM from './pages/CRM'
 import BOM from './pages/BOM'
 import Estoque from './pages/Estoque'
 import Financeiro from './pages/Financeiro'
+import PrintDoc from './components/PrintDoc'
 
 export default function App() {
   const { logged, page } = useApp()
@@ -25,6 +26,7 @@ export default function App() {
         {page === 'financeiro' && <Financeiro />}
       </Shell>
       <Toasts />
+      <PrintDoc />
     </>
   )
 }

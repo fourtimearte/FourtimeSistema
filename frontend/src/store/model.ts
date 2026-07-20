@@ -103,5 +103,15 @@ export function pedTecnicas(p: Pedido): TecnicaKey[] {
 }
 export function insumoNome(id: number) { return INSUMOS.find(i => i.id === id)?.nome ?? '?' }
 export function bomCusto(r: Referencia) { return r.bom.reduce((s, b) => { const i = INSUMOS.find(x => x.id === b.insumoId); return s + (i ? i.custo * b.qtd : 0) }, 0) }
+export const CORES: { nome: string; hex: string }[] = [
+  { nome: 'Preto', hex: '#1B1B1F' }, { nome: 'Branco', hex: '#F3F4F6' }, { nome: 'Vermelho Fourtime', hex: '#C6161B' },
+  { nome: 'Azul-marinho', hex: '#12213F' }, { nome: 'Royal', hex: '#2456C6' }, { nome: 'Verde bandeira', hex: '#0B7A3B' },
+  { nome: 'Amarelo ouro', hex: '#F2B705' }, { nome: 'Laranja', hex: '#EA580C' }, { nome: 'Rosa pink', hex: '#DB2777' },
+  { nome: 'Roxo', hex: '#6D28D9' }, { nome: 'Cinza mescla', hex: '#9AA1AC' }, { nome: 'Grafite', hex: '#3A3F47' },
+]
+export function corHexPorNome(nome: string): string {
+  const c = CORES.find(x => x.nome.toLowerCase() === nome.trim().toLowerCase())
+  return c ? c.hex : '#98A3B0'
+}
 export function money(v: number) { return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
 export function moneyK(v: number) { return v >= 1000 ? 'R$ ' + (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k' : 'R$ ' + money(v) }

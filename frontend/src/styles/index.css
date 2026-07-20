@@ -29,3 +29,12 @@ body {
 .play-surgir { animation: a-surgir .28s var(--ease-reveal) both; }
 .play-subir { animation: a-subir .45s var(--ease-reveal) both; }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .001ms !important; transition-duration: .001ms !important } }
+
+/* ===== Impressão / PDF: só o documento A4 aparece ===== */
+.print-doc { display: none; }
+@media print {
+  @page { size: A4; margin: 12mm; }
+  html, body { background: #fff !important; }
+  .app-root, .toasts-root { display: none !important; }
+  .print-doc { display: block !important; }
+}

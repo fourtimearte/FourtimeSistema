@@ -30,7 +30,9 @@ interface AppState {
   novoOrcamento: () => void
   criarPedidoDe: (base: Pedido, cli?: Cliente) => void
   updateHeader: (idx: number, field: keyof Pedido, value: string) => void
+  patchPedido: (idx: number, partial: Partial<Pedido>) => void
   updateLayout: (pIdx: number, lIdx: number, field: string, value: string) => void
+  patchLayout: (pIdx: number, lIdx: number, partial: Record<string, unknown>) => void
   updateSize: (pIdx: number, lIdx: number, tIdx: number, field: 'qtd' | 'uni', value: number) => void
   addLayout: (pIdx: number) => void
   deleteLayout: (pIdx: number, lIdx: number) => void
@@ -114,10 +116,20 @@ export const useApp = create<AppState>((set, get) => ({
     ;(pedidos[idx] as any)[field] = value
     set({ pedidos: [...pedidos] })
   },
+  patchPedido: (idx, partial) => {
+    const pedidos = get().pedidos
+    Object.assign(pedidos[idx], partial)
+    set({ pedidos: [...pedidos] })
+  },
   updateLayout: (pIdx, lIdx, field, value) => {
     const pedidos = get().pedidos
     ;(pedidos[pIdx].layouts[lIdx] as any)[field] = value
     set({ pedidos: [...pedidos] })
+  },
+  patchLayout: (pIdx, lIdx, partial) => {
+    const pedidos = get().pedidos
+    Object.assign(pedidos[pIdx].layouts[lIdx], partial)
+    set({ pedidos: [...pedidos], kcards: pedidos[pIdx].aprovado ? roteia(pedidos) : get().kcards })
   },
   updateSize: (pIdx, lIdx, tIdx, field, value) => {
     const pedidos = get().pedidos

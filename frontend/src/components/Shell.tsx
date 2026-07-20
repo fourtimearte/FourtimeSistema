@@ -36,7 +36,7 @@ export default function Shell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div className="app-root" style={{ minHeight: '100vh' }}>
       <header style={topbar}>
         <button style={iconBtnNav} className="only-mobile" onClick={() => setMenuOpen(o => !o)}><Menu size={17} /></button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontWeight: 600, color: 'var(--nav-fg-strong)' }}>
