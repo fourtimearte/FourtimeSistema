@@ -323,7 +323,7 @@ function SizeTable({ pIdx, lIdx, layout, semDinheiro }: { pIdx: number; lIdx: nu
               {inf ? <Baby size={16} /> : <User size={16} />}
             </button>
           </th>
-          <th style={stTh}>Qtd</th>{!semDinheiro && <th style={stTh}>Uni (R$)</th>}{!semDinheiro && <th style={stTh}>Total (R$)</th>}
+          <th style={{ ...stTh, ...(semDinheiro ? { width: 52 } : {}) }}>Qtd</th>{!semDinheiro && <th style={stTh}>Uni (R$)</th>}{!semDinheiro && <th style={stTh}>Total (R$)</th>}
         </tr></thead>
         <tbody>
           {linhas.map(tam => {
@@ -333,7 +333,7 @@ function SizeTable({ pIdx, lIdx, layout, semDinheiro }: { pIdx: number; lIdx: nu
             return (
               <tr key={tam}>
                 <td style={{ ...stTd, textAlign: 'left', fontFamily: 'var(--font-ui)', fontWeight: cross ? 700 : 600, ...cs }}>{tam}</td>
-                <td style={{ ...stTd, ...cs }}><input type="number" inputMode="numeric" value={t.qtd || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'qtd', parseFloat(e.target.value) || 0)} style={cellInp} /></td>
+                <td style={{ ...stTd, ...cs, ...(semDinheiro ? { width: 52 } : {}) }}><input type="number" inputMode="numeric" maxLength={4} value={t.qtd || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'qtd', parseFloat(e.target.value.slice(0, 4)) || 0)} style={{ ...cellInp, ...(semDinheiro ? { width: 44, minWidth: 0 } : {}) }} /></td>
                 {!semDinheiro && <td style={{ ...stTd, ...cs }}><input type="number" inputMode="decimal" value={t.uni || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'uni', parseFloat(e.target.value) || 0)} style={cellInp} /></td>}
                 {!semDinheiro && <td style={{ ...stTd, ...cs }}>{money(t.qtd * t.uni)}</td>}
               </tr>
@@ -399,4 +399,6 @@ const CSS = `
 .sizetbl tfoot td:first-child{border-bottom-left-radius:8px}
 .sizetbl tfoot td:last-child{border-bottom-right-radius:8px}
 .sizetbl .gradebtn:hover{border-color:var(--primary);color:var(--primary)}
+.sizetbl input[type=number]::-webkit-inner-spin-button,.sizetbl input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.sizetbl input[type=number]{-moz-appearance:textfield;appearance:textfield}
 `
