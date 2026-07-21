@@ -105,7 +105,7 @@ export default function Comercial() {
 
       {!p ? <div style={card}><div style={{ textAlign: 'center', color: 'var(--text-subtle)', padding: 20 }}>Nenhum orçamento. Clique em “Novo orçamento”.</div></div> : <>
         <div ref={sentinelRef} style={{ height: 1 }} />
-        <div style={{ ...actionBar, ...(stuck ? barStuck : null) }}>
+        <div className={'editbar' + (stuck ? ' stuck' : '')} style={actionBar}>
           <span className="mono" style={{ fontWeight: 600 }}>{p.pedido}</span>
           {p.aprovado ? <Badge kind="info">em produção</Badge> : <Badge kind="neutral">rascunho</Badge>}
           <span style={{ marginLeft: 'auto' }} />
@@ -363,15 +363,7 @@ const card: CSSProperties = { background: 'var(--bg-surface)', border: '1px soli
 const cardH: CSSProperties = { fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: 'var(--text-muted)', marginBottom: 12 }
 const fieldLbl: CSSProperties = { fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }
 const grid: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 12 }
-const actionBar: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 14px', boxShadow: 'var(--sh-1)', position: 'sticky', top: 66, zIndex: 20, transition: 'background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease)' }
-/* flutuando/grudado por cima do conteúdo: usa o esquema escuro do menu lateral.
-   sobrescreve os tokens localmente → todos os botões/textos filhos reagem. */
-const barStuck = {
-  background: 'var(--nav-bg)', borderColor: 'var(--nav-border)', color: 'var(--nav-fg-strong)', boxShadow: 'var(--sh-4)',
-  '--bg-surface': 'rgba(255,255,255,.06)', '--bg-surface-2': 'rgba(255,255,255,.06)', '--bg-muted': 'rgba(255,255,255,.10)', '--bg-hover': 'rgba(255,255,255,.12)',
-  '--border': 'var(--nav-border)', '--border-strong': 'rgba(255,255,255,.18)',
-  '--text': 'var(--nav-fg-strong)', '--text-muted': 'var(--nav-fg)', '--text-subtle': 'var(--nav-group)',
-} as CSSProperties
+const actionBar: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap', borderRadius: 12, padding: '10px 14px', position: 'sticky', top: 66, zIndex: 20, transition: 'background .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease)' }
 const tabbar: CSSProperties = { display: 'flex', gap: 3, overflowX: 'auto', borderBottom: '1px solid var(--border)', marginBottom: 12 }
 const tab: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', border: '1px solid var(--border)', borderBottom: 'none', borderRadius: '8px 8px 0 0', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative', top: 1 }
 const tabOn: CSSProperties = { background: 'var(--primary)', color: 'var(--primary-fg)', borderColor: 'var(--primary)', top: 0 }
@@ -406,6 +398,22 @@ const CSS = `
   .ficha.sd>:nth-child(5){grid-column:2;grid-row:4;align-self:stretch}
 }
 @media(max-width:820px){.lay-grid{grid-template-columns:1fr!important}}
+/* barra de ações: no fluxo usa o esquema da página; grudada (stuck) inverte
+   para contrastar — escura no tema claro, clara no tema dark. Sobrescreve os
+   tokens localmente para que todos os botões/textos filhos reajam. */
+.editbar{background:var(--bg-surface);border:1px solid var(--border);box-shadow:var(--sh-1)}
+.editbar.stuck{
+  background:var(--nav-bg);border-color:var(--nav-border);color:var(--nav-fg-strong);box-shadow:var(--sh-4);
+  --bg-surface:rgba(255,255,255,.06);--bg-surface-2:rgba(255,255,255,.06);--bg-muted:rgba(255,255,255,.10);--bg-hover:rgba(255,255,255,.12);
+  --border:var(--nav-border);--border-strong:rgba(255,255,255,.18);
+  --text:var(--nav-fg-strong);--text-muted:var(--nav-fg);--text-subtle:var(--nav-group);
+}
+[data-theme="dark"] .editbar.stuck{
+  background:#FFFFFF;border-color:#E4E8ED;color:#161A20;box-shadow:var(--sh-4);
+  --bg-surface:#FFFFFF;--bg-surface-2:#FBFCFD;--bg-muted:#EEF1F4;--bg-hover:#EEF1F4;
+  --border:#E4E8ED;--border-strong:#D6DCE3;
+  --text:#161A20;--text-muted:#5D6775;--text-subtle:#68727E;
+}
 /* tabela de tamanhos: grade só com topo+esquerda; corpo sem borda externa vertical (v172) */
 .sizetbl th,.sizetbl td{border:none;border-top:1px solid var(--border);border-left:1px solid var(--border)}
 .sizetbl th:first-child,.sizetbl td:first-child{border-left:none}
