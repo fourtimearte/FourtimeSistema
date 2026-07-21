@@ -27,7 +27,7 @@ function layoutHtml(l: Layout, i: number) {
   const tecidos = l.tecidos.filter(Boolean).map(t => `<div>${esc(t)}</div>`).join('') || '—'
   const img = l.img ? `<img class="prod" src="${l.img}" alt="produto">` : '<div class="noimg">sem imagem</div>'
   return `<section class="lay">
-    <div class="lay-l"><span class="lnum">L-${String(i + 1).padStart(2, '0')}</span><div class="ref">${esc(l.ref)}</div>${img}${l.obs ? `<div class="obs">${esc(l.obs)}</div>` : ''}</div>
+    <div class="lay-l"><span class="lnum">L-${String(i + 1).padStart(2, '0')}</span><div class="ref">${esc(l.ref)}</div>${img}${l.obs ? `<div class="obs">${l.obs}</div>` : ''}</div>
     <div class="lay-r">
       <div class="grp"><b>Tecido</b>${tecidos}</div>
       <div class="grp"><b>Cor</b><span class="cor"><i style="background:${esc(l.corHex)}"></i>${esc(l.cor) || '—'}</span></div>
@@ -64,6 +64,8 @@ body{margin:0;background:#EEF1F4;font-family:'Roboto',system-ui,sans-serif;color
 .prod{width:100%;max-height:420px;object-fit:contain;border:1px solid #E4E8ED;border-radius:8px}
 .noimg{height:150px;border:1px solid #E4E8ED;border-radius:8px;display:grid;place-items:center;color:#98A3B0;font-size:12px;background:#F6F8FA}
 .obs{font-size:12px;color:#39424E;margin-top:6px}
+.cod-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 7px 1px 5px;margin:0 1px;border-radius:999px;border:1px solid #D6DCE3;background:#F1F3F6;font-family:ui-monospace,monospace;font-size:.82em;font-weight:600;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.cod-chip::before{content:"";width:11px;height:11px;border-radius:3px;background:var(--c,#98A3B0);border:1px solid rgba(0,0,0,.18);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .grp{margin-bottom:9px;font-size:12px}.grp b{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#98A3B0;margin-bottom:3px}
 .cor{display:inline-flex;align-items:center;gap:6px}.cor i{width:13px;height:13px;border-radius:4px;border:1px solid #D6DCE3}
 .tags{display:flex;flex-wrap:wrap;gap:4px}.tag{color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:2px 8px}

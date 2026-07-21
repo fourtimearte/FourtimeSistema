@@ -26,6 +26,7 @@ interface AppState {
   copyLayout: (pIdx: number, lIdx: number) => void
   pasteLayout: (pIdx: number) => void
   abrirPedido: (p: Pedido) => void
+  fecharAba: (idx: number) => void
   updateHeader: (idx: number, field: keyof Pedido, value: string) => void
   patchPedido: (idx: number, partial: Partial<Pedido>) => void
   toggleHeaderObsTag: (idx: number, tag: string) => void
@@ -120,6 +121,14 @@ export const useApp = create<AppState>((set, get) => {
     copyLayout: (pIdx, lIdx) => { set({ layoutClip: clone(get().pedidos[pIdx].layouts[lIdx]) }); get().toast('Layout L-' + String(lIdx + 1).padStart(2, '0') + ' copiado') },
     pasteLayout: (pIdx) => { const clip = get().layoutClip; if (!clip) return; edit(pIdx, ped => ped[pIdx].layouts.push(clone(clip))); get().toast('Layout colado') },
     abrirPedido: (p) => { const seq = get().seq; set({ pedidos: [p, ...get().pedidos], fin: { ...get().fin, [p.pedido]: get().fin[p.pedido] ?? { sinal: 0 } }, curPed: 0, page: 'comercial', past: [], future: [], seq }); get().toast('Aberto ' + p.pedido) },
+    fecharAba: (idx) => {
+      const st = get(); if (idx < 0 || idx >= st.pedidos.length) return
+      const pedidos = st.pedidos.filter((_, i) => i !== idx)
+      let curPed = st.curPed
+      if (idx < st.curPed) curPed = st.curPed - 1
+      else if (idx === st.curPed) curPed = Math.min(st.curPed, pedidos.length - 1)
+      set({ pedidos, curPed: Math.max(0, curPed), past: [], future: [] })
+    },
 
     updateHeader: (idx, field, value) => edit(idx, ped => { (ped[idx] as any)[field] = value }),
     patchPedido: (idx, partial) => edit(idx, ped => Object.assign(ped[idx], partial)),

@@ -38,3 +38,29 @@ body {
   .app-root, .toasts-root { display: none !important; }
   .print-doc { display: block !important; }
 }
+
+/* ===== Cor de gênero no campo Referência (harmonizada com os tokens) ===== */
+.cb-ctrl.gen-masc { background: #E3EEFB !important; border-color: #BBD3F5 !important; color: #12213F !important; }
+.cb-ctrl.gen-fem  { background: #FCE7F1 !important; border-color: #F5C6DE !important; color: #7A123F !important; }
+.cb-ctrl.gen-inf  { background: #E4F3EC !important; border-color: #BFE3D2 !important; color: #0F5138 !important; }
+[data-theme="dark"] .cb-ctrl.gen-masc { background: #152238 !important; border-color: #26456F !important; color: #DCE8FB !important; }
+[data-theme="dark"] .cb-ctrl.gen-fem  { background: #33172A !important; border-color: #5C2B45 !important; color: #F7CFE0 !important; }
+[data-theme="dark"] .cb-ctrl.gen-inf  { background: #102A22 !important; border-color: #235345 !important; color: #B9E6D2 !important; }
+
+/* ===== Chip de código de cor (DTF/Subli) dentro da Observação ===== */
+.cod-chip {
+  display: inline-flex; align-items: center; gap: 4px; vertical-align: baseline;
+  padding: 1px 7px 1px 5px; margin: 0 1px; border-radius: 999px;
+  border: 1px solid var(--border-strong); background: var(--bg-muted);
+  font-family: var(--font-mono); font-size: .82em; font-weight: 600; line-height: 1.5;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.cod-chip::before {
+  content: ""; width: 11px; height: 11px; border-radius: 3px; flex: 0 0 auto;
+  background: var(--c, #98A3B0); border: 1px solid rgba(0,0,0,.18);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+
+/* ===== Observação rich (contenteditable) ===== */
+.obsrich:empty::before { content: attr(data-ph); color: var(--text-subtle); pointer-events: none; }
+.obsrich:focus { outline: none; }

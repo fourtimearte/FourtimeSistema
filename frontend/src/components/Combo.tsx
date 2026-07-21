@@ -8,9 +8,9 @@ export interface ComboOpt { label: string; value: string; sub?: string; hex?: st
  * busca no topo. Aceita texto livre. `rotulo` = rótulo dentro da caixa
  * (aparece com o valor); `rightAddon` = botões dentro da caixa (+ / swatch).
  */
-export default function Combo({ value, onSelect, options, placeholder, leftSwatch, allowFree = true, rotulo, upper, rightAddon }: {
+export default function Combo({ value, onSelect, options, placeholder, leftSwatch, allowFree = true, rotulo, upper, rightAddon, tintClass }: {
   value: string; onSelect: (v: string, opt?: ComboOpt) => void; options: ComboOpt[]
-  placeholder?: string; leftSwatch?: string; allowFree?: boolean; rotulo?: string; upper?: boolean; rightAddon?: ReactNode
+  placeholder?: string; leftSwatch?: string; allowFree?: boolean; rotulo?: string; upper?: boolean; rightAddon?: ReactNode; tintClass?: string
 }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
@@ -28,7 +28,7 @@ export default function Combo({ value, onSelect, options, placeholder, leftSwatc
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <div role="button" tabIndex={0} onClick={() => { setOpen(o => !o); setQ('') }} style={control}>
+      <div role="button" tabIndex={0} className={'cb-ctrl' + (tintClass ? ' ' + tintClass : '')} onClick={() => { setOpen(o => !o); setQ('') }} style={control}>
         {leftSwatch !== undefined && <i style={{ width: 20, height: 20, borderRadius: 5, border: '1px solid var(--border-strong)', background: leftSwatch, flex: '0 0 auto' }} />}
         <span style={{ flex: 1, display: 'flex', alignItems: 'baseline', gap: 6, overflow: 'hidden', textAlign: 'left' }}>
           {rotulo && value && <span style={rotuloCss}>{rotulo}</span>}

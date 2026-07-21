@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, type CSSProperties } from 'react'
-import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste, Code2, PenTool, User, Baby, Clock } from 'lucide-react'
+import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste, Code2, PenTool, User, Baby, Clock, Eraser, Palette } from 'lucide-react'
 import { useApp } from '../store/useApp'
 import { toFt, fromFt, ehFt, nomeFt } from '../lib/ft'
 import { exportarHtml } from '../lib/exportHtml'
 import AnotarModal from '../components/AnotarModal'
 import {
-  REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, TEM_CODIGO, CORES, TECIDOS, corHexPorNome,
+  REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, CORES, TECIDOS, corHexPorNome, generoClasse,
   VENDEDORES, DEPARTAMENTOS, EMBALAGENS, PAGAMENTOS, validarPedido,
-  DTF_CORES, SB_CORES, codigoHex, TAM_ADULTO, TAM_INFANTIL, isInfantil, ordemTamanhos, OBS_TAGS,
+  DTF_CORES, SB_CORES, isInfantil, ordemTamanhos, OBS_TAGS,
   pedTotais, money, type Pedido, type Layout, type TecnicaKey,
 } from '../store/model'
 import { PageHead, Btn, Badge, cvar } from '../components/ui'
@@ -24,7 +24,7 @@ function toISO(br: string) { const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); 
 function fromISO(iso: string) { const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : iso }
 
 export default function Comercial() {
-  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, toggleHeaderObsTag, aprovarPedido, toggleDinheiro, semDinheiro, toast, undo, redo, past, future, pasteLayout, layoutClip, abrirPedido } = useApp()
+  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, toggleHeaderObsTag, aprovarPedido, toggleDinheiro, semDinheiro, toast, undo, redo, past, future, pasteLayout, layoutClip, abrirPedido, fecharAba } = useApp()
   const p: Pedido | undefined = pedidos[curPed]
   const [viewImg, setViewImg] = useState<string | null>(null)
   const [anotar, setAnotar] = useState(false)
@@ -98,11 +98,17 @@ export default function Comercial() {
         <OrcamentosColuna onOpen={pd => { const i = pedidos.findIndex(x => x.pedido === pd.pedido); if (i >= 0) setCurPed(i); else abrirPedido(pd) }} />
         <div className="comercial-editor" style={{ minWidth: 0 }}>
       <div style={tabbar}>
-        {pedidos.map((o, i) => (
-          <button key={o.pedido} onClick={() => setCurPed(i)} style={{ ...tab, ...(i === curPed ? tabOn : {}) }}>
-            {o.cliente || '(novo)'} <span className="mono" style={{ opacity: .7, fontSize: 10 }}>{o.pedido.slice(-4)}</span>
-          </button>
-        ))}
+        {pedidos.map((o, i) => {
+          const on = i === curPed
+          return (
+            <div key={o.pedido} style={{ ...tab, ...(on ? tabOn : {}), paddingRight: 6 }}>
+              <button onClick={() => setCurPed(i)} style={{ all: 'unset', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                {o.cliente || '(novo)'} <span className="mono" style={{ opacity: .7, fontSize: 10 }}>{o.pedido.slice(-4)}</span>
+              </button>
+              {pedidos.length > 1 && <button onClick={() => fecharAba(i)} title="Fechar aba" style={{ ...tabClose, color: on ? 'var(--primary-fg)' : 'var(--text-subtle)' }}><X size={13} /></button>}
+            </div>
+          )
+        })}
         <button onClick={novoOrcamento} style={tabNew} title="Novo orçamento">+</button>
       </div>
 
@@ -137,12 +143,7 @@ export default function Comercial() {
             <Field label="Entrega"><Inp value={p.entrega} onChange={v => updateHeader(curPed, 'entrega', v)} placeholder="dd/mm/aaaa" /></Field>
             <Field label="Envio"><input type="date" value={toISO(p.envio)} onChange={e => updateHeader(curPed, 'envio', fromISO(e.target.value))} style={dateInp} /></Field>
             <Field label="Pagamento"><Inp value={p.pagamento} onChange={v => updateHeader(curPed, 'pagamento', v)} list="dl-pag" /></Field>
-            <Field label="Observações">
-              <div style={{ display: 'flex', gap: 5, marginBottom: 5 }}>
-                {OBS_TAGS.map(o => { const on = (p.obsTags ?? []).includes(o.tag); return <button key={o.tag} onClick={() => toggleHeaderObsTag(curPed, o.tag)} style={{ height: 22, padding: '0 8px', borderRadius: 999, fontSize: 10, fontWeight: 800, cursor: 'pointer', border: on ? 'none' : '1.5px solid var(--border-strong)', background: on ? o.cor : 'transparent', color: on ? '#fff' : 'var(--text-muted)' }}>{o.tag}</button> })}
-              </div>
-              <textarea value={p.obs} onChange={e => updateHeader(curPed, 'obs', e.target.value)} rows={2} style={ta} />
-            </Field>
+            <HeaderTagsBox p={p} idx={curPed} />
           </div>
         </div>
 
@@ -232,8 +233,14 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
         {/* COLUNA ESQUERDA (1.7): Referência (topo) + imagem */}
         <div tabIndex={0} onPaste={e => { const it = [...e.clipboardData.items].find(i => i.type.startsWith('image/')); if (it) readImg(it.getAsFile() ?? undefined) }} style={{ outline: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <button onClick={() => s.copyLayout(pIdx, lIdx)} title="Copiar layout (L-NN)" style={{ ...lnum, border: 'none', cursor: 'pointer' }}>L-{String(lIdx + 1).padStart(2, '0')}</button>
-            <div style={{ flex: 1 }}><Combo value={l.ref} onSelect={selRef} placeholder="Referência da peça" options={REFERENCIAS.map(r => ({ label: r.nome, value: r.nome, sub: r.cod }))} /></div>
+            <div className="lay-badge" style={{ position: 'relative', flex: '0 0 auto' }}>
+              <span style={lnum}>L-{String(lIdx + 1).padStart(2, '0')}</span>
+              <div className="lay-badge-menu" style={layMenu}>
+                <button onClick={() => s.copyLayout(pIdx, lIdx)} title="Copiar este layout" style={layMenuBtn}><Copy size={13} />Copiar</button>
+                <button onClick={() => s.pasteLayout(pIdx)} disabled={!s.layoutClip} title="Colar layout copiado" style={{ ...layMenuBtn, opacity: s.layoutClip ? 1 : .45, cursor: s.layoutClip ? 'pointer' : 'default' }}><ClipboardPaste size={13} />Colar</button>
+              </div>
+            </div>
+            <div style={{ flex: 1 }}><Combo value={l.ref} onSelect={selRef} placeholder="Referência da peça" tintClass={generoClasse(REFERENCIAS.find(r => r.cod === l.refCod)?.genero) ?? undefined} options={REFERENCIAS.map(r => ({ label: r.nome, value: r.nome, sub: r.cod }))} /></div>
             <button onClick={() => s.duplicateLayout(pIdx, lIdx)} title="Duplicar layout" style={iconBtn}><Copy size={15} /></button>
             {canDelete && <button onClick={() => s.deleteLayout(pIdx, lIdx)} title="Excluir layout" style={iconBtn}><Trash2 size={15} /></button>}
           </div>
@@ -274,11 +281,8 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
           <DesignEditor pIdx={pIdx} lIdx={lIdx} layout={l} />
           {/* 4 · tabela */}
           <SizeTable pIdx={pIdx} lIdx={lIdx} layout={l} semDinheiro={semDinheiro} />
-          {/* 5 · observações do layout */}
-          <div>
-            <label style={fieldLbl}>Observações da peça</label>
-            <textarea value={l.obs} onChange={e => s.setObs(pIdx, lIdx, e.target.value)} rows={2} placeholder="Observações desta peça…" style={{ ...ta, marginTop: 5 }} />
-          </div>
+          {/* 5 · observações do layout — rich: códigos DTF/Subli + marca-texto */}
+          <ObsEditor key={pIdx + '-' + lIdx} pIdx={pIdx} lIdx={lIdx} layout={l} />
         </div>
       </div>
     </div>
@@ -304,8 +308,6 @@ function ImgViewer({ src, onClose }: { src: string; onClose: () => void }) {
 /* ---------- Design ---------- */
 function DesignEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layout: Layout }) {
   const s = useApp()
-  const [openTag, setOpenTag] = useState<TecnicaKey | null>(null)
-  const [q, setQ] = useState('')
   const [pickOpen, setPickOpen] = useState(false)
   const pickRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -339,34 +341,102 @@ function DesignEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layo
           )}
         </div>
       </div>
-      {layout.design.filter(d => TEM_CODIGO.includes(d.tag)).map(d => (
-        <div key={d.tag} style={{ marginTop: 8, border: '1px solid var(--border)', borderRadius: 8, padding: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: cvar(TECNICAS[d.tag].cor) }}>{TECNICAS[d.tag].label} — códigos:</span>
-            {d.cores.map(code => (
-              <span key={code} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 6px 0 4px', borderRadius: 999, background: 'var(--bg-muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
-                <i style={{ width: 14, height: 14, borderRadius: 4, background: codigoHex(d.tag, code) }} />{code}
-                <button onClick={() => s.removeDesignCor(pIdx, lIdx, d.tag, code)} style={{ border: 'none', background: 'none', color: 'var(--text-muted)', cursor: 'pointer', lineHeight: 1 }}>×</button>
-              </span>
-            ))}
-            <button onClick={() => { setOpenTag(openTag === d.tag ? null : d.tag); setQ('') }} style={addBtnInline}>+ cor</button>
-          </div>
-          {openTag === d.tag && (
-            <div style={{ marginTop: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                <Search size={13} style={{ color: 'var(--text-subtle)' }} />
-                <input value={q} onChange={e => setQ(e.target.value)} placeholder="buscar código…" style={{ flex: 1, height: 30, padding: '0 8px', border: '1px solid var(--border-strong)', borderRadius: 6, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 12, outline: 'none' }} />
+    </div>
+  )
+}
+
+/* ---------- Marcadores do cabeçalho (URGENTE/ATRASADO) no estilo do Design ---------- */
+function HeaderTagsBox({ p, idx }: { p: Pedido; idx: number }) {
+  const toggle = useApp(s => s.toggleHeaderObsTag)
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => { if (!open) return; const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h) }, [open])
+  const tags = p.obsTags ?? []
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <label style={fieldLbl}>Marcadores</label>
+      <div style={designBox}>
+        <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
+          {tags.length ? tags.map(t => { const o = OBS_TAGS.find(x => x.tag === t); return (
+            <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 22, padding: '0 5px 0 9px', borderRadius: 999, background: o?.cor ?? 'var(--text-muted)', color: '#fff', fontSize: 11, fontWeight: 800 }}>
+              {t}<button onClick={() => toggle(idx, t)} title="Remover" style={{ border: 'none', background: 'rgba(255,255,255,.25)', color: '#fff', cursor: 'pointer', borderRadius: 999, width: 15, height: 15, display: 'grid', placeItems: 'center', padding: 0 }}><X size={11} /></button>
+            </span>
+          ) }) : <span style={{ fontSize: 12, color: 'var(--text-subtle)' }}>Sem marcadores</span>}
+        </div>
+        <div style={{ position: 'relative', flex: '0 0 auto' }} ref={ref}>
+          <button onClick={() => setOpen(o => !o)} title="Adicionar marcador" style={{ ...inBoxBtn, color: 'var(--primary)', borderColor: 'var(--primary)' }}><Plus size={14} /></button>
+          {open && (
+            <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--sh-4)', padding: 8, display: 'flex', flexWrap: 'wrap', gap: 6, width: 180 }}>
+              {OBS_TAGS.map(o => { const on = tags.includes(o.tag); return (
+                <button key={o.tag} onClick={() => toggle(idx, o.tag)} style={{ height: 28, padding: '0 11px', borderRadius: 999, fontSize: 12, fontWeight: 800, cursor: 'pointer', border: on ? '1.5px solid transparent' : '1.5px solid var(--border-strong)', background: on ? o.cor : 'transparent', color: on ? '#fff' : 'var(--text-muted)' }}>{o.tag}</button>
+              ) })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ---------- Observação rich: códigos de cor (DTF/Subli) + marca-texto (v172) ---------- */
+function txtContrast(hex: string): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex); if (!m) return '#111'
+  const n = parseInt(m[1], 16); const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#111' : '#fff'
+}
+const TEXTO_CORES = ['#C6161B', '#1F6FEB', '#0B7A3B', '#111214', '#E0218A']
+const MARCA_CORES = ['#FFF27A', '#FF9EC7', '#B6F2C1']
+
+function ObsEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layout: Layout }) {
+  const s = useApp()
+  const ref = useRef<HTMLDivElement>(null)
+  const selRef = useRef<Range | null>(null)
+  const [tab, setTab] = useState<'DTF' | 'Subli'>('DTF')
+  const [q, setQ] = useState('')
+  const [pick, setPick] = useState(false)
+  const pickRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { if (ref.current) ref.current.innerHTML = layout.obs || '' }, [])
+  useEffect(() => {
+    if (!pick) return
+    const h = (e: MouseEvent) => { if (pickRef.current && !pickRef.current.contains(e.target as Node)) setPick(false) }
+    document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h)
+  }, [pick])
+
+  const save = () => { if (ref.current) s.setObs(pIdx, lIdx, ref.current.innerHTML) }
+  const guardaSel = () => { const sel = window.getSelection(); if (sel && sel.rangeCount && ref.current?.contains(sel.anchorNode)) selRef.current = sel.getRangeAt(0).cloneRange() }
+  const focaSel = () => { ref.current?.focus(); const sel = window.getSelection(); if (selRef.current && sel) { sel.removeAllRanges(); sel.addRange(selRef.current) } }
+  const cmd = (c: string, v?: string) => { focaSel(); document.execCommand('styleWithCSS', false, 'true'); document.execCommand(c, false, v); guardaSel(); save() }
+  const insereCodigo = (code: string, hex: string) => { focaSel(); document.execCommand('insertHTML', false, `<span class="cod-chip" contenteditable="false" style="--c:${hex}">${code}</span>&#8203;`); guardaSel(); save() }
+  const lista = (tab === 'DTF' ? DTF_CORES : SB_CORES).filter(c => c.code.toUpperCase().includes(q.toUpperCase())).slice(0, 240)
+
+  return (
+    <div>
+      <div style={obsBar} onMouseDown={e => e.preventDefault()}>
+        {TEXTO_CORES.map(c => <button key={c} title="Cor do texto" onClick={() => cmd('foreColor', c)} style={{ ...obsSw, background: c }} />)}
+        <span style={obsSep} />
+        {MARCA_CORES.map(c => <button key={c} title="Marca-texto" onClick={() => cmd('hiliteColor', c)} style={{ ...obsSw, background: c, color: '#111', fontWeight: 800, fontSize: 11, lineHeight: 1 }}>A</button>)}
+        <span style={obsSep} />
+        <button title="Limpar formatação" onClick={() => cmd('removeFormat')} style={obsBtn}><Eraser size={14} /></button>
+        <span style={{ marginLeft: 'auto' }} />
+        <div style={{ position: 'relative' }} ref={pickRef}>
+          <button onMouseDown={e => { e.preventDefault(); guardaSel() }} onClick={() => setPick(p => !p)} style={{ ...obsBtn, width: 'auto', padding: '0 10px', gap: 5, fontSize: 12, fontWeight: 600, color: 'var(--primary)' }}><Palette size={14} />Código de cor</button>
+          {pick && (
+            <div style={codPop} onMouseDown={e => e.preventDefault()}>
+              <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+                {(['DTF', 'Subli'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ ...codTab, ...(tab === t ? codTabOn : {}) }}>{t === 'DTF' ? 'DTF' : 'Sublimação'}</button>)}
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxHeight: 150, overflowY: 'auto' }}>
-                {(d.tag === 'DTF' ? DTF_CORES : SB_CORES).filter(c => c.code.includes(q.toUpperCase())).slice(0, 120).map(c => (
-                  <button key={c.code} title={c.code} onClick={() => s.addDesignCor(pIdx, lIdx, d.tag, c.code)}
-                    style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border-strong)', background: c.hex, cursor: 'pointer', fontSize: 8, color: '#fff', fontFamily: 'var(--font-mono)' }}>{c.code}</button>
-                ))}
+              <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar número…" style={codBusca} />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxHeight: 190, overflowY: 'auto', marginTop: 6 }}>
+                {lista.map(c => <button key={c.code} title={c.code} onClick={() => insereCodigo(c.code, c.hex)} style={{ width: 34, height: 26, borderRadius: 5, border: '1px solid var(--border-strong)', background: c.hex, cursor: 'pointer', fontSize: 8, color: txtContrast(c.hex), fontFamily: 'var(--font-mono)' }}>{c.code}</button>)}
               </div>
             </div>
           )}
         </div>
-      ))}
+      </div>
+      <div ref={ref} className="obsrich" contentEditable suppressContentEditableWarning
+        data-ph="Observações da peça — códigos de cor, texto colorido e marca-texto…"
+        onInput={save} onBlur={save} onMouseUp={guardaSel} onKeyUp={guardaSel} style={obsArea} />
     </div>
   )
 }
@@ -387,7 +457,7 @@ function SizeTable({ pIdx, lIdx, layout, semDinheiro }: { pIdx: number; lIdx: nu
               {inf ? <Baby size={16} /> : <User size={16} />}
             </button>
           </th>
-          <th style={{ ...stTh, ...(semDinheiro ? { width: 52 } : {}) }}>Qtd</th>{!semDinheiro && <th style={stTh}>Uni (R$)</th>}{!semDinheiro && <th style={stTh}>Total (R$)</th>}
+          <th style={{ ...stTh, width: 50 }}>Qtd</th>{!semDinheiro && <th style={{ ...stTh, width: 60 }}>Uni (R$)</th>}{!semDinheiro && <th style={{ ...stTh, minWidth: 80 }}>Total (R$)</th>}
         </tr></thead>
         <tbody>
           {linhas.map(tam => {
@@ -396,19 +466,19 @@ function SizeTable({ pIdx, lIdx, layout, semDinheiro }: { pIdx: number; lIdx: nu
             const cs: CSSProperties = cross ? (l.grade === 'adulto' ? { background: 'var(--sig-inf-bg)', color: 'var(--sig-inf-fg)' } : { background: 'var(--sig-adu-bg)', color: 'var(--sig-adu-fg)' }) : {}
             return (
               <tr key={tam}>
-                <td style={{ ...stTd, textAlign: 'left', fontFamily: 'var(--font-ui)', fontWeight: cross ? 700 : 600, ...cs }}>{tam}</td>
-                <td style={{ ...stTd, ...cs, ...(semDinheiro ? { width: 52 } : {}) }}><input type="number" inputMode="numeric" maxLength={4} value={t.qtd || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'qtd', parseFloat(e.target.value.slice(0, 4)) || 0)} style={{ ...cellInp, ...(semDinheiro ? { width: 44, minWidth: 0 } : {}) }} /></td>
-                {!semDinheiro && <td style={{ ...stTd, ...cs }}><input type="number" inputMode="decimal" value={t.uni || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'uni', parseFloat(e.target.value) || 0)} style={cellInp} /></td>}
-                {!semDinheiro && <td style={{ ...stTd, ...cs }}>{money(t.qtd * t.uni)}</td>}
+                <td style={{ ...stTd, textAlign: 'center', fontFamily: 'var(--font-ui)', fontWeight: cross ? 700 : 600, ...cs }}>{tam}</td>
+                <td style={{ ...stTd, ...cs, width: 50 }}><input type="number" inputMode="numeric" maxLength={4} value={t.qtd || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'qtd', parseFloat(e.target.value.slice(0, 4)) || 0)} style={{ ...cellInp, width: 42, minWidth: 0 }} /></td>
+                {!semDinheiro && <td style={{ ...stTd, ...cs, width: 60 }}><input type="number" inputMode="decimal" value={t.uni || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'uni', parseFloat(e.target.value) || 0)} style={{ ...cellInp, width: 52, minWidth: 0 }} /></td>}
+                {!semDinheiro && <td style={{ ...stTd, ...cs, minWidth: 80 }}>{money(t.qtd * t.uni)}</td>}
               </tr>
             )
           })}
         </tbody>
         <tfoot><tr>
-          <td style={{ ...stTd, textAlign: 'left', fontWeight: 700, background: 'var(--bg-muted)' }}>Total</td>
+          <td style={{ ...stTd, textAlign: 'center', fontWeight: 700, background: 'var(--bg-muted)' }}>Total</td>
           <td style={{ ...stTd, fontWeight: 700, background: 'var(--bg-muted)' }}>{totQ}</td>
           {!semDinheiro && <td style={{ ...stTd, background: 'var(--bg-muted)' }}>—</td>}
-          {!semDinheiro && <td style={{ ...stTd, fontWeight: 700, background: 'var(--bg-muted)' }}>{money(totV)}</td>}
+          {!semDinheiro && <td style={{ ...stTd, fontWeight: 700, background: 'var(--bg-muted)', minWidth: 80 }}>{money(totV)}</td>}
         </tr></tfoot>
       </table>
     </div>
@@ -424,7 +494,7 @@ const tabbar: CSSProperties = { display: 'flex', gap: 3, overflowX: 'auto', bord
 const tab: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', border: '1px solid var(--border)', borderBottom: 'none', borderRadius: '8px 8px 0 0', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative', top: 1 }
 const tabOn: CSSProperties = { background: 'var(--primary)', color: 'var(--primary-fg)', borderColor: 'var(--primary)', top: 0 }
 const tabNew: CSSProperties = { width: 34, height: 34, borderRadius: '8px 8px 0 0', border: '1px solid var(--border)', borderBottom: 'none', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18, lineHeight: 1 }
-const lnum: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700, color: '#fff', background: 'var(--set-comercial)', borderRadius: 999, padding: '3px 10px', flex: '0 0 auto' }
+const lnum: CSSProperties = { display: 'inline-flex', alignItems: 'center', height: 42, padding: '0 12px', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, letterSpacing: '.02em', color: 'var(--text-muted)', background: 'var(--bg-surface-2)', border: '1px solid var(--border-strong)', borderRadius: 8, cursor: 'default', userSelect: 'none' }
 const iconBtn: CSSProperties = { width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
 const miniBtn: CSSProperties = { width: 'var(--control-h-lg)', height: 'var(--control-h-lg)', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
 const undoBtn: CSSProperties = { width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
@@ -444,8 +514,23 @@ const orcCard: CSSProperties = { textAlign: 'left', width: '100%', background: '
 const orcCardOn: CSSProperties = { borderColor: 'var(--primary)', boxShadow: '0 0 0 1px var(--primary)' }
 const imgDrop: CSSProperties = { display: 'grid', placeItems: 'center', gap: 2, minHeight: 240, border: '1.5px dashed var(--border-strong)', borderRadius: 10, color: 'var(--text-muted)', cursor: 'pointer', background: 'var(--bg-surface-2)', textAlign: 'center', padding: 20 }
 const imgModal: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', zIndex: 95, display: 'grid', placeItems: 'center', cursor: 'zoom-out' }
+const tabClose: CSSProperties = { display: 'inline-grid', placeItems: 'center', width: 18, height: 18, borderRadius: 5, border: 'none', background: 'transparent', cursor: 'pointer', flex: '0 0 auto', opacity: .75 }
+const layMenu: CSSProperties = { position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 30, display: 'flex', gap: 4, padding: 5, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--sh-4)', whiteSpace: 'nowrap' }
+const layMenuBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }
+const obsBar: CSSProperties = { display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 6 }
+const obsSw: CSSProperties = { width: 24, height: 24, borderRadius: 6, border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto', padding: 0 }
+const obsSep: CSSProperties = { width: 1, height: 20, background: 'var(--border)', margin: '0 3px' }
+const obsBtn: CSSProperties = { width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', fontFamily: 'inherit' }
+const obsArea: CSSProperties = { minHeight: 60, width: '100%', padding: '9px 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 13, lineHeight: 1.5 }
+const codPop: CSSProperties = { position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, width: 260, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--sh-4)', padding: 8 }
+const codTab: CSSProperties = { flex: 1, height: 28, borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }
+const codTabOn: CSSProperties = { background: 'var(--primary)', color: 'var(--primary-fg)', borderColor: 'var(--primary)' }
+const codBusca: CSSProperties = { width: '100%', height: 32, padding: '0 10px', border: '1px solid var(--border-strong)', borderRadius: 7, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 12, outline: 'none' }
 
 const CSS = `
+.lay-badge-menu{opacity:0;pointer-events:none;transform:translateY(-3px);transition:opacity .12s var(--ease),transform .12s var(--ease)}
+.lay-badge:hover .lay-badge-menu,.lay-badge:focus-within .lay-badge-menu{opacity:1;pointer-events:auto;transform:none}
+.obsrich .cod-chip{cursor:default}
 .comercial-layout{display:grid;grid-template-columns:262px minmax(0,1fr);gap:18px;align-items:start}
 .orc-col{position:sticky;top:66px;align-self:start;max-height:calc(100vh - 84px);overflow:auto;padding-right:2px}
 .orc-card:hover{border-color:var(--border-strong);box-shadow:var(--sh-2)}

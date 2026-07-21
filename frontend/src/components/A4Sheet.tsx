@@ -39,7 +39,7 @@ export default function A4Sheet({ p, semDinheiro, children }: { p: Pedido; semDi
               <span style={lnum}>L-{String(li + 1).padStart(2, '0')}</span>
               <div style={{ fontSize: 15, fontWeight: 600, margin: '8px 0 10px' }}>{l.ref}</div>
               {l.img ? <img src={l.img} style={{ width: '100%', maxHeight: 220, objectFit: 'contain', borderRadius: 8, border: '1px solid #E4E8ED' }} /> : <div style={img}>sem imagem</div>}
-              {l.obs && <div style={{ fontSize: 11, color: '#39424E', marginTop: 4 }}>{l.obs}</div>}
+              {l.obs && <div style={{ fontSize: 11, color: '#39424E', marginTop: 4 }} dangerouslySetInnerHTML={{ __html: l.obs }} />}
             </div>
             <div>
               <Grp label="Tecido">{l.tecidos.filter(Boolean).map((t, i) => <div key={i} style={{ fontSize: 12, color: '#39424E' }}>{t}</div>)}</Grp>
