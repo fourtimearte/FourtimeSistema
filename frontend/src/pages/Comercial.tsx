@@ -259,8 +259,8 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
             {canDelete && <button onClick={() => s.deleteLayout(pIdx, lIdx)} title="Excluir layout" style={iconBtn}><Trash2 size={15} /></button>}
           </div>
           {l.img
-            ? <div style={{ position: 'relative' }}>
-                <img src={l.img} onClick={() => onView(l.img!)} style={{ width: '100%', maxHeight: 460, objectFit: 'contain', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', cursor: 'zoom-in', display: 'block' }} />
+            ? <div style={{ position: 'relative', width: 'fit-content', maxWidth: '100%' }}>
+                <img src={l.img} onClick={() => onView(l.img!)} style={{ maxWidth: '100%', maxHeight: 460, width: 'auto', height: 'auto', objectFit: 'contain', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', cursor: 'zoom-in', display: 'block' }} />
                 <button onClick={() => s.setImg(pIdx, lIdx, null)} title="Limpar imagem" style={{ ...iconBtn, position: 'absolute', top: 8, right: 8, background: 'var(--bg-surface)' }}><X size={14} /></button>
               </div>
             : <label onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); readImg(e.dataTransfer.files?.[0]) }} style={imgDrop}>
@@ -309,13 +309,18 @@ function ImgViewer({ src, onClose }: { src: string; onClose: () => void }) {
   const drag = useRef<{ x: number; y: number } | null>(null)
   useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k) }, [onClose])
   function onWheel(e: React.WheelEvent) { const nz = Math.min(6, Math.max(1, z * (e.deltaY < 0 ? 1.15 : 0.87))); setZ(nz); if (nz === 1) { setTx(0); setTy(0) } }
-  return (
-    <div style={imgModal} onMouseDown={e => { if (e.target === e.currentTarget) onClose() }} onWheel={onWheel}
-      onMouseMove={e => { if (drag.current) { setTx(t => t + (e.clientX - drag.current!.x)); setTy(t => t + (e.clientY - drag.current!.y)); drag.current = { x: e.clientX, y: e.clientY } } }} onMouseUp={() => (drag.current = null)}>
-      <img src={src} draggable={false} onMouseDown={e => { if (z > 1) { e.preventDefault(); drag.current = { x: e.clientX, y: e.clientY } } }}
-        style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 8, transform: `translate(${tx}px,${ty}px) scale(${z})`, cursor: z > 1 ? 'grab' : 'zoom-out', transition: drag.current ? 'none' : 'transform .08s' }} />
+  // portal em document.body: fica acima de tudo e imune ao empilhamento/scroll dos ancestrais
+  return createPortal(
+    <div style={imgModal} onWheel={onWheel}
+      onPointerDown={e => { if (e.target === e.currentTarget) onClose() }}
+      onPointerMove={e => { if (drag.current) { setTx(t => t + (e.clientX - drag.current!.x)); setTy(t => t + (e.clientY - drag.current!.y)); drag.current = { x: e.clientX, y: e.clientY } } }}
+      onPointerUp={() => { drag.current = null }} onPointerLeave={() => { drag.current = null }}>
+      <img src={src} draggable={false} onClick={e => e.stopPropagation()}
+        onPointerDown={e => { if (z > 1) { e.preventDefault(); e.stopPropagation(); drag.current = { x: e.clientX, y: e.clientY }; (e.currentTarget as Element).setPointerCapture?.(e.pointerId) } }}
+        style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 8, transform: `translate(${tx}px,${ty}px) scale(${z})`, cursor: z > 1 ? 'grab' : 'zoom-in', transition: drag.current ? 'none' : 'transform .08s', userSelect: 'none', touchAction: 'none' }} />
       <div style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', color: '#fff', fontSize: 12, opacity: .8 }}>roda = zoom · arrastar = mover · Esc = fechar</div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -563,7 +568,7 @@ const miniSel: CSSProperties = { height: 22, padding: '0 4px', border: '1px soli
 const orcCard: CSSProperties = { textAlign: 'left', width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', cursor: 'pointer', boxShadow: 'var(--sh-1)', font: 'inherit', color: 'var(--text)', transition: 'border-color .12s var(--ease), box-shadow .12s var(--ease)' }
 const orcCardOn: CSSProperties = { borderColor: 'var(--primary)', boxShadow: '0 0 0 1px var(--primary)' }
 const imgDrop: CSSProperties = { display: 'grid', placeItems: 'center', gap: 2, minHeight: 240, border: '1.5px dashed var(--border-strong)', borderRadius: 10, color: 'var(--text-muted)', cursor: 'pointer', background: 'var(--bg-surface-2)', textAlign: 'center', padding: 20 }
-const imgModal: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', zIndex: 95, display: 'grid', placeItems: 'center', cursor: 'zoom-out' }
+const imgModal: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', zIndex: 120, display: 'grid', placeItems: 'center', cursor: 'zoom-out', touchAction: 'none', overscrollBehavior: 'contain' }
 const tabClose: CSSProperties = { display: 'inline-grid', placeItems: 'center', width: 18, height: 18, borderRadius: 5, border: 'none', background: 'transparent', cursor: 'pointer', flex: '0 0 auto', opacity: .75 }
 const layMenu: CSSProperties = { position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 30, display: 'flex', gap: 4, padding: 5, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--sh-4)', whiteSpace: 'nowrap' }
 const layMenuBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }
