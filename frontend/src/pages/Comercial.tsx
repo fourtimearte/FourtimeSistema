@@ -122,7 +122,11 @@ export default function Comercial() {
           <button onClick={undo} disabled={!past.length} title="Desfazer (Ctrl+Z)" style={{ ...undoBtn, opacity: past.length ? 1 : .4 }}><Undo2 size={15} /></button>
           <button onClick={redo} disabled={!future.length} title="Refazer (Ctrl+Shift+Z)" style={{ ...undoBtn, opacity: future.length ? 1 : .4 }}><Redo2 size={15} /></button>
           {layoutClip && <Btn size="sm" onClick={() => pasteLayout(curPed)}><ClipboardPaste size={14} />Colar layout</Btn>}
-          <Btn size="sm" onClick={toggleDinheiro}>{semDinheiro ? 'Mostrar R$' : 'Ocultar R$'}</Btn>
+          <Btn size="sm" onClick={toggleDinheiro} style={semDinheiro
+            ? { background: 'var(--success-bg)', color: 'var(--success-fg)', borderColor: 'color-mix(in srgb, var(--success) 40%, transparent)' }
+            : { background: 'var(--danger-bg)', color: 'var(--danger-fg)', borderColor: 'color-mix(in srgb, var(--danger) 40%, transparent)' }}>
+            {semDinheiro ? 'Mostrar R$' : 'Ocultar R$'}
+          </Btn>
           <input ref={fileRef} type="file" accept=".ft,application/json" onChange={onOpenFt} style={{ display: 'none' }} />
           <Btn size="sm" onClick={() => fileRef.current?.click()}><FolderOpen size={14} />Abrir</Btn>
           <Btn size="sm" onClick={salvarFt}><Save size={14} />Salvar .ft</Btn>
