@@ -93,8 +93,8 @@ function SizeTable({ l, semDinheiro }: { l: Layout; semDinheiro: boolean }) {
             <tr key={tam}>
               <td style={{ ...td, textAlign: 'left', fontFamily: "'Roboto',sans-serif", ...cs }}>{tam}</td>
               <td style={{ ...td, ...cs }}>{t.qtd}</td>
-              {!semDinheiro && <td style={{ ...td, ...cs }}>{money(t.uni)}</td>}
-              {!semDinheiro && <td style={{ ...td, ...cs }}>{money(t.qtd * t.uni)}</td>}
+              {!semDinheiro && <td style={{ ...td, ...cs }}>{t.uni > 0 ? money(t.uni) : ''}</td>}
+              {!semDinheiro && <td style={{ ...td, ...cs }}>{t.qtd * t.uni > 0 ? money(t.qtd * t.uni) : ''}</td>}
             </tr>
           )
         })}

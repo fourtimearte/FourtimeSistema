@@ -519,7 +519,7 @@ function SizeTable({ pIdx, lIdx, layout, semDinheiro }: { pIdx: number; lIdx: nu
                 <td style={{ ...stTd, textAlign: 'center', fontFamily: 'var(--font-ui)', fontWeight: cross ? 700 : 600, ...cs }}>{tam}</td>
                 <td style={{ ...stTd, ...cs, width: 50 }}><input type="number" inputMode="numeric" maxLength={4} value={t.qtd || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'qtd', parseFloat(e.target.value.slice(0, 4)) || 0)} style={{ ...cellInp, width: 42, minWidth: 0 }} /></td>
                 {!semDinheiro && <td style={{ ...stTd, ...cs, width: 60 }}><input type="number" inputMode="decimal" value={t.uni || ''} onChange={e => s.setSize(pIdx, lIdx, tam, 'uni', parseFloat(e.target.value) || 0)} style={{ ...cellInp, width: 52, minWidth: 0 }} /></td>}
-                {!semDinheiro && <td style={{ ...stTd, ...cs, minWidth: 80 }}>{money(t.qtd * t.uni)}</td>}
+                {!semDinheiro && <td style={{ ...stTd, ...cs, minWidth: 80 }}>{t.qtd * t.uni > 0 ? money(t.qtd * t.uni) : ''}</td>}
               </tr>
             )
           })}
