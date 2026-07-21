@@ -71,10 +71,13 @@ export interface Layout {
   img: string | null; obs: string; obsTags: string[]
 }
 export type Status = 'rascunho' | 'aprovado' | 'producao' | 'entregue'
+/** anotação livre sobre a folha A4. x/y/w/h em fração (0..1) do documento. */
+export interface Anotacao { id: string; tipo: 'circulo' | 'retangulo' | 'seta' | 'texto'; x: number; y: number; w: number; h: number; cor: string; texto?: string }
+export const ANOT_CORES = ['#C6161B', '#2563EB', '#047857', '#EA580C', '#161A20']
 export interface Pedido {
   pedido: string; clienteId: number | null; cliente: string; cpf: string; vendedor: string; contato: string
   depto: string; embalagem: string; entrega: string; envio: string; pagamento: string; obs: string; obsTags?: string[]
-  status: Status; aprovado: boolean; late?: boolean; layouts: Layout[]
+  status: Status; aprovado: boolean; late?: boolean; layouts: Layout[]; anotacoes?: Anotacao[]
 }
 export interface KCard { id: string; pedido: string; cliente: string; tec: TecnicaKey; station: string; prazo: string; late: boolean; val: number; artes: number }
 

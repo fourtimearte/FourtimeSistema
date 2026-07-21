@@ -44,6 +44,10 @@ interface AppState {
   setImg: (pIdx: number, lIdx: number, data: string | null) => void
   setObs: (pIdx: number, lIdx: number, value: string) => void
   toggleObsTag: (pIdx: number, lIdx: number, tag: string) => void
+  addAnot: (idx: number, a: import('./model').Anotacao) => void
+  updAnot: (idx: number, id: string, partial: Partial<import('./model').Anotacao>) => void
+  delAnot: (idx: number, id: string) => void
+  clearAnot: (idx: number) => void
   registrarPagamento: (pedido: string) => void
   toast: (msg: string) => void
   dismissToast: (id: number) => void
@@ -138,6 +142,10 @@ export const useApp = create<AppState>((set, get) => {
     setObs: (pIdx, lIdx, value) => edit(pIdx, ped => { ped[pIdx].layouts[lIdx].obs = value }),
     toggleObsTag: (pIdx, lIdx, tag) => edit(pIdx, ped => { const o = ped[pIdx].layouts[lIdx].obsTags; const i = o.indexOf(tag); if (i >= 0) o.splice(i, 1); else o.push(tag) }),
 
+    addAnot: (idx, a) => edit(idx, ped => { (ped[idx].anotacoes ?? (ped[idx].anotacoes = [])).push(a) }),
+    updAnot: (idx, id, partial) => edit(idx, ped => { const an = ped[idx].anotacoes?.find(x => x.id === id); if (an) Object.assign(an, partial) }),
+    delAnot: (idx, id) => edit(idx, ped => { ped[idx].anotacoes = (ped[idx].anotacoes ?? []).filter(x => x.id !== id) }),
+    clearAnot: (idx) => edit(idx, ped => { ped[idx].anotacoes = [] }),
     registrarPagamento: (pedido) => {
       const p = get().pedidos.find(x => x.pedido === pedido); if (!p) return
       const t = pedTotais(p).valor; const fin = { ...get().fin }; if (!fin[pedido]) fin[pedido] = { sinal: 0 }

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, type CSSProperties } from 'react'
-import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste, Code2 } from 'lucide-react'
+import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste, Code2, PenTool } from 'lucide-react'
 import { useApp } from '../store/useApp'
 import { toFt, fromFt, ehFt, nomeFt } from '../lib/ft'
 import { exportarHtml } from '../lib/exportHtml'
+import AnotarModal from '../components/AnotarModal'
 import {
   REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, TEM_CODIGO, CORES, TECIDOS, corHexPorNome,
   VENDEDORES, DEPARTAMENTOS, EMBALAGENS, PAGAMENTOS, validarPedido,
@@ -26,6 +27,7 @@ export default function Comercial() {
   const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, toggleHeaderObsTag, aprovarPedido, toggleDinheiro, semDinheiro, toast, undo, redo, past, future, pasteLayout, layoutClip, abrirPedido } = useApp()
   const p: Pedido | undefined = pedidos[curPed]
   const [viewImg, setViewImg] = useState<string | null>(null)
+  const [anotar, setAnotar] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   function salvarFt() {
@@ -107,6 +109,7 @@ export default function Comercial() {
           <Btn size="sm" onClick={() => fileRef.current?.click()}><FolderOpen size={14} />Abrir</Btn>
           <Btn size="sm" onClick={salvarFt}><Save size={14} />Salvar .ft</Btn>
           <Btn size="sm" onClick={salvarHtml}><Code2 size={14} />HTML</Btn>
+          <Btn size="sm" onClick={() => setAnotar(true)}><PenTool size={14} />Anotar</Btn>
           <Btn size="sm" onClick={() => window.print()}><Printer size={14} />PDF</Btn>
           {!p.aprovado && <Btn size="sm" variant="primary" onClick={aprovar}><Check size={14} />Aprovar</Btn>}
         </div>
@@ -143,6 +146,7 @@ export default function Comercial() {
       </>}
 
       {viewImg && <ImgViewer src={viewImg} onClose={() => setViewImg(null)} />}
+      {anotar && <AnotarModal onClose={() => setAnotar(false)} />}
       <style>{CSS}</style>
     </div>
   )

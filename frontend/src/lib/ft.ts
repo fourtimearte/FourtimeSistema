@@ -23,7 +23,7 @@ export function toFt(p: Pedido, salvoEm: string) {
       refCod: l.refCod, ref: l.ref, grade: l.grade, tecidos: l.tecidos, cor: l.cor, corHex: l.corHex,
       design: l.design, tamanhos: l.tamanhos, img: l.img, obs: l.obs, obsTags: l.obsTags,
     })),
-    anotacoes: [] as string[],
+    anotacoes: p.anotacoes ?? [],
   }
 }
 
@@ -49,6 +49,7 @@ export function fromFt(obj: any): Pedido {
     ...h,
     obsTags: Array.isArray(h.obsTags) ? h.obsTags : [],
     status: 'rascunho', aprovado: false,
+    anotacoes: Array.isArray(obj?.anotacoes) ? obj.anotacoes.filter((a: any) => a && a.tipo) : [],
     layouts: (layouts.length ? layouts : [novoLayout()]).map(completaLayout),
   } as Pedido
   if (!p.pedido) p.pedido = 'PD000000'
