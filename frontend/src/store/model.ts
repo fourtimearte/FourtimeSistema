@@ -78,6 +78,7 @@ export interface Pedido {
   pedido: string; clienteId: number | null; cliente: string; cpf: string; vendedor: string; contato: string
   depto: string; embalagem: string; entrega: string; envio: string; pagamento: string; obs: string; obsTags?: string[]
   status: Status; aprovado: boolean; late?: boolean; layouts: Layout[]; anotacoes?: Anotacao[]
+  criadoPor?: string; atualizadoEm?: string
 }
 export interface KCard { id: string; pedido: string; cliente: string; tec: TecnicaKey; station: string; prazo: string; late: boolean; val: number; artes: number }
 
@@ -133,13 +134,13 @@ function L(o: Partial<Layout>): Layout {
 export function novoLayout(): Layout { return L({ tamanhos: { P: { qtd: 0, uni: 0 }, M: { qtd: 0, uni: 0 }, G: { qtd: 0, uni: 0 } } }) }
 
 export const PEDIDOS_SEED: Pedido[] = [
-  { pedido: 'PD003929', clienteId: 1, cliente: 'Escola João XXIII', cpf: '12.345.678/0001-11', vendedor: 'Henrique', contato: '(62) 99912-3421', depto: 'Uniformes', embalagem: 'Saco individual', entrega: '22/07/2026', envio: '', pagamento: '50% sinal + saldo', obs: 'Arte aprovada pelo cliente', status: 'rascunho', aprovado: false,
+  { pedido: 'PD003929', clienteId: 1, cliente: 'Escola João XXIII', cpf: '12.345.678/0001-11', vendedor: 'Henrique', contato: '(62) 99912-3421', depto: 'Uniformes', embalagem: 'Saco individual', entrega: '22/07/2026', envio: '', pagamento: '50% sinal + saldo', obs: 'Arte aprovada pelo cliente', status: 'rascunho', aprovado: false, criadoPor: 'Henrique', atualizadoEm: '2026-07-20T16:42:00',
     layouts: [L({ refCod: 'REF-4021', ref: 'Camiseta dry-fit gola careca', grade: 'adulto', tecidos: ['Dry-fit 100% poliéster', 'Ribana punho'], cor: 'Azul-marinho', corHex: '#12213F', design: [dt('DTF', ['017', '142']), dt('Silk')], tamanhos: { '10A': { qtd: 6, uni: 79.9 }, PP: { qtd: 4, uni: 89.9 }, M: { qtd: 10, uni: 89.9 }, G: { qtd: 8, uni: 89.9 } } })] },
-  { pedido: 'PD003912', clienteId: 2, cliente: 'Time Vôlei Sub-15', cpf: '—', vendedor: 'Daniele', contato: '(62) 98110-7788', depto: 'Esporte', embalagem: 'Caixa', entrega: '14/07/2026', envio: '', pagamento: 'À vista', obs: '', status: 'producao', aprovado: true, late: true,
+  { pedido: 'PD003912', clienteId: 2, cliente: 'Time Vôlei Sub-15', cpf: '—', vendedor: 'Daniele', contato: '(62) 98110-7788', depto: 'Esporte', embalagem: 'Caixa', entrega: '14/07/2026', envio: '', pagamento: 'À vista', obs: '', status: 'producao', aprovado: true, late: true, criadoPor: 'Daniele', atualizadoEm: '2026-07-19T10:15:00',
     layouts: [L({ refCod: 'REF-2087', ref: 'Uniforme sublimado manga curta', grade: 'adulto', tecidos: ['Dry-fit PET'], cor: 'Full print', corHex: '#0E7490', design: [dt('Subli', ['S12', 'S40'])], tamanhos: { P: { qtd: 8, uni: 119.9 }, M: { qtd: 12, uni: 119.9 }, G: { qtd: 10, uni: 119.9 } } })] },
-  { pedido: 'PD003940', clienteId: 4, cliente: 'Padaria Estrela', cpf: '33.111.222/0001-45', vendedor: 'Kevelin', contato: '(62) 99655-3030', depto: 'Comércio', embalagem: '', entrega: '25/07/2026', envio: '', pagamento: '50% sinal + saldo', obs: '', status: 'aprovado', aprovado: true,
+  { pedido: 'PD003940', clienteId: 4, cliente: 'Padaria Estrela', cpf: '33.111.222/0001-45', vendedor: 'Kevelin', contato: '(62) 99655-3030', depto: 'Comércio', embalagem: '', entrega: '25/07/2026', envio: '', pagamento: '50% sinal + saldo', obs: '', status: 'aprovado', aprovado: true, criadoPor: 'Kevelin', atualizadoEm: '2026-07-20T09:03:00',
     layouts: [L({ refCod: 'REF-1150', ref: 'Camiseta silk algodão', grade: 'adulto', tecidos: ['PV'], cor: 'Preto', corHex: '#1B1B1F', design: [dt('Silk')], tamanhos: { M: { qtd: 6, uni: 49.9 }, G: { qtd: 6, uni: 49.9 } } })] },
-  { pedido: 'PD003944', clienteId: 3, cliente: 'Academia Pulse', cpf: '22.987.654/0001-90', vendedor: 'Henrique', contato: '(62) 99740-1122', depto: 'Academia', embalagem: '', entrega: '28/07/2026', envio: '', pagamento: 'À vista', obs: '', status: 'aprovado', aprovado: true,
+  { pedido: 'PD003944', clienteId: 3, cliente: 'Academia Pulse', cpf: '22.987.654/0001-90', vendedor: 'Henrique', contato: '(62) 99740-1122', depto: 'Academia', embalagem: '', entrega: '28/07/2026', envio: '', pagamento: 'À vista', obs: '', status: 'aprovado', aprovado: true, criadoPor: 'Henrique', atualizadoEm: '2026-07-18T14:30:00',
     layouts: [
       L({ refCod: 'REF-3310', ref: 'Regata dry treino', grade: 'adulto', tecidos: ['Dry-fit PET'], cor: 'Royal', corHex: '#2456C6', design: [dt('DTF', ['201'])], tamanhos: { P: { qtd: 10, uni: 69.9 }, M: { qtd: 14, uni: 69.9 }, G: { qtd: 8, uni: 69.9 } } }),
       L({ refCod: 'REF-5502', ref: 'Polo piquet bordada', grade: 'adulto', tecidos: ['Piquet'], cor: 'Marinho', corHex: '#12213F', design: [dt('Bordado')], tamanhos: { M: { qtd: 6, uni: 98.0 }, G: { qtd: 6, uni: 98.0 } } }),

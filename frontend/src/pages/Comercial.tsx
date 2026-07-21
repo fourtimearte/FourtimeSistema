@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type CSSProperties } from 'react'
-import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste, Code2, PenTool, User, Baby } from 'lucide-react'
+import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste, Code2, PenTool, User, Baby, Clock } from 'lucide-react'
 import { useApp } from '../store/useApp'
 import { toFt, fromFt, ehFt, nomeFt } from '../lib/ft'
 import { exportarHtml } from '../lib/exportHtml'
@@ -94,6 +94,9 @@ export default function Comercial() {
         desc="Editor de orçamento nativo — eficiente no celular e no desktop, com as funções do v172. O A4 sai fiel na impressão/PDF."
         actions={<Btn size="sm" variant="primary" onClick={novoOrcamento}><Plus size={16} />Novo orçamento</Btn>} />
 
+      <div className="comercial-layout">
+        <OrcamentosColuna onOpen={pd => { const i = pedidos.findIndex(x => x.pedido === pd.pedido); if (i >= 0) setCurPed(i); else abrirPedido(pd) }} />
+        <div className="comercial-editor" style={{ minWidth: 0 }}>
       <div style={tabbar}>
         {pedidos.map((o, i) => (
           <button key={o.pedido} onClick={() => setCurPed(i)} style={{ ...tab, ...(i === curPed ? tabOn : {}) }}>
@@ -152,11 +155,64 @@ export default function Comercial() {
           <span className="mono" style={{ fontSize: 18, fontWeight: 700 }}>{tot.pecas} pçs{semDinheiro ? '' : ` · R$ ${money(tot.valor)}`}</span>
         </div>
       </>}
+        </div>
+      </div>
 
       {viewImg && <ImgViewer src={viewImg} onClose={() => setViewImg(null)} />}
       {anotar && <AnotarModal onClose={() => setAnotar(false)} />}
       <style>{CSS}</style>
     </div>
+  )
+}
+
+/* ---------- Coluna de Orçamentos (pasta de trabalho) ---------- */
+function fmtDataEdicao(iso?: string): string {
+  if (!iso) return '—'
+  const d = new Date(iso); if (isNaN(d.getTime())) return '—'
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const now = new Date(); const hhmm = `${pad(d.getHours())}h${pad(d.getMinutes())}`
+  const dias = Math.floor((now.setHours(0, 0, 0, 0) - new Date(iso).setHours(0, 0, 0, 0)) / 86400000)
+  if (dias === 0) return `hoje ${hhmm}`
+  if (dias === 1) return `ontem ${hhmm}`
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${String(d.getFullYear()).slice(2)} ${hhmm}`
+}
+
+function OrcamentosColuna({ onOpen }: { onOpen: (p: Pedido) => void }) {
+  const { pedidos, curPed } = useApp()
+  const [q, setQ] = useState('')
+  const atual = pedidos[curPed]?.pedido
+  const list = pedidos
+    .filter(p => (p.cliente + ' ' + p.pedido + ' ' + (p.criadoPor ?? '') + ' ' + (p.vendedor ?? '')).toLowerCase().includes(q.toLowerCase()))
+    .slice().sort((a, b) => (b.atualizadoEm ?? '').localeCompare(a.atualizadoEm ?? ''))
+  return (
+    <aside className="orc-col">
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Orçamentos</h3>
+        <span className="mono" style={{ fontSize: 11, color: 'var(--text-subtle)' }}>{list.length}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-surface)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '0 10px', height: 36, marginBottom: 10 }}>
+        <Search size={15} style={{ color: 'var(--text-subtle)', flex: '0 0 auto' }} />
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar orçamento…" style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text)', font: 'inherit', fontSize: 13, width: '100%' }} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {list.length ? list.map(p => {
+          const tot = pedTotais(p); const on = p.pedido === atual
+          return (
+            <button key={p.pedido} className="orc-card" onClick={() => onOpen(p)} title={`Abrir ${p.pedido} no editor`} style={{ ...orcCard, ...(on ? orcCardOn : {}) }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: 'var(--set-comercial)' }}>{p.pedido}</span>
+                <span className="mono" style={{ fontSize: 12, fontWeight: 700 }}>R$ {money(tot.valor)}</span>
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, margin: '3px 0 6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.cliente || '(sem cliente)'}</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, fontSize: 11, color: 'var(--text-muted)' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, minWidth: 0 }}><User size={12} style={{ flex: '0 0 auto' }} /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.criadoPor || p.vendedor || '—'}</span></span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flex: '0 0 auto' }}><Clock size={12} />{fmtDataEdicao(p.atualizadoEm)}</span>
+              </div>
+            </button>
+          )
+        }) : <div style={{ fontSize: 12, color: 'var(--text-subtle)', padding: '10px 4px' }}>Nenhum orçamento encontrado.</div>}
+      </div>
+    </aside>
   )
 }
 
@@ -384,10 +440,16 @@ const cellInp: CSSProperties = { width: '100%', minWidth: 42, height: 28, paddin
 const ta: CSSProperties = { width: '100%', padding: '8px 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 13, outline: 'none', resize: 'vertical' }
 const dateInp: CSSProperties = { height: 'var(--control-h-lg)', width: '100%', padding: '0 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 14, outline: 'none' }
 const miniSel: CSSProperties = { height: 22, padding: '0 4px', border: '1px solid var(--border-strong)', borderRadius: 6, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 11, outline: 'none' }
+const orcCard: CSSProperties = { textAlign: 'left', width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', cursor: 'pointer', boxShadow: 'var(--sh-1)', font: 'inherit', color: 'var(--text)', transition: 'border-color .12s var(--ease), box-shadow .12s var(--ease)' }
+const orcCardOn: CSSProperties = { borderColor: 'var(--primary)', boxShadow: '0 0 0 1px var(--primary)' }
 const imgDrop: CSSProperties = { display: 'grid', placeItems: 'center', gap: 2, minHeight: 240, border: '1.5px dashed var(--border-strong)', borderRadius: 10, color: 'var(--text-muted)', cursor: 'pointer', background: 'var(--bg-surface-2)', textAlign: 'center', padding: 20 }
 const imgModal: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', zIndex: 95, display: 'grid', placeItems: 'center', cursor: 'zoom-out' }
 
 const CSS = `
+.comercial-layout{display:grid;grid-template-columns:262px minmax(0,1fr);gap:18px;align-items:start}
+.orc-col{position:sticky;top:66px;align-self:start;max-height:calc(100vh - 84px);overflow:auto;padding-right:2px}
+.orc-card:hover{border-color:var(--border-strong);box-shadow:var(--sh-2)}
+@media(max-width:1120px){.comercial-layout{grid-template-columns:1fr}.orc-col{position:static;max-height:none;order:2;max-height:420px}.comercial-editor{order:1}}
 .ficha{display:flex;flex-direction:column;gap:14px}
 @media(min-width:821px){
   .ficha.sd{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto 1fr;column-gap:14px;row-gap:12px;align-items:start}

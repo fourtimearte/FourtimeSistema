@@ -64,7 +64,7 @@ function roteia(pedidos: Pedido[]): KCard[] {
   return cards
 }
 function novoPedido(seq: number, perfil: string): Pedido {
-  return { pedido: 'PD' + String(seq).padStart(6, '0'), clienteId: null, cliente: '', cpf: '', vendedor: perfil === 'Comercial' ? '' : perfil, contato: '', depto: '', embalagem: '', entrega: '', envio: '', pagamento: '50% sinal + saldo', obs: '', obsTags: [], status: 'rascunho', aprovado: false, layouts: [novoLayout()] }
+  return { pedido: 'PD' + String(seq).padStart(6, '0'), clienteId: null, cliente: '', cpf: '', vendedor: perfil === 'Comercial' ? '' : perfil, contato: '', depto: '', embalagem: '', entrega: '', envio: '', pagamento: '50% sinal + saldo', obs: '', obsTags: [], status: 'rascunho', aprovado: false, layouts: [novoLayout()], criadoPor: perfil, atualizadoEm: new Date().toISOString() }
 }
 
 export const useApp = create<AppState>((set, get) => {
@@ -74,6 +74,7 @@ export const useApp = create<AppState>((set, get) => {
     const past = [...st.past, clone(st.pedidos[st.curPed])].slice(-40)
     const pedidos = st.pedidos
     mut(pedidos)
+    if (pedidos[pIdx]) pedidos[pIdx].atualizadoEm = new Date().toISOString()
     set({ pedidos: [...pedidos], past, future: [], kcards: pedidos[pIdx].aprovado ? roteia(pedidos) : st.kcards })
   }
   return {
@@ -99,6 +100,7 @@ export const useApp = create<AppState>((set, get) => {
     criarPedidoDe: (base, cli) => {
       const seq = get().seq + 1; const p: Pedido = clone(base)
       p.pedido = 'PD' + String(seq).padStart(6, '0'); p.status = 'rascunho'; p.aprovado = false; p.late = false
+      p.criadoPor = get().perfil; p.atualizadoEm = new Date().toISOString()
       if (cli) { p.clienteId = cli.id; p.cliente = cli.nome; p.cpf = cli.doc; p.contato = cli.contato; p.vendedor = cli.vendedor }
       set({ pedidos: [p, ...get().pedidos], fin: { ...get().fin, [p.pedido]: { sinal: 0 } }, seq, curPed: 0, page: 'comercial', past: [], future: [] }); get().toast('Novo orçamento ' + p.pedido + ' criado')
     },
