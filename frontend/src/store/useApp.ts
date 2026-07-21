@@ -12,7 +12,7 @@ interface AppState {
   logged: boolean; perfil: string; page: PageId
   pedidos: Pedido[]; kcards: KCard[]; fin: Record<string, { sinal: number }>
   seq: number; curPed: number; semDinheiro: boolean; toasts: Toast[]
-  past: Pedido[]; future: Pedido[]
+  past: Pedido[]; future: Pedido[]; layoutClip: Layout | null
   login: (perfil: string) => void
   goto: (p: PageId) => void
   toggleDinheiro: () => void
@@ -23,6 +23,9 @@ interface AppState {
   novoOrcamento: () => void
   criarPedidoDe: (base: Pedido, cli?: Cliente) => void
   undo: () => void; redo: () => void
+  copyLayout: (pIdx: number, lIdx: number) => void
+  pasteLayout: (pIdx: number) => void
+  abrirPedido: (p: Pedido) => void
   updateHeader: (idx: number, field: keyof Pedido, value: string) => void
   patchPedido: (idx: number, partial: Partial<Pedido>) => void
   toggleHeaderObsTag: (idx: number, tag: string) => void
@@ -73,7 +76,7 @@ export const useApp = create<AppState>((set, get) => {
     logged: false, perfil: 'Administração', page: 'dashboard',
     pedidos: clone(PEDIDOS_SEED), kcards: roteia(PEDIDOS_SEED),
     fin: { PD003929: { sinal: 0 }, PD003912: { sinal: 1798.5 }, PD003940: { sinal: 299 }, PD003944: { sinal: 0 } },
-    seq: 3945, curPed: 0, semDinheiro: false, toasts: [], past: [], future: [],
+    seq: 3945, curPed: 0, semDinheiro: false, toasts: [], past: [], future: [], layoutClip: null,
 
     login: (perfil) => set({ logged: true, perfil, page: perfil === 'Produção' ? 'producao' : perfil === 'Comercial' ? 'comercial' : 'dashboard' }),
     goto: (page) => set({ page }),
@@ -107,6 +110,10 @@ export const useApp = create<AppState>((set, get) => {
       const pedidos = st.pedidos; const cur = clone(pedidos[st.curPed]); pedidos[st.curPed] = next
       set({ pedidos: [...pedidos], future, past: [...st.past, cur].slice(-40), kcards: pedidos[st.curPed].aprovado ? roteia(pedidos) : st.kcards })
     },
+
+    copyLayout: (pIdx, lIdx) => { set({ layoutClip: clone(get().pedidos[pIdx].layouts[lIdx]) }); get().toast('Layout L-' + String(lIdx + 1).padStart(2, '0') + ' copiado') },
+    pasteLayout: (pIdx) => { const clip = get().layoutClip; if (!clip) return; edit(pIdx, ped => ped[pIdx].layouts.push(clone(clip))); get().toast('Layout colado') },
+    abrirPedido: (p) => { const seq = get().seq; set({ pedidos: [p, ...get().pedidos], fin: { ...get().fin, [p.pedido]: get().fin[p.pedido] ?? { sinal: 0 } }, curPed: 0, page: 'comercial', past: [], future: [], seq }); get().toast('Aberto ' + p.pedido) },
 
     updateHeader: (idx, field, value) => edit(idx, ped => { (ped[idx] as any)[field] = value }),
     patchPedido: (idx, partial) => edit(idx, ped => Object.assign(ped[idx], partial)),

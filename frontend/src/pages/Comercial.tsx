@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, type CSSProperties } from 'react'
-import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2 } from 'lucide-react'
+import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste } from 'lucide-react'
 import { useApp } from '../store/useApp'
+import { toFt, fromFt, ehFt, nomeFt } from '../lib/ft'
 import {
   REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, TEM_CODIGO, CORES, TECIDOS, corHexPorNome,
   VENDEDORES, DEPARTAMENTOS, EMBALAGENS, PAGAMENTOS, validarPedido,
@@ -21,9 +22,24 @@ function toISO(br: string) { const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); 
 function fromISO(iso: string) { const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : iso }
 
 export default function Comercial() {
-  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, toggleHeaderObsTag, aprovarPedido, toggleDinheiro, semDinheiro, toast, undo, redo, past, future } = useApp()
+  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, toggleHeaderObsTag, aprovarPedido, toggleDinheiro, semDinheiro, toast, undo, redo, past, future, pasteLayout, layoutClip, abrirPedido } = useApp()
   const p: Pedido | undefined = pedidos[curPed]
   const [viewImg, setViewImg] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  function salvarFt() {
+    if (!p) return
+    const d = new Date()
+    const blob = new Blob([JSON.stringify(toFt(p, d.toISOString()), null, 2)], { type: 'application/json' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nomeFt(p, d) + '.ft'; a.click(); URL.revokeObjectURL(a.href)
+    toast('Salvo: ' + a.download)
+  }
+  function onOpenFt(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]; if (!f) return
+    const r = new FileReader()
+    r.onload = () => { try { const obj = JSON.parse(String(r.result)); if (!ehFt(obj)) { toast('Arquivo .ft inválido'); return } abrirPedido(fromFt(obj)) } catch { toast('Não foi possível ler o .ft') } }
+    r.readAsText(f); e.target.value = ''
+  }
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -78,8 +94,11 @@ export default function Comercial() {
           <span style={{ marginLeft: 'auto' }} />
           <button onClick={undo} disabled={!past.length} title="Desfazer (Ctrl+Z)" style={{ ...undoBtn, opacity: past.length ? 1 : .4 }}><Undo2 size={15} /></button>
           <button onClick={redo} disabled={!future.length} title="Refazer (Ctrl+Shift+Z)" style={{ ...undoBtn, opacity: future.length ? 1 : .4 }}><Redo2 size={15} /></button>
+          {layoutClip && <Btn size="sm" onClick={() => pasteLayout(curPed)}><ClipboardPaste size={14} />Colar layout</Btn>}
           <Btn size="sm" onClick={toggleDinheiro}>{semDinheiro ? 'Mostrar R$' : 'Ocultar R$'}</Btn>
-          <Btn size="sm" onClick={() => toast('Salvo (.ft) — protótipo')}><Save size={14} />Salvar</Btn>
+          <input ref={fileRef} type="file" accept=".ft,application/json" onChange={onOpenFt} style={{ display: 'none' }} />
+          <Btn size="sm" onClick={() => fileRef.current?.click()}><FolderOpen size={14} />Abrir</Btn>
+          <Btn size="sm" onClick={salvarFt}><Save size={14} />Salvar .ft</Btn>
           <Btn size="sm" onClick={() => window.print()}><Printer size={14} />PDF</Btn>
           {!p.aprovado && <Btn size="sm" variant="primary" onClick={aprovar}><Check size={14} />Aprovar</Btn>}
         </div>
@@ -137,7 +156,7 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
         {/* COLUNA ESQUERDA (1.7): Referência (topo) + imagem */}
         <div tabIndex={0} onPaste={e => { const it = [...e.clipboardData.items].find(i => i.type.startsWith('image/')); if (it) readImg(it.getAsFile() ?? undefined) }} style={{ outline: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <span style={lnum}>L-{String(lIdx + 1).padStart(2, '0')}</span>
+            <button onClick={() => s.copyLayout(pIdx, lIdx)} title="Copiar layout (L-NN)" style={{ ...lnum, border: 'none', cursor: 'pointer' }}>L-{String(lIdx + 1).padStart(2, '0')}</button>
             <div style={{ flex: 1 }}><Combo value={l.ref} onSelect={selRef} placeholder="Referência da peça" options={REFERENCIAS.map(r => ({ label: r.nome, value: r.nome, sub: r.cod }))} /></div>
             <button onClick={() => s.duplicateLayout(pIdx, lIdx)} title="Duplicar layout" style={iconBtn}><Copy size={15} /></button>
             {canDelete && <button onClick={() => s.deleteLayout(pIdx, lIdx)} title="Excluir layout" style={iconBtn}><Trash2 size={15} /></button>}
