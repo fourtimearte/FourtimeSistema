@@ -237,9 +237,11 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <div className="lay-badge" style={{ position: 'relative', flex: '0 0 auto' }}>
               <span style={lnum}>L-{String(lIdx + 1).padStart(2, '0')}</span>
-              <div className="lay-badge-menu" style={layMenu}>
-                <button onClick={() => s.copyLayout(pIdx, lIdx)} title="Copiar este layout" style={layMenuBtn}><Copy size={13} />Copiar</button>
-                <button onClick={() => s.pasteLayout(pIdx)} disabled={!s.layoutClip} title="Colar layout copiado" style={{ ...layMenuBtn, opacity: s.layoutClip ? 1 : .45, cursor: s.layoutClip ? 'pointer' : 'default' }}><ClipboardPaste size={13} />Colar</button>
+              <div className="lay-badge-menu" style={layMenuWrap}>
+                <div style={layMenuBox}>
+                  <button onClick={() => s.copyLayout(pIdx, lIdx)} title="Copiar este layout" style={layMenuBtn}><Copy size={13} />Copiar</button>
+                  <button onClick={() => s.pasteLayout(pIdx)} disabled={!s.layoutClip} title="Colar layout copiado" style={{ ...layMenuBtn, opacity: s.layoutClip ? 1 : .45, cursor: s.layoutClip ? 'pointer' : 'default' }}><ClipboardPaste size={13} />Colar</button>
+                </div>
               </div>
             </div>
             <div style={{ flex: 1 }}><Combo value={l.ref} onSelect={selRef} placeholder="Referência da peça" tintClass={generoClasse(generoAtual) ?? undefined}
@@ -278,10 +280,8 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
               const last = ti === l.tecidos.length - 1
               return (
                 <Combo key={ti} value={t} rotulo="Tecido" upper placeholder="Tecido" onSelect={v => s.setTecido(pIdx, lIdx, ti, v)} options={TECIDOS.map(x => ({ label: x, value: x }))}
-                  rightAddon={<>
-                    {l.tecidos.length > 1 && <button onClick={e => { e.stopPropagation(); s.removeTecido(pIdx, lIdx, ti) }} title="Remover tecido" style={inBoxBtn}><X size={13} /></button>}
-                    {last && <button onClick={e => { e.stopPropagation(); s.addTecido(pIdx, lIdx) }} title="Adicionar tecido" style={{ ...inBoxBtn, color: 'var(--primary)', borderColor: 'var(--primary)' }}><Plus size={14} /></button>}
-                  </>} />
+                  preAddon={last ? <button onClick={e => { e.stopPropagation(); s.addTecido(pIdx, lIdx) }} title="Adicionar tecido" style={{ ...inBoxBtn, color: 'var(--primary)', borderColor: 'var(--primary)' }}><Plus size={14} /></button> : undefined}
+                  rightAddon={l.tecidos.length > 1 ? <button onClick={e => { e.stopPropagation(); s.removeTecido(pIdx, lIdx, ti) }} title="Remover tecido" style={inBoxBtn}><X size={13} /></button> : undefined} />
               )
             })}
           </div>
@@ -577,7 +577,7 @@ const tabbar: CSSProperties = { display: 'flex', gap: 3, overflowX: 'auto', bord
 const tab: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', border: '1px solid var(--border)', borderBottom: 'none', borderRadius: '8px 8px 0 0', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', position: 'relative', top: 1 }
 const tabOn: CSSProperties = { background: 'var(--primary)', color: 'var(--primary-fg)', borderColor: 'var(--primary)', top: 0 }
 const tabNew: CSSProperties = { width: 34, height: 34, borderRadius: '8px 8px 0 0', border: '1px solid var(--border)', borderBottom: 'none', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 18, lineHeight: 1 }
-const lnum: CSSProperties = { display: 'inline-flex', alignItems: 'center', height: 42, padding: '0 12px', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, letterSpacing: '.02em', color: 'var(--text-muted)', background: 'var(--bg-surface-2)', border: '1px solid var(--border-strong)', borderRadius: 8, cursor: 'default', userSelect: 'none' }
+const lnum: CSSProperties = { display: 'inline-flex', alignItems: 'center', height: 42, padding: '0 12px', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, letterSpacing: '.02em', color: 'var(--info-fg)', background: 'var(--info-bg)', border: '1px solid color-mix(in srgb, var(--set-comercial) 30%, transparent)', borderRadius: 8, cursor: 'default', userSelect: 'none' }
 const iconBtn: CSSProperties = { width: 34, height: 34, borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
 const miniBtn: CSSProperties = { width: 'var(--control-h-lg)', height: 'var(--control-h-lg)', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
 const undoBtn: CSSProperties = { width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
@@ -598,7 +598,9 @@ const orcCardOn: CSSProperties = { borderColor: 'var(--primary)', boxShadow: '0 
 const imgDrop: CSSProperties = { display: 'grid', placeItems: 'center', gap: 2, minHeight: 240, border: '1.5px dashed var(--border-strong)', borderRadius: 10, color: 'var(--text-muted)', cursor: 'pointer', background: 'var(--bg-surface-2)', textAlign: 'center', padding: 20 }
 const imgModal: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', zIndex: 120, display: 'grid', placeItems: 'center', cursor: 'zoom-out', touchAction: 'none', overscrollBehavior: 'contain' }
 const tabClose: CSSProperties = { display: 'inline-grid', placeItems: 'center', width: 18, height: 18, borderRadius: 5, border: 'none', background: 'transparent', cursor: 'pointer', flex: '0 0 auto', opacity: .75 }
-const layMenu: CSSProperties = { position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 30, display: 'flex', gap: 4, padding: 5, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--sh-4)', whiteSpace: 'nowrap' }
+// wrap = ponte de hover transparente (encostada no badge, sem gap); box = a caixa visível
+const layMenuWrap: CSSProperties = { position: 'absolute', top: '100%', left: 0, zIndex: 30, paddingTop: 6, whiteSpace: 'nowrap' }
+const layMenuBox: CSSProperties = { display: 'flex', gap: 4, padding: 5, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--sh-4)' }
 const layMenuBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }
 const obsBox: CSSProperties = { position: 'relative', width: '100%', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)' }
 const obsInner: CSSProperties = { minHeight: 56, padding: '9px 12px', paddingRight: 42, paddingBottom: 14, color: 'var(--text)', font: 'inherit', fontSize: 13, lineHeight: 1.5, outline: 'none' }

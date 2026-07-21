@@ -8,9 +8,9 @@ export interface ComboOpt { label: string; value: string; sub?: string; hex?: st
  * busca no topo. Aceita texto livre. `rotulo` = rótulo dentro da caixa
  * (aparece com o valor); `rightAddon` = botões dentro da caixa (+ / swatch).
  */
-export default function Combo({ value, onSelect, options, placeholder, leftSwatch, allowFree = true, rotulo, upper, rightAddon, tintClass, popoverTop }: {
+export default function Combo({ value, onSelect, options, placeholder, leftSwatch, allowFree = true, rotulo, upper, rightAddon, preAddon, tintClass, popoverTop }: {
   value: string; onSelect: (v: string, opt?: ComboOpt) => void; options: ComboOpt[]
-  placeholder?: string; leftSwatch?: string; allowFree?: boolean; rotulo?: string; upper?: boolean; rightAddon?: ReactNode; tintClass?: string; popoverTop?: ReactNode
+  placeholder?: string; leftSwatch?: string; allowFree?: boolean; rotulo?: string; upper?: boolean; rightAddon?: ReactNode; preAddon?: ReactNode; tintClass?: string; popoverTop?: ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
@@ -34,6 +34,7 @@ export default function Combo({ value, onSelect, options, placeholder, leftSwatc
           {rotulo && value && <span style={rotuloCss}>{rotulo}</span>}
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: value ? 'var(--text)' : 'var(--text-subtle)', textTransform: upper ? 'uppercase' : undefined, fontSize: upper ? 12 : undefined, fontWeight: upper && !value ? 600 : undefined, letterSpacing: upper && !value ? '.04em' : undefined }}>{value || placeholder}</span>
         </span>
+        {preAddon}
         <ChevronDown size={16} style={{ color: 'var(--text-muted)', flex: '0 0 auto', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
         {rightAddon}
       </div>
