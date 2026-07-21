@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, type CSSProperties } from 'react'
-import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste } from 'lucide-react'
+import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste, Code2 } from 'lucide-react'
 import { useApp } from '../store/useApp'
 import { toFt, fromFt, ehFt, nomeFt } from '../lib/ft'
+import { exportarHtml } from '../lib/exportHtml'
 import {
   REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, TEM_CODIGO, CORES, TECIDOS, corHexPorNome,
   VENDEDORES, DEPARTAMENTOS, EMBALAGENS, PAGAMENTOS, validarPedido,
@@ -39,6 +40,12 @@ export default function Comercial() {
     const r = new FileReader()
     r.onload = () => { try { const obj = JSON.parse(String(r.result)); if (!ehFt(obj)) { toast('Arquivo .ft inválido'); return } abrirPedido(fromFt(obj)) } catch { toast('Não foi possível ler o .ft') } }
     r.readAsText(f); e.target.value = ''
+  }
+  function salvarHtml() {
+    if (!p) return
+    const blob = new Blob([exportarHtml(p)], { type: 'text/html' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nomeFt(p, new Date()) + '.html'; a.click(); URL.revokeObjectURL(a.href)
+    toast('HTML exportado (sem valores)')
   }
 
   useEffect(() => {
@@ -99,6 +106,7 @@ export default function Comercial() {
           <input ref={fileRef} type="file" accept=".ft,application/json" onChange={onOpenFt} style={{ display: 'none' }} />
           <Btn size="sm" onClick={() => fileRef.current?.click()}><FolderOpen size={14} />Abrir</Btn>
           <Btn size="sm" onClick={salvarFt}><Save size={14} />Salvar .ft</Btn>
+          <Btn size="sm" onClick={salvarHtml}><Code2 size={14} />HTML</Btn>
           <Btn size="sm" onClick={() => window.print()}><Printer size={14} />PDF</Btn>
           {!p.aprovado && <Btn size="sm" variant="primary" onClick={aprovar}><Check size={14} />Aprovar</Btn>}
         </div>
