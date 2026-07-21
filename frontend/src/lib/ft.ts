@@ -20,7 +20,7 @@ export function toFt(p: Pedido, salvoEm: string) {
       depto: p.depto, embalagem: p.embalagem, entrega: p.entrega, envio: p.envio, pagamento: p.pagamento, obs: p.obs, obsTags: p.obsTags ?? [],
     },
     layouts: p.layouts.map(l => ({
-      refCod: l.refCod, ref: l.ref, grade: l.grade, tecidos: l.tecidos, cor: l.cor, corHex: l.corHex,
+      refCod: l.refCod, ref: l.ref, grade: l.grade, genero: l.genero, tecidos: l.tecidos, cor: l.cor, corHex: l.corHex,
       design: l.design, tamanhos: l.tamanhos, img: l.img, obs: l.obs, obsTags: l.obsTags,
     })),
     anotacoes: p.anotacoes ?? [],

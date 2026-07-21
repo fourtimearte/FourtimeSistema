@@ -6,12 +6,12 @@ import { toFt, fromFt, ehFt, nomeFt } from '../lib/ft'
 import { exportarHtml } from '../lib/exportHtml'
 import AnotarModal from '../components/AnotarModal'
 import {
-  REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, CORES, TECIDOS, corHexPorNome, generoClasse,
+  REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, CORES, TECIDOS, corHexPorNome, generoClasse, GENEROS,
   VENDEDORES, DEPARTAMENTOS, EMBALAGENS, PAGAMENTOS, validarPedido,
-  DTF_CORES, SB_CORES, isInfantil, ordemTamanhos, OBS_TAGS,
+  DTF_CORES, SB_CORES, codigoHex, isInfantil, ordemTamanhos, OBS_TAGS,
   pedTotais, money, type Pedido, type Layout, type TecnicaKey,
 } from '../store/model'
-import { PageHead, Btn, Badge, cvar } from '../components/ui'
+import { PageHead, Btn, Badge, TecTag, cvar } from '../components/ui'
 import Combo from '../components/Combo'
 
 function Inp({ value, onChange, list, placeholder, mono }: { value: string; onChange: (v: string) => void; list?: string; placeholder?: string; mono?: boolean }) {
@@ -223,9 +223,10 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
   const s = useApp(); const l = layout
   function selRef(v: string, opt?: { sub?: string }) {
     const m = REFERENCIAS.find(r => r.cod === opt?.sub || r.nome.toLowerCase() === v.trim().toLowerCase())
-    if (m) s.patchLayout(pIdx, lIdx, { refCod: m.cod, ref: m.nome, design: m.design.map(t => ({ tag: t, cores: [] })) })
+    if (m) s.patchLayout(pIdx, lIdx, { refCod: m.cod, ref: m.nome, design: m.design.map(t => ({ tag: t, cores: [] })), genero: l.genero ?? m.genero })
     else s.patchLayout(pIdx, lIdx, { ref: v })
   }
+  const generoAtual = l.genero ?? REFERENCIAS.find(r => r.cod === l.refCod)?.genero ?? ''
   function readImg(f?: File) { if (!f) return; const r = new FileReader(); r.onload = () => s.setImg(pIdx, lIdx, String(r.result)); r.readAsDataURL(f) }
 
   return (
@@ -241,7 +242,19 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
                 <button onClick={() => s.pasteLayout(pIdx)} disabled={!s.layoutClip} title="Colar layout copiado" style={{ ...layMenuBtn, opacity: s.layoutClip ? 1 : .45, cursor: s.layoutClip ? 'pointer' : 'default' }}><ClipboardPaste size={13} />Colar</button>
               </div>
             </div>
-            <div style={{ flex: 1 }}><Combo value={l.ref} onSelect={selRef} placeholder="Referência da peça" tintClass={generoClasse(REFERENCIAS.find(r => r.cod === l.refCod)?.genero) ?? undefined} options={REFERENCIAS.map(r => ({ label: r.nome, value: r.nome, sub: r.cod }))} /></div>
+            <div style={{ flex: 1 }}><Combo value={l.ref} onSelect={selRef} placeholder="Referência da peça" tintClass={generoClasse(generoAtual) ?? undefined}
+              options={REFERENCIAS.map(r => ({ label: r.nome, value: r.nome, sub: r.cod }))}
+              popoverTop={
+                <div style={{ marginBottom: 6 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', marginBottom: 5 }}>Gênero (cor do campo)</div>
+                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                    {GENEROS.map(g => { const on = generoAtual.toLowerCase() === g.toLowerCase(); const cl = generoClasse(g); const dot = cl === 'gen-masc' ? '#2563EB' : cl === 'gen-fem' ? '#DB2777' : cl === 'gen-inf' ? '#0F766E' : 'var(--text-subtle)'
+                      return <button key={g} onMouseDown={e => e.preventDefault()} onClick={() => s.setGenero(pIdx, lIdx, g)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 26, padding: '0 9px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: on ? '1.5px solid var(--primary)' : '1px solid var(--border-strong)', background: on ? 'var(--bg-muted)' : 'var(--bg-surface)', color: 'var(--text)' }}>
+                        <i style={{ width: 9, height: 9, borderRadius: '50%', background: dot }} />{g}
+                      </button> })}
+                  </div>
+                </div>
+              } /></div>
             <button onClick={() => s.duplicateLayout(pIdx, lIdx)} title="Duplicar layout" style={iconBtn}><Copy size={15} /></button>
             {canDelete && <button onClick={() => s.deleteLayout(pIdx, lIdx)} title="Excluir layout" style={iconBtn}><Trash2 size={15} /></button>}
           </div>
@@ -417,28 +430,49 @@ function ObsEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layout:
     guardaSel(); setBar({ x: rect.left + rect.width / 2, y: rect.top })
   }
   const cmd = (c: string, v?: string) => { focaSel(); document.execCommand('styleWithCSS', false, 'true'); document.execCommand(c, false, v); save(); atualizaBar() }
-  const insereCodigo = (code: string, hex: string) => { focaSel(); document.execCommand('insertHTML', false, `<span class="cod-chip" contenteditable="false" style="--c:${hex}">${code}</span>&#8203;`); save() }
+  const addCor = (tech: TecnicaKey, code: string) => { if (!layout.design.some(d => d.tag === tech)) s.toggleDesign(pIdx, lIdx, tech); s.addDesignCor(pIdx, lIdx, tech, code) }
   const lista = (tab === 'DTF' ? DTF_CORES : SB_CORES).filter(c => c.code.toUpperCase().includes(q.toUpperCase())).slice(0, 240)
+  const codeRows = (['DTF', 'Subli'] as TecnicaKey[])
+    .map(tech => { const d = layout.design.find(x => x.tag === tech); return d && d.cores.length ? { tech, cores: d.cores } : null })
+    .filter(Boolean) as { tech: TecnicaKey; cores: string[] }[]
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={obsBox}>
+      {/* códigos de cor — agrupados por técnica (tag na frente), cada uma em sua linha */}
+      {codeRows.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7, padding: '10px 12px 0' }}>
+          {codeRows.map(r => (
+            <div key={r.tech} style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <TecTag tec={r.tech} style={{ height: 22, fontSize: 10 }} />
+              {r.cores.map(code => (
+                <span key={code} style={codChip}>
+                  <i style={{ width: 12, height: 12, borderRadius: 3, background: codigoHex(r.tech, code), border: '1px solid rgba(0,0,0,.15)', flex: '0 0 auto' }} />{code}
+                  <button onClick={() => s.removeDesignCor(pIdx, lIdx, r.tech, code)} title="Remover" style={codChipX}><X size={11} /></button>
+                </span>
+              ))}
+            </div>
+          ))}
+          <div style={{ height: 1, background: 'var(--border)', marginTop: 3 }} />
+        </div>
+      )}
+
       <div ref={ref} className="obsrich" contentEditable suppressContentEditableWarning
         data-ph="Observações da peça…"
         onInput={save} onBlur={() => { save(); setTimeout(() => setBar(null), 150) }}
         onMouseUp={atualizaBar} onKeyUp={atualizaBar}
-        style={{ ...obsArea, paddingRight: 42 }} />
+        style={obsInner} />
 
       {/* ícone no canto inferior direito → inserir código de cor (DTF/Sublimação) */}
       <div ref={pickRef} style={{ position: 'absolute', right: 8, bottom: 8 }}>
-        <button onMouseDown={e => { e.preventDefault(); guardaSel() }} onClick={() => setPick(p => !p)} title="Inserir código de cor (DTF/Sublimação)" style={obsIcon}><Palette size={15} /></button>
+        <button onClick={() => setPick(p => !p)} title="Inserir código de cor (DTF/Sublimação)" style={obsIcon}><Palette size={15} /></button>
         {pick && (
-          <div style={{ ...codPop, top: 'auto', bottom: 'calc(100% + 6px)', right: 0 }} onMouseDown={e => e.preventDefault()}>
+          <div style={{ ...codPop, top: 'auto', bottom: 'calc(100% + 6px)', right: 0 }}>
             <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
               {(['DTF', 'Subli'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ ...codTab, ...(tab === t ? codTabOn : {}) }}>{t === 'DTF' ? 'DTF' : 'Sublimação'}</button>)}
             </div>
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar número…" style={codBusca} />
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxHeight: 190, overflowY: 'auto', marginTop: 6 }}>
-              {lista.map(c => <button key={c.code} title={c.code} onClick={() => insereCodigo(c.code, c.hex)} style={{ width: 34, height: 26, borderRadius: 5, border: '1px solid var(--border-strong)', background: c.hex, cursor: 'pointer', fontSize: 8, color: txtContrast(c.hex), fontFamily: 'var(--font-mono)' }}>{c.code}</button>)}
+              {lista.map(c => <button key={c.code} title={c.code} onClick={() => addCor(tab === 'DTF' ? 'DTF' : 'Subli', c.code)} style={{ width: 34, height: 26, borderRadius: 5, border: '1px solid var(--border-strong)', background: c.hex, cursor: 'pointer', fontSize: 8, color: txtContrast(c.hex), fontFamily: 'var(--font-mono)' }}>{c.code}</button>)}
             </div>
           </div>
         )}
@@ -533,7 +567,10 @@ const imgModal: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba
 const tabClose: CSSProperties = { display: 'inline-grid', placeItems: 'center', width: 18, height: 18, borderRadius: 5, border: 'none', background: 'transparent', cursor: 'pointer', flex: '0 0 auto', opacity: .75 }
 const layMenu: CSSProperties = { position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 30, display: 'flex', gap: 4, padding: 5, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--sh-4)', whiteSpace: 'nowrap' }
 const layMenuBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }
-const obsArea: CSSProperties = { minHeight: 64, width: '100%', padding: '9px 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 13, lineHeight: 1.5 }
+const obsBox: CSSProperties = { position: 'relative', width: '100%', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)' }
+const obsInner: CSSProperties = { minHeight: 56, padding: '9px 12px', paddingRight: 42, paddingBottom: 14, color: 'var(--text)', font: 'inherit', fontSize: 13, lineHeight: 1.5, outline: 'none' }
+const codChip: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, height: 22, padding: '0 4px 0 6px', borderRadius: 999, background: 'var(--bg-muted)', border: '1px solid var(--border)', fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text)' }
+const codChipX: CSSProperties = { border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0, width: 14, height: 14 }
 const obsIcon: CSSProperties = { width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--primary)', cursor: 'pointer', display: 'grid', placeItems: 'center', boxShadow: 'var(--sh-1)' }
 const selBar: CSSProperties = { display: 'flex', alignItems: 'center', gap: 5, padding: '6px 8px', background: 'var(--n-900)', borderRadius: 10, boxShadow: 'var(--sh-4)' }
 const selSw: CSSProperties = { width: 22, height: 22, borderRadius: 6, border: '1px solid rgba(255,255,255,.28)', cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0, flex: '0 0 auto' }

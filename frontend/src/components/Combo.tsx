@@ -8,9 +8,9 @@ export interface ComboOpt { label: string; value: string; sub?: string; hex?: st
  * busca no topo. Aceita texto livre. `rotulo` = rótulo dentro da caixa
  * (aparece com o valor); `rightAddon` = botões dentro da caixa (+ / swatch).
  */
-export default function Combo({ value, onSelect, options, placeholder, leftSwatch, allowFree = true, rotulo, upper, rightAddon, tintClass }: {
+export default function Combo({ value, onSelect, options, placeholder, leftSwatch, allowFree = true, rotulo, upper, rightAddon, tintClass, popoverTop }: {
   value: string; onSelect: (v: string, opt?: ComboOpt) => void; options: ComboOpt[]
-  placeholder?: string; leftSwatch?: string; allowFree?: boolean; rotulo?: string; upper?: boolean; rightAddon?: ReactNode; tintClass?: string
+  placeholder?: string; leftSwatch?: string; allowFree?: boolean; rotulo?: string; upper?: boolean; rightAddon?: ReactNode; tintClass?: string; popoverTop?: ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
@@ -39,6 +39,7 @@ export default function Combo({ value, onSelect, options, placeholder, leftSwatc
       </div>
       {open && (
         <div style={popover}>
+          {popoverTop}
           <input autoFocus value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && allowFree) commitFree() }} placeholder="Buscar…" style={search} />
           <div style={list}>
             {filt.slice(0, 60).map(o => (

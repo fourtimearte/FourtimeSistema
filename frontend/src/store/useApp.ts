@@ -35,6 +35,7 @@ interface AppState {
   duplicateLayout: (pIdx: number, lIdx: number) => void
   deleteLayout: (pIdx: number, lIdx: number) => void
   setGrade: (pIdx: number, lIdx: number, grade: 'adulto' | 'infantil') => void
+  setGenero: (pIdx: number, lIdx: number, genero: string) => void
   setTecido: (pIdx: number, lIdx: number, tIdx: number, value: string) => void
   addTecido: (pIdx: number, lIdx: number) => void
   removeTecido: (pIdx: number, lIdx: number, tIdx: number) => void
@@ -138,6 +139,7 @@ export const useApp = create<AppState>((set, get) => {
     duplicateLayout: (pIdx, lIdx) => { edit(pIdx, ped => ped[pIdx].layouts.splice(lIdx + 1, 0, clone(ped[pIdx].layouts[lIdx]))); get().toast('Layout duplicado') },
     deleteLayout: (pIdx, lIdx) => { if (get().pedidos[pIdx].layouts.length <= 1) return; edit(pIdx, ped => ped[pIdx].layouts.splice(lIdx, 1)) },
     setGrade: (pIdx, lIdx, grade) => edit(pIdx, ped => { ped[pIdx].layouts[lIdx].grade = grade }),
+    setGenero: (pIdx, lIdx, genero) => edit(pIdx, ped => { ped[pIdx].layouts[lIdx].genero = genero }),
     setTecido: (pIdx, lIdx, tIdx, value) => edit(pIdx, ped => { ped[pIdx].layouts[lIdx].tecidos[tIdx] = value }),
     addTecido: (pIdx, lIdx) => edit(pIdx, ped => { ped[pIdx].layouts[lIdx].tecidos.push('') }),
     removeTecido: (pIdx, lIdx, tIdx) => edit(pIdx, ped => { const t = ped[pIdx].layouts[lIdx].tecidos; if (t.length > 1) t.splice(tIdx, 1) }),

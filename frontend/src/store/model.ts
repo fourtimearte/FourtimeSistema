@@ -71,7 +71,9 @@ export interface Layout {
   design: DesignTag[]
   tamanhos: Record<string, Tamanho>
   img: string | null; obs: string; obsTags: string[]
+  genero?: string
 }
+export const GENEROS = ['Masculino', 'Feminino', 'Infantil', 'Unissex']
 export type Status = 'rascunho' | 'aprovado' | 'producao' | 'entregue'
 /** anotação livre sobre a folha A4. x/y/w/h em fração (0..1) do documento. */
 export interface Anotacao { id: string; tipo: 'circulo' | 'retangulo' | 'seta' | 'texto'; x: number; y: number; w: number; h: number; cor: string; texto?: string }
