@@ -260,7 +260,7 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
           </div>
           {l.img
             ? <div style={{ position: 'relative' }}>
-                <img src={l.img} onClick={() => onView(l.img!)} style={{ width: '100%', maxHeight: 460, objectFit: 'contain', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', cursor: 'zoom-in', display: 'block' }} />
+                <img src={l.img} onClick={() => onView(l.img!)} style={{ width: '100%', height: 'auto', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', cursor: 'zoom-in', display: 'block' }} />
                 <button onClick={() => s.setImg(pIdx, lIdx, null)} title="Limpar imagem" style={{ ...iconBtn, position: 'absolute', top: 8, right: 8, background: 'var(--bg-surface)' }}><X size={14} /></button>
               </div>
             : <label onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); readImg(e.dataTransfer.files?.[0]) }} style={imgDrop}>
@@ -306,7 +306,6 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
 /* ---------- Visualizador (zoom/pan) — portal no body, trava scroll do fundo ---------- */
 function ImgViewer({ src, onClose }: { src: string; onClose: () => void }) {
   const [z, setZ] = useState(1); const [tx, setTx] = useState(0); const [ty, setTy] = useState(0)
-  const zRef = useRef(1)
   const drag = useRef<{ x: number; y: number } | null>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
@@ -314,38 +313,39 @@ function ImgViewer({ src, onClose }: { src: string; onClose: () => void }) {
   useEffect(() => {
     const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', k)
-    // trava o scroll da página atrás (html + body) enquanto o visualizador está aberto
+    // trava o scroll da página atrás (html + body) — a roda só dá zoom, não rola o fundo
     const de = document.documentElement
     const prevHtml = de.style.overflow, prevBody = document.body.style.overflow
     de.style.overflow = 'hidden'; document.body.style.overflow = 'hidden'
-    // wheel NÃO-passivo: zoom sem deixar a página do editor rolar por trás
-    const el = overlayRef.current
-    const wheel = (e: WheelEvent) => {
-      e.preventDefault()
-      const nz = Math.min(6, Math.max(1, zRef.current * (e.deltaY < 0 ? 1.15 : 0.87)))
-      zRef.current = nz; setZ(nz)
-      if (nz === 1) { setTx(0); setTy(0) }
-    }
-    el?.addEventListener('wheel', wheel, { passive: false })
-    return () => { window.removeEventListener('keydown', k); de.style.overflow = prevHtml; document.body.style.overflow = prevBody; el?.removeEventListener('wheel', wheel) }
+    return () => { window.removeEventListener('keydown', k); de.style.overflow = prevHtml; document.body.style.overflow = prevBody }
   }, [onClose])
 
-  function down(e: React.PointerEvent) {
-    if (e.target === imgRef.current) {
-      if (zRef.current > 1) { drag.current = { x: e.clientX, y: e.clientY }; overlayRef.current?.setPointerCapture(e.pointerId) }
-    } else if (e.target === overlayRef.current) { onClose() }
+  function onWheel(e: React.WheelEvent) {
+    setZ(prev => { const nz = Math.min(6, Math.max(1, prev * (e.deltaY < 0 ? 1.2 : 0.83))); if (nz === 1) { setTx(0); setTy(0) } return nz })
   }
-  function move(e: React.PointerEvent) {
-    if (!drag.current) return
-    setTx(t => t + (e.clientX - drag.current!.x)); setTy(t => t + (e.clientY - drag.current!.y))
+  // pan direto na imagem, com captura de ponteiro — move para qualquer canto, em qualquer zoom
+  function imgDown(e: React.PointerEvent) {
+    e.stopPropagation()
     drag.current = { x: e.clientX, y: e.clientY }
+    try { imgRef.current?.setPointerCapture(e.pointerId) } catch { /* noop */ }
   }
-  function up(e: React.PointerEvent) { if (drag.current) { drag.current = null; try { overlayRef.current?.releasePointerCapture(e.pointerId) } catch { /* noop */ } } }
+  function imgMove(e: React.PointerEvent) {
+    if (!drag.current) return
+    const dx = e.clientX - drag.current.x, dy = e.clientY - drag.current.y
+    drag.current = { x: e.clientX, y: e.clientY }
+    setTx(t => t + dx); setTy(t => t + dy)
+  }
+  function imgUp(e: React.PointerEvent) {
+    if (!drag.current) return
+    drag.current = null
+    try { imgRef.current?.releasePointerCapture(e.pointerId) } catch { /* noop */ }
+  }
 
   return createPortal(
-    <div ref={overlayRef} style={imgModal} onPointerDown={down} onPointerMove={move} onPointerUp={up}>
+    <div ref={overlayRef} style={imgModal} onWheel={onWheel} onPointerDown={e => { if (e.target === overlayRef.current) onClose() }}>
       <img ref={imgRef} src={src} draggable={false} onDragStart={e => e.preventDefault()}
-        style={{ maxWidth: '92vw', maxHeight: '90vh', borderRadius: 8, transform: `translate(${tx}px,${ty}px) scale(${z})`, cursor: z > 1 ? 'grab' : 'zoom-in', transition: drag.current ? 'none' : 'transform .08s', userSelect: 'none', touchAction: 'none' }} />
+        onPointerDown={imgDown} onPointerMove={imgMove} onPointerUp={imgUp} onPointerCancel={imgUp}
+        style={{ maxWidth: '94vw', maxHeight: '92vh', borderRadius: 8, transform: `translate(${tx}px,${ty}px) scale(${z})`, cursor: drag.current ? 'grabbing' : (z > 1 ? 'grab' : 'zoom-in'), transition: drag.current ? 'none' : 'transform .1s', userSelect: 'none', touchAction: 'none' }} />
       <div style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', color: '#fff', fontSize: 12, opacity: .8, pointerEvents: 'none' }}>roda = zoom · arrastar = mover · Esc = fechar</div>
     </div>,
     document.body,
