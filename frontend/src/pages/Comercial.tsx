@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type CSSProperties } from 'react'
-import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste, Code2, PenTool } from 'lucide-react'
+import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste, Code2, PenTool, User, Baby } from 'lucide-react'
 import { useApp } from '../store/useApp'
 import { toFt, fromFt, ehFt, nomeFt } from '../lib/ft'
 import { exportarHtml } from '../lib/exportHtml'
@@ -187,29 +187,24 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
 
         {/* COLUNA DIREITA (1.3): ficha — vira grid no modo sem-dinheiro */}
         <div className={'ficha' + (semDinheiro ? ' sd' : '')}>
-          {/* 1 · tecido */}
-          <div>
-            <label style={fieldLbl}>Tecido(s)</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 5 }}>
-              {l.tecidos.map((t, ti) => {
-                const last = ti === l.tecidos.length - 1
-                return (
-                  <div key={ti} style={{ display: 'flex', gap: 6 }}>
-                    <div style={{ flex: 1 }}><Combo value={t} onSelect={v => s.setTecido(pIdx, lIdx, ti, v)} placeholder="Tecido" options={TECIDOS.map(x => ({ label: x, value: x }))} /></div>
-                    {l.tecidos.length > 1 && <button onClick={() => s.removeTecido(pIdx, lIdx, ti)} title="Remover" style={miniBtn}><X size={14} /></button>}
-                    {last && <button onClick={() => s.addTecido(pIdx, lIdx)} title="Adicionar tecido" style={{ ...miniBtn, color: 'var(--primary)', borderColor: 'var(--primary)' }}><Plus size={15} /></button>}
-                  </div>
-                )
-              })}
-            </div>
+          {/* 1 · tecido — rótulo e botões (+/×) dentro da caixa (v172) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {l.tecidos.map((t, ti) => {
+              const last = ti === l.tecidos.length - 1
+              return (
+                <Combo key={ti} value={t} rotulo="Tecido" upper placeholder="Tecido" onSelect={v => s.setTecido(pIdx, lIdx, ti, v)} options={TECIDOS.map(x => ({ label: x, value: x }))}
+                  rightAddon={<>
+                    {l.tecidos.length > 1 && <button onClick={e => { e.stopPropagation(); s.removeTecido(pIdx, lIdx, ti) }} title="Remover tecido" style={inBoxBtn}><X size={13} /></button>}
+                    {last && <button onClick={e => { e.stopPropagation(); s.addTecido(pIdx, lIdx) }} title="Adicionar tecido" style={{ ...inBoxBtn, color: 'var(--primary)', borderColor: 'var(--primary)' }}><Plus size={14} /></button>}
+                  </>} />
+              )
+            })}
           </div>
-          {/* 2 · cor (selecionada no campo) */}
+          {/* 2 · cor — rótulo e swatch dentro da caixa (v172) */}
           <div>
-            <label style={fieldLbl}>Cor</label>
-            <div style={{ marginTop: 5 }}>
-              <Combo value={l.cor} leftSwatch={l.corHex} placeholder="Selecione a cor" options={CORES.map(c => ({ label: c.nome, value: c.nome, hex: c.hex }))}
-                onSelect={(v, opt) => s.patchLayout(pIdx, lIdx, { cor: v, corHex: opt?.hex ?? corHexPorNome(v) })} />
-            </div>
+            <Combo value={l.cor} rotulo="Cor" upper placeholder="Cor" options={CORES.map(c => ({ label: c.nome, value: c.nome, hex: c.hex }))}
+              onSelect={(v, opt) => s.patchLayout(pIdx, lIdx, { cor: v, corHex: opt?.hex ?? corHexPorNome(v) })}
+              rightAddon={<span title="Cor" style={{ width: 22, height: 22, borderRadius: 6, border: '1px solid var(--border-strong)', flex: '0 0 auto', ...(l.cor ? { background: l.corHex } : { backgroundImage: 'repeating-linear-gradient(45deg,#EEE,#EEE 2px,#CFCFCF 2px,#CFCFCF 4px)' }) }} />} />
           </div>
           {/* 3 · design */}
           <DesignEditor pIdx={pIdx} lIdx={lIdx} layout={l} />
@@ -247,15 +242,38 @@ function DesignEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layo
   const s = useApp()
   const [openTag, setOpenTag] = useState<TecnicaKey | null>(null)
   const [q, setQ] = useState('')
+  const [pickOpen, setPickOpen] = useState(false)
+  const pickRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!pickOpen) return
+    const h = (e: MouseEvent) => { if (pickRef.current && !pickRef.current.contains(e.target as Node)) setPickOpen(false) }
+    document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h)
+  }, [pickOpen])
   return (
     <div>
-      <label style={fieldLbl}>Design (define a rota de produção)</label>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-        {DESIGN_ORDER.map(tag => {
-          const on = layout.design.some(d => d.tag === tag)
-          return <button key={tag} onClick={() => s.toggleDesign(pIdx, lIdx, tag)}
-            style={{ height: 30, padding: '0 12px', borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: on ? '1.5px solid transparent' : '1.5px solid var(--border-strong)', background: on ? cvar(TECNICAS[tag].cor) : 'transparent', color: on ? '#fff' : 'var(--text-muted)' }}>{TECNICAS[tag].label}</button>
-        })}
+      {/* caixa Design: rótulo dentro + tokens das técnicas + botão "+" (v172) */}
+      <div style={designBox}>
+        <span style={comboRotulo}>Design</span>
+        <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 5, alignItems: 'center' }}>
+          {layout.design.map(d => (
+            <span key={d.tag} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 22, padding: '0 5px 0 9px', borderRadius: 999, background: cvar(TECNICAS[d.tag].cor), color: '#fff', fontSize: 11, fontWeight: 700 }}>
+              {TECNICAS[d.tag].label}
+              <button onClick={() => s.toggleDesign(pIdx, lIdx, d.tag)} title="Remover" style={{ border: 'none', background: 'rgba(255,255,255,.25)', color: '#fff', cursor: 'pointer', lineHeight: 1, borderRadius: 999, width: 15, height: 15, display: 'grid', placeItems: 'center', padding: 0 }}><X size={11} /></button>
+            </span>
+          ))}
+        </div>
+        <div style={{ position: 'relative', flex: '0 0 auto' }} ref={pickRef}>
+          <button onClick={() => setPickOpen(o => !o)} title="Adicionar técnica de impressão" style={{ ...inBoxBtn, color: 'var(--primary)', borderColor: 'var(--primary)' }}><Plus size={14} /></button>
+          {pickOpen && (
+            <div style={{ position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--sh-4)', padding: 8, display: 'flex', flexWrap: 'wrap', gap: 6, width: 240 }}>
+              {DESIGN_ORDER.map(tag => {
+                const on = layout.design.some(d => d.tag === tag)
+                return <button key={tag} onClick={() => s.toggleDesign(pIdx, lIdx, tag)}
+                  style={{ height: 28, padding: '0 11px', borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: on ? '1.5px solid transparent' : '1.5px solid var(--border-strong)', background: on ? cvar(TECNICAS[tag].cor) : 'transparent', color: on ? '#fff' : 'var(--text-muted)' }}>{TECNICAS[tag].label}</button>
+              })}
+            </div>
+          )}
+        </div>
       </div>
       {layout.design.filter(d => TEM_CODIGO.includes(d.tag)).map(d => (
         <div key={d.tag} style={{ marginTop: 8, border: '1px solid var(--border)', borderRadius: 8, padding: 8 }}>
@@ -293,24 +311,19 @@ function DesignEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layo
 function SizeTable({ pIdx, lIdx, layout, semDinheiro }: { pIdx: number; lIdx: number; layout: Layout; semDinheiro: boolean }) {
   const s = useApp(); const l = layout
   const linhas = ordemTamanhos(l)
-  const outras = (l.grade === 'adulto' ? TAM_INFANTIL : TAM_ADULTO).filter(t => l.tamanhos[t] === undefined)
+  const inf = l.grade === 'infantil'
   let totQ = 0, totV = 0
   return (
     <div>
-      <table style={{ ...stbl, width: semDinheiro ? 'auto' : '100%' }}>
+      <table className="sizetbl" style={{ ...stbl, width: semDinheiro ? 'auto' : '100%' }}>
         <thead><tr>
-          <th style={{ ...stTh, textAlign: 'left', minWidth: 74 }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              Tam
-              <span style={tamModo}>
-                {(['adulto', 'infantil'] as const).map(g => <button key={g} onClick={() => s.setGrade(pIdx, lIdx, g)} title={g} style={{ ...tamModoB, ...(l.grade === g ? tamModoBOn : {}) }}>{g === 'adulto' ? 'A' : 'I'}</button>)}
-              </span>
-              {outras.length > 0 && <select value="" onChange={e => { if (e.target.value) s.setSize(pIdx, lIdx, e.target.value, 'qtd', 0) }} style={miniSel} title="Adicionar tamanho da outra grade">
-                <option value="">+</option>{outras.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>}
-            </span>
+          <th style={{ ...stTh, textAlign: 'center', minWidth: 44 }}>
+            <button className="gradebtn" onClick={() => s.setGrade(pIdx, lIdx, inf ? 'adulto' : 'infantil')} style={gradeBtn}
+              title={inf ? 'Grade infantil — clique para adulto' : 'Grade adulto — clique para infantil'}>
+              {inf ? <Baby size={16} /> : <User size={16} />}
+            </button>
           </th>
-          <th style={stTh}>Qtd</th>{!semDinheiro && <th style={stTh}>Uni</th>}{!semDinheiro && <th style={stTh}>Total</th>}
+          <th style={stTh}>Qtd</th>{!semDinheiro && <th style={stTh}>Uni (R$)</th>}{!semDinheiro && <th style={stTh}>Total (R$)</th>}
         </tr></thead>
         <tbody>
           {linhas.map(tam => {
@@ -352,12 +365,13 @@ const iconBtn: CSSProperties = { width: 34, height: 34, borderRadius: 8, border:
 const miniBtn: CSSProperties = { width: 'var(--control-h-lg)', height: 'var(--control-h-lg)', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
 const undoBtn: CSSProperties = { width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
 const addBtnInline: CSSProperties = { border: 'none', background: 'none', color: 'var(--primary)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }
-const tamModo: CSSProperties = { display: 'inline-flex', background: 'var(--bg-muted)', borderRadius: 6, padding: 2, gap: 1 }
-const tamModoB: CSSProperties = { width: 18, height: 18, fontSize: 10, fontWeight: 700, borderRadius: 4, border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }
-const tamModoBOn: CSSProperties = { background: 'var(--primary)', color: '#fff' }
+const inBoxBtn: CSSProperties = { width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
+const designBox: CSSProperties = { display: 'flex', alignItems: 'center', gap: 8, minHeight: 'var(--control-h-lg)', padding: '5px 8px 5px 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)' }
+const comboRotulo: CSSProperties = { flex: '0 0 auto', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-subtle)' }
+const gradeBtn: CSSProperties = { display: 'inline-grid', placeItems: 'center', width: 26, height: 26, padding: 0, background: 'transparent', border: '1px solid transparent', borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer', margin: '0 auto' }
 const stbl: CSSProperties = { borderCollapse: 'separate', borderSpacing: 0, fontFamily: 'var(--font-mono)', fontSize: 12, marginTop: 2 }
-const stTh: CSSProperties = { border: '1px solid var(--border)', padding: '3px 5px', textAlign: 'center', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', fontWeight: 600, fontSize: 10 }
-const stTd: CSSProperties = { border: '1px solid var(--border)', padding: '2px 4px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }
+const stTh: CSSProperties = { padding: '3px 5px', textAlign: 'center', background: 'transparent', color: 'var(--text-muted)', fontWeight: 500, fontSize: 10 }
+const stTd: CSSProperties = { padding: '2px 4px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }
 const cellInp: CSSProperties = { width: '100%', minWidth: 42, height: 28, padding: '0 4px', border: 'none', background: 'transparent', color: 'inherit', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 12, outline: 'none', textAlign: 'center' }
 const ta: CSSProperties = { width: '100%', padding: '8px 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 13, outline: 'none', resize: 'vertical' }
 const dateInp: CSSProperties = { height: 'var(--control-h-lg)', width: '100%', padding: '0 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 14, outline: 'none' }
@@ -376,4 +390,13 @@ const CSS = `
   .ficha.sd>:nth-child(5){grid-column:2;grid-row:4;align-self:stretch}
 }
 @media(max-width:820px){.lay-grid{grid-template-columns:1fr!important}}
+/* tabela de tamanhos: grade só com topo+esquerda; corpo sem borda externa vertical (v172) */
+.sizetbl th,.sizetbl td{border:none;border-top:1px solid var(--border);border-left:1px solid var(--border)}
+.sizetbl th:first-child,.sizetbl td:first-child{border-left:none}
+.sizetbl tr:last-child td{border-bottom:1px solid var(--border)}
+.sizetbl thead th:first-child{border-left:1px solid var(--border);border-top-left-radius:8px}
+.sizetbl thead th:last-child{border-right:1px solid var(--border);border-top-right-radius:8px}
+.sizetbl tfoot td:first-child{border-bottom-left-radius:8px}
+.sizetbl tfoot td:last-child{border-bottom-right-radius:8px}
+.sizetbl .gradebtn:hover{border-color:var(--primary);color:var(--primary)}
 `
