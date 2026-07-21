@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { Plus, Save, Printer, Check, Trash2, Copy, X, ImagePlus, Search, Undo2, Redo2, FolderOpen, ClipboardPaste, Code2, PenTool, User, Baby, Clock, Eraser, Palette } from 'lucide-react'
 import { useApp } from '../store/useApp'
 import { toFt, fromFt, ehFt, nomeFt } from '../lib/ft'
@@ -394,6 +395,7 @@ function ObsEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layout:
   const [tab, setTab] = useState<'DTF' | 'Subli'>('DTF')
   const [q, setQ] = useState('')
   const [pick, setPick] = useState(false)
+  const [bar, setBar] = useState<{ x: number; y: number } | null>(null)
   const pickRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { if (ref.current) ref.current.innerHTML = layout.obs || '' }, [])
@@ -406,37 +408,51 @@ function ObsEditor({ pIdx, lIdx, layout }: { pIdx: number; lIdx: number; layout:
   const save = () => { if (ref.current) s.setObs(pIdx, lIdx, ref.current.innerHTML) }
   const guardaSel = () => { const sel = window.getSelection(); if (sel && sel.rangeCount && ref.current?.contains(sel.anchorNode)) selRef.current = sel.getRangeAt(0).cloneRange() }
   const focaSel = () => { ref.current?.focus(); const sel = window.getSelection(); if (selRef.current && sel) { sel.removeAllRanges(); sel.addRange(selRef.current) } }
-  const cmd = (c: string, v?: string) => { focaSel(); document.execCommand('styleWithCSS', false, 'true'); document.execCommand(c, false, v); guardaSel(); save() }
-  const insereCodigo = (code: string, hex: string) => { focaSel(); document.execCommand('insertHTML', false, `<span class="cod-chip" contenteditable="false" style="--c:${hex}">${code}</span>&#8203;`); guardaSel(); save() }
+  /** mostra a barra flutuante acima da seleção (só quando há texto marcado) */
+  const atualizaBar = () => {
+    const sel = window.getSelection()
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed || !ref.current?.contains(sel.anchorNode)) { setBar(null); return }
+    const rect = sel.getRangeAt(0).getBoundingClientRect()
+    if (!rect.width && !rect.height) { setBar(null); return }
+    guardaSel(); setBar({ x: rect.left + rect.width / 2, y: rect.top })
+  }
+  const cmd = (c: string, v?: string) => { focaSel(); document.execCommand('styleWithCSS', false, 'true'); document.execCommand(c, false, v); save(); atualizaBar() }
+  const insereCodigo = (code: string, hex: string) => { focaSel(); document.execCommand('insertHTML', false, `<span class="cod-chip" contenteditable="false" style="--c:${hex}">${code}</span>&#8203;`); save() }
   const lista = (tab === 'DTF' ? DTF_CORES : SB_CORES).filter(c => c.code.toUpperCase().includes(q.toUpperCase())).slice(0, 240)
 
   return (
-    <div>
-      <div style={obsBar} onMouseDown={e => e.preventDefault()}>
-        {TEXTO_CORES.map(c => <button key={c} title="Cor do texto" onClick={() => cmd('foreColor', c)} style={{ ...obsSw, background: c }} />)}
-        <span style={obsSep} />
-        {MARCA_CORES.map(c => <button key={c} title="Marca-texto" onClick={() => cmd('hiliteColor', c)} style={{ ...obsSw, background: c, color: '#111', fontWeight: 800, fontSize: 11, lineHeight: 1 }}>A</button>)}
-        <span style={obsSep} />
-        <button title="Limpar formatação" onClick={() => cmd('removeFormat')} style={obsBtn}><Eraser size={14} /></button>
-        <span style={{ marginLeft: 'auto' }} />
-        <div style={{ position: 'relative' }} ref={pickRef}>
-          <button onMouseDown={e => { e.preventDefault(); guardaSel() }} onClick={() => setPick(p => !p)} style={{ ...obsBtn, width: 'auto', padding: '0 10px', gap: 5, fontSize: 12, fontWeight: 600, color: 'var(--primary)' }}><Palette size={14} />Código de cor</button>
-          {pick && (
-            <div style={codPop} onMouseDown={e => e.preventDefault()}>
-              <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
-                {(['DTF', 'Subli'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ ...codTab, ...(tab === t ? codTabOn : {}) }}>{t === 'DTF' ? 'DTF' : 'Sublimação'}</button>)}
-              </div>
-              <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar número…" style={codBusca} />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxHeight: 190, overflowY: 'auto', marginTop: 6 }}>
-                {lista.map(c => <button key={c.code} title={c.code} onClick={() => insereCodigo(c.code, c.hex)} style={{ width: 34, height: 26, borderRadius: 5, border: '1px solid var(--border-strong)', background: c.hex, cursor: 'pointer', fontSize: 8, color: txtContrast(c.hex), fontFamily: 'var(--font-mono)' }}>{c.code}</button>)}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+    <div style={{ position: 'relative' }}>
       <div ref={ref} className="obsrich" contentEditable suppressContentEditableWarning
-        data-ph="Observações da peça — códigos de cor, texto colorido e marca-texto…"
-        onInput={save} onBlur={save} onMouseUp={guardaSel} onKeyUp={guardaSel} style={obsArea} />
+        data-ph="Observações da peça…"
+        onInput={save} onBlur={() => { save(); setTimeout(() => setBar(null), 150) }}
+        onMouseUp={atualizaBar} onKeyUp={atualizaBar}
+        style={{ ...obsArea, paddingRight: 42 }} />
+
+      {/* ícone no canto inferior direito → inserir código de cor (DTF/Sublimação) */}
+      <div ref={pickRef} style={{ position: 'absolute', right: 8, bottom: 8 }}>
+        <button onMouseDown={e => { e.preventDefault(); guardaSel() }} onClick={() => setPick(p => !p)} title="Inserir código de cor (DTF/Sublimação)" style={obsIcon}><Palette size={15} /></button>
+        {pick && (
+          <div style={{ ...codPop, top: 'auto', bottom: 'calc(100% + 6px)', right: 0 }} onMouseDown={e => e.preventDefault()}>
+            <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+              {(['DTF', 'Subli'] as const).map(t => <button key={t} onClick={() => setTab(t)} style={{ ...codTab, ...(tab === t ? codTabOn : {}) }}>{t === 'DTF' ? 'DTF' : 'Sublimação'}</button>)}
+            </div>
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar número…" style={codBusca} />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxHeight: 190, overflowY: 'auto', marginTop: 6 }}>
+              {lista.map(c => <button key={c.code} title={c.code} onClick={() => insereCodigo(c.code, c.hex)} style={{ width: 34, height: 26, borderRadius: 5, border: '1px solid var(--border-strong)', background: c.hex, cursor: 'pointer', fontSize: 8, color: txtContrast(c.hex), fontFamily: 'var(--font-mono)' }}>{c.code}</button>)}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* barra flutuante de formatação — só aparece com texto selecionado (v172) */}
+      {bar && createPortal(
+        <div style={{ position: 'fixed', left: bar.x, top: bar.y - 48, transform: 'translateX(-50%)', zIndex: 96, ...selBar }} onMouseDown={e => e.preventDefault()}>
+          {TEXTO_CORES.map(c => <button key={c} title="Cor do texto" onClick={() => cmd('foreColor', c)} style={{ ...selSw, background: c }} />)}
+          <span style={selSep} />
+          {MARCA_CORES.map(c => <button key={c} title="Marca-texto" onClick={() => cmd('hiliteColor', c)} style={{ ...selSw, background: c, color: '#111', fontWeight: 800, fontSize: 11, lineHeight: 1 }}>A</button>)}
+          <span style={selSep} />
+          <button title="Limpar formatação" onClick={() => cmd('removeFormat')} style={selBtn}><Eraser size={13} /></button>
+        </div>, document.body)}
     </div>
   )
 }
@@ -517,11 +533,12 @@ const imgModal: CSSProperties = { position: 'fixed', inset: 0, background: 'rgba
 const tabClose: CSSProperties = { display: 'inline-grid', placeItems: 'center', width: 18, height: 18, borderRadius: 5, border: 'none', background: 'transparent', cursor: 'pointer', flex: '0 0 auto', opacity: .75 }
 const layMenu: CSSProperties = { position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 30, display: 'flex', gap: 4, padding: 5, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--sh-4)', whiteSpace: 'nowrap' }
 const layMenuBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }
-const obsBar: CSSProperties = { display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 6 }
-const obsSw: CSSProperties = { width: 24, height: 24, borderRadius: 6, border: '1px solid var(--border-strong)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto', padding: 0 }
-const obsSep: CSSProperties = { width: 1, height: 20, background: 'var(--border)', margin: '0 3px' }
-const obsBtn: CSSProperties = { width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: '0 0 auto', fontFamily: 'inherit' }
-const obsArea: CSSProperties = { minHeight: 60, width: '100%', padding: '9px 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 13, lineHeight: 1.5 }
+const obsArea: CSSProperties = { minHeight: 64, width: '100%', padding: '9px 12px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-surface)', color: 'var(--text)', font: 'inherit', fontSize: 13, lineHeight: 1.5 }
+const obsIcon: CSSProperties = { width: 28, height: 28, borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--primary)', cursor: 'pointer', display: 'grid', placeItems: 'center', boxShadow: 'var(--sh-1)' }
+const selBar: CSSProperties = { display: 'flex', alignItems: 'center', gap: 5, padding: '6px 8px', background: 'var(--n-900)', borderRadius: 10, boxShadow: 'var(--sh-4)' }
+const selSw: CSSProperties = { width: 22, height: 22, borderRadius: 6, border: '1px solid rgba(255,255,255,.28)', cursor: 'pointer', display: 'grid', placeItems: 'center', padding: 0, flex: '0 0 auto' }
+const selSep: CSSProperties = { width: 1, height: 18, background: 'rgba(255,255,255,.22)', margin: '0 2px' }
+const selBtn: CSSProperties = { width: 26, height: 26, borderRadius: 6, border: '1px solid rgba(255,255,255,.28)', background: 'transparent', color: '#fff', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }
 const codPop: CSSProperties = { position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 40, width: 260, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--sh-4)', padding: 8 }
 const codTab: CSSProperties = { flex: 1, height: 28, borderRadius: 7, border: '1px solid var(--border-strong)', background: 'var(--bg-surface)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }
 const codTabOn: CSSProperties = { background: 'var(--primary)', color: 'var(--primary-fg)', borderColor: 'var(--primary)' }
@@ -532,7 +549,7 @@ const CSS = `
 .lay-badge:hover .lay-badge-menu,.lay-badge:focus-within .lay-badge-menu{opacity:1;pointer-events:auto;transform:none}
 .obsrich .cod-chip{cursor:default}
 .comercial-layout{display:grid;grid-template-columns:262px minmax(0,1fr);gap:18px;align-items:start}
-.orc-col{position:sticky;top:66px;align-self:start;max-height:calc(100vh - 84px);overflow:auto;padding-right:2px}
+.orc-col{position:sticky;top:66px;align-self:start;max-height:calc(100vh - 84px);overflow:auto;padding:3px 5px 12px}
 .orc-card:hover{border-color:var(--border-strong);box-shadow:var(--sh-2)}
 @media(max-width:1120px){.comercial-layout{grid-template-columns:1fr}.orc-col{position:static;max-height:none;order:2;max-height:420px}.comercial-editor{order:1}}
 .ficha{display:flex;flex-direction:column;gap:14px}
