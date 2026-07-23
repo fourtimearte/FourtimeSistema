@@ -70,7 +70,7 @@ export default function Comercial() {
 
   function onCliente(v: string) {
     const m = CLIENTES.find(c => c.nome.toLowerCase() === v.trim().toLowerCase())
-    if (m) patchPedido(curPed, { cliente: m.nome, clienteId: m.id, cpf: m.doc, contato: m.contato, vendedor: m.vendedor })
+    if (m) patchPedido(curPed, { cliente: m.nome, clienteId: m.id, cpf: m.doc, contato: m.contato, vendedor: m.vendedor, endereco: m.endereco })
     else updateHeader(curPed, 'cliente', v)
   }
   function aprovar() {
@@ -145,6 +145,7 @@ export default function Comercial() {
             <Field label="Embalagem"><Inp value={p.embalagem} onChange={v => updateHeader(curPed, 'embalagem', v)} list="dl-emb" /></Field>
             <Field label="Vendedor"><Inp value={p.vendedor} onChange={v => updateHeader(curPed, 'vendedor', v)} list="dl-vend" /></Field>
             <Field label="Contato"><Inp value={p.contato} onChange={v => updateHeader(curPed, 'contato', v)} mono /></Field>
+            <Field label="Endereço"><Inp value={p.endereco ?? ''} onChange={v => updateHeader(curPed, 'endereco', v)} placeholder="Rua, nº, bairro — cidade/UF" /></Field>
             <Field label="Entrega"><Inp value={p.entrega} onChange={v => updateHeader(curPed, 'entrega', v)} placeholder="dd/mm/aaaa" /></Field>
             <Field label="Envio"><input type="date" value={toISO(p.envio)} onChange={e => updateHeader(curPed, 'envio', fromISO(e.target.value))} style={dateInp} /></Field>
             <Field label="Pagamento"><Inp value={p.pagamento} onChange={v => updateHeader(curPed, 'pagamento', v)} list="dl-pag" /></Field>
@@ -244,7 +245,7 @@ function LayoutCard({ pIdx, lIdx, layout, canDelete, semDinheiro, onView }: { pI
               <div className="lay-badge-menu" style={layMenuWrap}>
                 <div style={layMenuBox}>
                   <button onClick={() => s.copyLayout(pIdx, lIdx)} title="Copiar este layout" style={layMenuBtn}><Copy size={13} />Copiar</button>
-                  <button onClick={() => s.pasteLayout(pIdx)} disabled={!s.layoutClip} title="Colar layout copiado" style={{ ...layMenuBtn, opacity: s.layoutClip ? 1 : .45, cursor: s.layoutClip ? 'pointer' : 'default' }}><ClipboardPaste size={13} />Colar</button>
+                  <button onClick={() => s.pasteLayout(pIdx, lIdx)} disabled={!s.layoutClip} title="Colar sobre este layout" style={{ ...layMenuBtn, opacity: s.layoutClip ? 1 : .45, cursor: s.layoutClip ? 'pointer' : 'default' }}><ClipboardPaste size={13} />Colar</button>
                 </div>
               </div>
             </div>

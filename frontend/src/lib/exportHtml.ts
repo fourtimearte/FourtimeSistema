@@ -3,6 +3,7 @@
    SEMPRE sem valores (R$). Self-contained (CSS inline, imagens base64).
    ===================================================================== */
 import { TECNICAS, ordemTamanhos, isInfantil, pedTotais, type Pedido, type Layout } from '../store/model'
+import { logoSvg } from '../components/Logo'
 
 const esc = (s: string) => (s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string))
 function corVar(name: string) {
@@ -44,16 +45,15 @@ export function exportarHtml(p: Pedido): string {
   const tagsHead = (p.obsTags ?? []).map(t => `<b style="color:${t === 'URGENTE' ? '#C6161B' : '#B45309'}">${esc(t)}</b>`).join(' ')
   return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc((p.cliente || 'Orçamento'))} · ${esc(p.pedido)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--red:#C6161B}
 *{box-sizing:border-box}
 body{margin:0;background:#EEF1F4;font-family:'Roboto',system-ui,sans-serif;color:#161A20;padding:16px}
 .doc{max-width:820px;margin:0 auto;background:#fff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);padding:24px}
 .head{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--red);padding-bottom:12px;margin-bottom:12px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700}
-.brand .lg{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#E5484D,#9E0E13);color:#fff;display:grid;place-items:center}
-.brand small{display:block;font-weight:500;font-size:10px;color:#6A7686}
+.brand{display:flex;flex-direction:column;gap:3px}
+.brand small{display:block;font-weight:500;font-size:10px;color:#6A7686;padding-left:2px}
 .code{text-align:right;font-size:12px;color:#6A7686}.code b{display:block;color:#161A20;font-size:15px}
 .campos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 18px;border-bottom:1px solid #E4E8ED;padding-bottom:12px;margin-bottom:8px}
 .cp{padding:4px 0}.cp label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:#98A3B0;font-weight:700}.cp span{font-size:13px;font-weight:500}
@@ -79,7 +79,7 @@ body{margin:0;background:#EEF1F4;font-family:'Roboto',system-ui,sans-serif;color
    poderia cair no layout de celular e quebrar a arte. Mobile só na tela, nunca no papel. */
 @media screen and (max-width:640px){.campos{grid-template-columns:1fr 1fr}.lay{grid-template-columns:1fr}}
 </style></head><body><div class="doc">
-<div class="head"><div class="brand"><div class="lg">F</div><div>FOURTIME<small>Personalização esportiva</small></div></div><div class="code">Pedido Nº<b>${esc(p.pedido)}</b></div></div>
+<div class="head"><div class="brand">${logoSvg('dark', 30)}<small>Personalização esportiva</small></div><div class="code">Pedido Nº<b>${esc(p.pedido)}</b></div></div>
 <div class="campos">${campos}</div>
 ${(tagsHead || p.obs) ? `<div class="headobs">${tagsHead} ${esc(p.obs)}</div>` : ''}
 ${p.layouts.map(layoutHtml).join('')}

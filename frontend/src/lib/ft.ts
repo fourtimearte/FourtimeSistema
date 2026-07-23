@@ -9,14 +9,14 @@ export const FT_FORMATO = 'FOURTIME_ORCAMENTO'
 export const FT_VERSAO = 2
 
 function blankHeader() {
-  return { pedido: '', clienteId: null, cliente: '', cpf: '', vendedor: '', contato: '', depto: '', embalagem: '', entrega: '', envio: '', pagamento: '', obs: '', obsTags: [] as string[] }
+  return { pedido: '', clienteId: null, cliente: '', cpf: '', vendedor: '', contato: '', endereco: '', depto: '', embalagem: '', entrega: '', envio: '', pagamento: '', obs: '', obsTags: [] as string[] }
 }
 
 export function toFt(p: Pedido, salvoEm: string) {
   return {
     _formato: FT_FORMATO, _versao: FT_VERSAO, salvoEm,
     header: {
-      pedido: p.pedido, clienteId: p.clienteId, cliente: p.cliente, cpf: p.cpf, vendedor: p.vendedor, contato: p.contato,
+      pedido: p.pedido, clienteId: p.clienteId, cliente: p.cliente, cpf: p.cpf, vendedor: p.vendedor, contato: p.contato, endereco: p.endereco ?? '',
       depto: p.depto, embalagem: p.embalagem, entrega: p.entrega, envio: p.envio, pagamento: p.pagamento, obs: p.obs, obsTags: p.obsTags ?? [],
     },
     layouts: p.layouts.map(l => ({

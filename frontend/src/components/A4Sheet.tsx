@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { TECNICAS, ordemTamanhos, isInfantil, pedTotais, money, type Pedido, type Layout, type Anotacao } from '../store/model'
 import { cvar } from './ui'
+import Logo from './Logo'
 
 /** Corpo do documento A4 (fonte Roboto, cores fixas claras). Reutilizado
  * pela impressão (PrintDoc) e pela pré-visualização/anotações. `children`
@@ -10,9 +11,9 @@ export default function A4Sheet({ p, semDinheiro, children }: { p: Pedido; semDi
   return (
     <div style={{ position: 'relative', fontFamily: "'Roboto',sans-serif", color: '#161A20', background: '#fff' }}>
       <div style={head}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={logo}>F</div>
-          <div style={{ fontWeight: 700 }}>FOURTIME<div style={{ fontWeight: 500, fontSize: 10, color: '#6A7686' }}>Personalização esportiva</div></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Logo variant="dark" height={28} />
+          <div style={{ fontWeight: 500, fontSize: 10, color: '#6A7686', paddingLeft: 2 }}>Personalização esportiva</div>
         </div>
         <div style={{ fontFamily: "'IBM Plex Mono',monospace", fontSize: 12, color: '#6A7686', textAlign: 'right' }}>
           Pedido Nº<div style={{ color: '#161A20', fontSize: 15, fontWeight: 600 }}>{p.pedido}</div>

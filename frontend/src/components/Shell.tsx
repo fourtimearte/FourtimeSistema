@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import {
-  LayoutGrid, Briefcase, Users, Kanban, Layers, Box, Wallet, Search, Bell, Sun, Moon, Menu,
+  LayoutGrid, Briefcase, Users, Kanban, Layers, Box, Wallet, Search, Bell, Sun, Moon,
 } from 'lucide-react'
 import { useApp, type PageId } from '../store/useApp'
+import Logo from './Logo'
 
 interface NavItem { id: PageId; nome: string; icon: ReactNode; cor: string }
 interface NavGroup { grupo: string; itens: NavItem[] }
@@ -26,7 +27,6 @@ const NAV: NavGroup[] = [
 export default function Shell({ children }: { children: ReactNode }) {
   const { page, goto, perfil, kcards, toast } = useApp()
   const [dark, setDark] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
   const av = perfil === 'Administração' ? 'AF' : perfil.slice(0, 2).toUpperCase()
   const nLate = kcards.filter(c => c.late).length
 
@@ -38,10 +38,7 @@ export default function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="app-root" style={{ minHeight: '100vh' }}>
       <header style={topbar}>
-        <button style={iconBtnNav} className="only-mobile" onClick={() => setMenuOpen(o => !o)}><Menu size={17} /></button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontWeight: 600, color: 'var(--nav-fg-strong)' }}>
-          <div style={logo}>F</div><div>Fourtime <small style={{ display: 'block', fontWeight: 500, fontSize: 11, color: 'var(--nav-group)' }}>CRM · ERP · Produção</small></div>
-        </div>
+        <div style={{ display: 'flex', alignItems: 'center', paddingLeft: 2 }}><Logo variant="light" height={22} /></div>
         <div style={{ flex: 1 }} />
         <div style={search}><Search size={15} /><input placeholder="Buscar pedido, cliente, PD####…" style={searchInput} onKeyDown={e => { if (e.key === 'Enter' && (e.target as HTMLInputElement).value) toast('Busca (protótipo)') }} /></div>
         <button style={iconBtnNav} onClick={toggleTheme}>{dark ? <Sun size={17} /> : <Moon size={17} />}</button>
@@ -50,7 +47,7 @@ export default function Shell({ children }: { children: ReactNode }) {
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', alignItems: 'start' }} className="ft-layout">
-        <nav className={'sidenav ' + (menuOpen ? 'open' : '')} style={sidenav}>
+        <nav className="sidenav" style={sidenav}>
           {NAV.map(g => (
             <div key={g.grupo}>
               <div style={grp}>{g.grupo}</div>
@@ -59,7 +56,7 @@ export default function Shell({ children }: { children: ReactNode }) {
                 let cnt: ReactNode = null
                 if (it.id === 'producao') cnt = <span style={cntBadge}>{kcards.filter(c => c.station !== 'entregue').length}</span>
                 return (
-                  <button key={it.id} onClick={() => { goto(it.id); setMenuOpen(false) }}
+                  <button key={it.id} onClick={() => goto(it.id)}
                     style={{ ...navItem, ...(on ? { background: `linear-gradient(90deg,color-mix(in srgb,var(${it.cor}) 34%,transparent),transparent)`, color: '#fff', boxShadow: `inset 3px 0 0 var(${it.cor})` } : {}) }}>
                     {it.icon}<span style={{ flex: 1, textAlign: 'left' }}>{it.nome}</span>{cnt}
                   </button>

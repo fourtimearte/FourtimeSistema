@@ -24,7 +24,7 @@ interface AppState {
   criarPedidoDe: (base: Pedido, cli?: Cliente) => void
   undo: () => void; redo: () => void
   copyLayout: (pIdx: number, lIdx: number) => void
-  pasteLayout: (pIdx: number) => void
+  pasteLayout: (pIdx: number, lIdx?: number) => void
   abrirPedido: (p: Pedido) => void
   fecharAba: (idx: number) => void
   updateHeader: (idx: number, field: keyof Pedido, value: string) => void
@@ -120,7 +120,7 @@ export const useApp = create<AppState>((set, get) => {
     },
 
     copyLayout: (pIdx, lIdx) => { set({ layoutClip: clone(get().pedidos[pIdx].layouts[lIdx]) }); get().toast('Layout L-' + String(lIdx + 1).padStart(2, '0') + ' copiado') },
-    pasteLayout: (pIdx) => { const clip = get().layoutClip; if (!clip) return; edit(pIdx, ped => ped[pIdx].layouts.push(clone(clip))); get().toast('Layout colado') },
+    pasteLayout: (pIdx, lIdx) => { const clip = get().layoutClip; if (!clip) return; edit(pIdx, ped => { if (lIdx == null) ped[pIdx].layouts.push(clone(clip)); else ped[pIdx].layouts[lIdx] = clone(clip) }); get().toast(lIdx == null ? 'Layout colado' : 'Layout colado sobre L-' + String(lIdx + 1).padStart(2, '0')) },
     abrirPedido: (p) => { const seq = get().seq; set({ pedidos: [p, ...get().pedidos], fin: { ...get().fin, [p.pedido]: get().fin[p.pedido] ?? { sinal: 0 } }, curPed: 0, page: 'comercial', past: [], future: [], seq }); get().toast('Aberto ' + p.pedido) },
     fecharAba: (idx) => {
       const st = get(); if (idx < 0 || idx >= st.pedidos.length) return
