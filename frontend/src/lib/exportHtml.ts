@@ -75,7 +75,9 @@ body{margin:0;background:#EEF1F4;font-family:'Roboto',system-ui,sans-serif;color
 .sz tr.inf td{background:#FCE8E9;color:#C6161B;font-weight:600}.sz tr.adu td{background:#E3EEFB;color:#12213F;font-weight:600}
 .foot{display:flex;justify-content:space-between;align-items:center;padding-top:12px;font-size:11px;color:#6A7686}
 .foot b{font-family:ui-monospace,monospace;color:#161A20;font-size:14px}
-@media(max-width:640px){.campos{grid-template-columns:1fr 1fr}.lay{grid-template-columns:1fr}}
+/* 'screen' de propósito (lição do v188): sem ele, o viewport da impressão (A4 ≈ 794px)
+   poderia cair no layout de celular e quebrar a arte. Mobile só na tela, nunca no papel. */
+@media screen and (max-width:640px){.campos{grid-template-columns:1fr 1fr}.lay{grid-template-columns:1fr}}
 </style></head><body><div class="doc">
 <div class="head"><div class="brand"><div class="lg">F</div><div>FOURTIME<small>Personalização esportiva</small></div></div><div class="code">Pedido Nº<b>${esc(p.pedido)}</b></div></div>
 <div class="campos">${campos}</div>
