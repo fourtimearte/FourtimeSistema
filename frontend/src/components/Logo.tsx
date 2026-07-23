@@ -1,19 +1,18 @@
-/* Wordmark FOURTIME. Recriação em SVG (troca-se pelo arquivo oficial se houver).
+/* Logo FOURTIME — imagem oficial do cliente (PNG 1000x110, fundo transparente).
  * variant 'light' = para fundos ESCUROS (TIME branco). 'dark' = para fundos
- * CLAROS (TIME quase-preto). FOUR sempre vermelho da marca. */
+ * CLAROS (TIME preto). Proporção fixa 1000:110 → largura = altura * 1000/110. */
+import { LOGO_TIME_CLARO, LOGO_TIME_ESCURO } from './logoData'
+
+const AR = 1000 / 110
+
 export default function Logo({ variant = 'light', height = 26 }: { variant?: 'light' | 'dark'; height?: number }) {
-  const time = variant === 'light' ? '#F3F5F8' : '#161A20'
-  return (
-    <svg height={height} viewBox="0 0 592 100" role="img" aria-label="Fourtime" style={{ display: 'block' }}>
-      <text x="0" y="79" fontFamily="'Archivo Black','Arial Black','Helvetica Neue',system-ui,sans-serif" fontSize="100" fontWeight="900" letterSpacing="-5">
-        <tspan fill="#C6161B">FOUR</tspan><tspan fill={time}>TIME</tspan>
-      </text>
-    </svg>
-  )
+  const src = variant === 'light' ? LOGO_TIME_CLARO : LOGO_TIME_ESCURO
+  return <img src={src} alt="Fourtime" height={height} style={{ display: 'block', height, width: 'auto' }} />
 }
 
 /** mesma logo como string HTML (para o export standalone e outros usos fora do React) */
 export function logoSvg(variant: 'light' | 'dark' = 'dark', height = 34): string {
-  const time = variant === 'light' ? '#F3F5F8' : '#161A20'
-  return `<svg height="${height}" viewBox="0 0 592 100" role="img" aria-label="Fourtime" style="display:block"><text x="0" y="79" font-family="'Archivo Black','Arial Black','Helvetica Neue',system-ui,sans-serif" font-size="100" font-weight="900" letter-spacing="-5"><tspan fill="#C6161B">FOUR</tspan><tspan fill="${time}">TIME</tspan></text></svg>`
+  const src = variant === 'light' ? LOGO_TIME_CLARO : LOGO_TIME_ESCURO
+  const w = Math.round(height * AR)
+  return `<img src="${src}" alt="Fourtime" height="${height}" width="${w}" style="display:block;height:${height}px;width:auto">`
 }
