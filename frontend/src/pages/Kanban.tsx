@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { Plus, Clock, Calendar, Paperclip, Layers, PencilLine, PackageCheck, X, FileText, PencilRuler, MapPin } from 'lucide-react'
@@ -26,15 +26,30 @@ const LANES: [string, string][] = [
 export default function Kanban() {
   const { pedidos, kcards, moveCard, goto, abrirNoEditor, semDinheiro, toast } = useApp()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
-  const nLate = kcards.filter(c => c.late).length
+  const nLate = useMemo(() => kcards.filter(c => c.late).length, [kcards])
   const [selCardId, setSelCardId] = useState<string | null>(null)
   const [selPed, setSelPed] = useState<string | null>(null)
   const [hlIds, setHlIds] = useState<string[]>([])
   const selCard = kcards.find(c => c.id === selCardId) ?? null
   const selPedido = pedidos.find(p => p.pedido === selPed) ?? null
+  const hlSet = useMemo(() => new Set(hlIds), [hlIds])
+
+  /* agrupa os cards por estação UMA vez (em vez de filtrar 21× por render) */
+  const cardsByStation = useMemo(() => {
+    const m: Record<string, KCard[]> = {}
+    for (const st of STATIONS) m[st.id] = []
+    for (const c of kcards) (m[c.station] ?? (m[c.station] = [])).push(c)
+    return m
+  }, [kcards])
+  /* cards por pedido (para os cartões da fila) */
+  const cardsByPedido = useMemo(() => {
+    const m: Record<string, KCard[]> = {}
+    for (const c of kcards) (m[c.pedido] ?? (m[c.pedido] = [])).push(c)
+    return m
+  }, [kcards])
 
   /* pedidos aprovados em ordem de entrega (mais urgente primeiro) */
-  const fila = pedidos.filter(p => p.aprovado).sort((a, b) => entregaTs(a.entrega) - entregaTs(b.entrega))
+  const fila = useMemo(() => pedidos.filter(p => p.aprovado).sort((a, b) => entregaTs(a.entrega) - entregaTs(b.entrega)), [pedidos])
 
   function onDragEnd(e: DragEndEvent) {
     const over = e.over?.id as string | undefined
@@ -78,7 +93,7 @@ export default function Kanban() {
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>ordem de entrega · {fila.length} pedido(s) · clique abre os módulos do pedido</span>
           </div>
           <div style={{ display: 'flex', gap: 12, overflowX: 'auto', overflowY: 'hidden', paddingBottom: 10 }}>
-            {fila.map(p => <PedidoCard key={p.pedido} p={p} cards={kcards.filter(c => c.pedido === p.pedido)} semDinheiro={semDinheiro} onOpen={() => setSelPed(p.pedido)} />)}
+            {fila.map(p => <PedidoCard key={p.pedido} p={p} cards={cardsByPedido[p.pedido] ?? EMPTY} semDinheiro={semDinheiro} onOpen={setSelPed} />)}
             {!fila.length && <div style={{ color: 'var(--text-subtle)', fontSize: 13, padding: '18px 4px' }}>Nenhum pedido aprovado ainda — aprove um orçamento no Editor para ele entrar na fila.</div>}
           </div>
         </div>
@@ -96,7 +111,7 @@ export default function Kanban() {
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <div style={{ flex: 1, minHeight: 0, minWidth: 0, display: 'flex', gap: 14, overflowX: 'auto', overflowY: 'hidden', padding: '0 32px 20px', alignItems: 'stretch' }}>
           {STATIONS.map(st => (
-            <Column key={st.id} id={st.id} nome={st.nome} lane={st.lane} cards={kcards.filter(c => c.station === st.id)} hlIds={hlIds} onOpen={id => setSelCardId(id)} />
+            <Column key={st.id} id={st.id} nome={st.nome} lane={st.lane} cards={cardsByStation[st.id] ?? EMPTY} hlSet={hlSet} onOpen={setSelCardId} />
           ))}
         </div>
       </DndContext>
@@ -392,17 +407,18 @@ function PedidoModal({ p, cards, onClose, onLocate, onEditor }: {
 }
 
 /* ---------- card do pedido-mãe (fileira horizontal) ---------- */
-function PedidoCard({ p, cards, semDinheiro, onOpen }: { p: Pedido; cards: KCard[]; semDinheiro: boolean; onOpen: () => void }) {
+const PedidoCard = memo(function PedidoCard({ p, cards, semDinheiro, onOpen }: { p: Pedido; cards: KCard[]; semDinheiro: boolean; onOpen: (pedido: string) => void }) {
   const tot = pedTotais(p)
   const entregues = cards.filter(c => c.station === 'entregue').length
   const done = p.status === 'entregue'
   return (
-    <div onClick={onOpen} title="Abrir os módulos do pedido" style={{
+    <div onClick={() => onOpen(p.pedido)} title="Abrir os módulos do pedido" style={{
       flex: '0 0 250px', cursor: 'pointer', borderRadius: 12, background: 'var(--bg-surface)', boxShadow: 'var(--sh-1)', padding: '12px 14px',
       border: '1px solid ' + (p.late ? 'color-mix(in srgb,var(--alert) 55%,transparent)' : 'var(--border)'),
       borderTop: '3px solid ' + (done ? 'var(--success)' : p.late ? 'var(--alert)' : 'var(--set-comercial)'),
       opacity: done ? .75 : 1,
-    }}>
+      contentVisibility: 'auto', containIntrinsicSize: '250px 170px',
+    } as React.CSSProperties}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
         <span className="mono" style={{ fontWeight: 600, fontSize: 13 }}>{p.pedido}</span>
         {done ? <Badge kind="success">entregue</Badge> : p.late ? <span style={alertChip}><Clock size={11} />ATRASADO</span> : null}
@@ -433,10 +449,11 @@ function PedidoCard({ p, cards, semDinheiro, onOpen }: { p: Pedido; cards: KCard
       </div>
     </div>
   )
-}
+})
 
-/* ---------- coluna do kanban de produção ---------- */
-function Column({ id, nome, lane, cards, hlIds, onOpen }: { id: string; nome: string; lane: string; cards: KCard[]; hlIds: string[]; onOpen: (id: string) => void }) {
+/* ---------- coluna do kanban de produção (memo: só re-renderiza quando os
+   cards da coluna ou o conjunto de destaque mudam) ---------- */
+const Column = memo(function Column({ id, nome, lane, cards, hlSet, onOpen }: { id: string; nome: string; lane: string; cards: KCard[]; hlSet: Set<string>; onOpen: (id: string) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id })
   return (
     <div ref={setNodeRef} style={{ flex: '0 0 262px', height: '100%', background: 'var(--bg-surface-2)', border: '1px solid ' + (isOver ? 'var(--primary)' : 'var(--border)'), borderRadius: 12, display: 'flex', flexDirection: 'column', minHeight: 0, outline: isOver ? '2px dashed var(--primary)' : 'none', outlineOffset: -3 }}>
@@ -446,18 +463,22 @@ function Column({ id, nome, lane, cards, hlIds, onOpen }: { id: string; nome: st
         <span className="mono" style={{ fontSize: 11, color: 'var(--text-muted)', background: 'var(--bg-muted)', borderRadius: 999, padding: '1px 8px' }}>{cards.length}</span>
       </div>
       <div style={{ flex: 1, minHeight: 0, padding: 8, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
-        {cards.map(c => <Card key={c.id} card={c} hl={hlIds.includes(c.id)} onOpen={onOpen} />)}
+        {cards.map(c => <Card key={c.id} card={c} hl={hlSet.has(c.id)} onOpen={onOpen} />)}
       </div>
     </div>
   )
-}
+})
 
 /* ---------- card de departamento (fatia MARK42 do pedido) ---------- */
-function Card({ card, hl, onOpen }: { card: KCard; hl: boolean; onOpen: (id: string) => void }) {
+const Card = memo(function Card({ card, hl, onOpen }: { card: KCard; hl: boolean; onOpen: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: card.id })
   const style: React.CSSProperties = {
     border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-surface)', padding: 14, boxShadow: 'var(--sh-1)', cursor: 'pointer', opacity: isDragging ? 0.4 : 1,
     transform: transform ? `translate(${transform.x}px,${transform.y}px)` : undefined,
+    /* o navegador pula layout/paint dos cards fora da tela (virtualização
+       nativa) — grande ganho no 1º paint com muitos cards. Ao arrastar,
+       desliga p/ não recortar o card em voo. */
+    ...(isDragging ? {} : { contentVisibility: 'auto', containIntrinsicSize: '0 118px' } as React.CSSProperties),
     ...(card.late ? { borderLeft: '3px solid var(--alert)', background: 'linear-gradient(0deg,var(--alert-bg),var(--alert-bg)),var(--bg-surface)' } : {}),
     ...(hl ? { outline: '3px solid var(--primary)', outlineOffset: 2, boxShadow: '0 0 0 6px color-mix(in srgb,var(--primary) 22%,transparent)' } : {}),
   }
@@ -483,8 +504,9 @@ function Card({ card, hl, onOpen }: { card: KCard; hl: boolean; onOpen: (id: str
       </div>
     </div>
   )
-}
+})
 
+const EMPTY: KCard[] = []
 const secHead: React.CSSProperties = { display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 10, flexWrap: 'wrap' }
 const secTitle: React.CSSProperties = { fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-muted)' }
 const alertChip: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, height: 23, padding: '0 10px', borderRadius: 999, fontSize: 11, fontWeight: 800, background: 'var(--alert)', color: '#fff' }
