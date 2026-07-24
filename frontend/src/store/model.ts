@@ -3,6 +3,8 @@
    NÃO remover campos — só acrescentar (contrato .ft inviolável).
    ===================================================================== */
 
+import { SMELJ_NAVY, SMELJ_BLACK, POLO_3A, CROSS_3B } from './seedImgs'
+
 export type TecnicaKey = 'DTF' | 'Subli' | 'Silk' | 'Patch' | 'Bordado' | 'Etiqueta'
 export interface Tecnica { label: string; cor: string; entry: string | null }
 export const TECNICAS: Record<TecnicaKey, Tecnica> = {
@@ -191,6 +193,22 @@ export const PEDIDOS_SEED: Pedido[] = [
     layouts: [
       L({ refCod: 'REF-3310', ref: 'Regata dry treino', grade: 'adulto', tecidos: ['Dry-fit PET'], cor: 'Royal', corHex: '#2456C6', design: [dt('DTF', ['201'])], tamanhos: { P: { qtd: 10, uni: 69.9 }, M: { qtd: 14, uni: 69.9 }, G: { qtd: 8, uni: 69.9 } } }),
       L({ refCod: 'REF-5502', ref: 'Polo piquet bordada', grade: 'adulto', tecidos: ['Piquet'], cor: 'Marinho', corHex: '#12213F', design: [dt('Bordado')], tamanhos: { M: { qtd: 6, uni: 98.0 }, G: { qtd: 6, uni: 98.0 } } }),
+    ] },
+  /* ---- pedido GRANDE de teste: 12 layouts, com imagens reais em alguns ---- */
+  { pedido: 'PD003950', clienteId: 2, cliente: 'SMELJ Vôlei · Caldas Novas', cpf: '—', vendedor: 'Daniele', contato: '(64) 99988-2100', depto: 'Esporte', embalagem: 'Saco individual', entrega: '30/07/2026', envio: '', pagamento: '50% sinal + saldo', obs: 'Coleção completa 2026 — conferir numeração', obsTags: [], status: 'producao', aprovado: true, criadoPor: 'Daniele', atualizadoEm: '2026-07-22T11:00:00',
+    layouts: [
+      L({ refCod: 'FT-020-002M', ref: 'Jogo Vôlei Azul (frente/costas)', grade: 'adulto', genero: 'Masculino', tecidos: ['Dry-fit PET'], cor: 'Azul-marinho', corHex: '#12213F', design: [dt('Subli', ['S79', 'S64'])], img: SMELJ_NAVY, tamanhos: { P: { qtd: 4, uni: 129.9 }, M: { qtd: 8, uni: 129.9 }, G: { qtd: 6, uni: 129.9 }, GG: { qtd: 2, uni: 129.9 } } }),
+      L({ refCod: 'FT-020-002M', ref: 'Jogo Vôlei Preto (frente/costas)', grade: 'adulto', genero: 'Masculino', tecidos: ['Dry-fit PET'], cor: 'Preto', corHex: '#1B1B1F', design: [dt('Subli', ['S03', 'S64'])], img: SMELJ_BLACK, tamanhos: { P: { qtd: 4, uni: 129.9 }, M: { qtd: 8, uni: 129.9 }, G: { qtd: 6, uni: 129.9 } } }),
+      L({ refCod: 'REF-4021', ref: 'Camiseta comissão DTF', grade: 'adulto', genero: 'Masculino', tecidos: ['Dry-fit 100% poliéster'], cor: 'Preto', corHex: '#1B1B1F', design: [dt('DTF', ['001', '235'])], tamanhos: { M: { qtd: 5, uni: 69.9 }, G: { qtd: 5, uni: 69.9 } } }),
+      L({ refCod: 'FT-010-011M', ref: 'Polo staff 3A Consultoria', grade: 'adulto', tecidos: ['Piquet'], cor: 'Verde bandeira', corHex: '#0B7A3B', design: [dt('Silk'), dt('Bordado')], img: POLO_3A, tamanhos: { P: { qtd: 3, uni: 89.9 }, M: { qtd: 6, uni: 89.9 }, G: { qtd: 6, uni: 89.9 }, GG: { qtd: 3, uni: 89.9 } } }),
+      L({ refCod: 'REF-1150', ref: 'Camiseta torcida silk', grade: 'adulto', tecidos: ['Algodão penteado 30.1'], cor: 'Branco', corHex: '#F3F4F6', design: [dt('Silk')], tamanhos: { M: { qtd: 10, uni: 39.9 }, G: { qtd: 10, uni: 39.9 }, GG: { qtd: 5, uni: 39.9 } } }),
+      L({ refCod: 'FT-010-000M', ref: 'Camiseta 3B Cross', grade: 'adulto', genero: 'Masculino', tecidos: ['Poliéster'], cor: 'Preto', corHex: '#1B1B1F', design: [dt('DTF', ['001'])], img: CROSS_3B, tamanhos: { P: { qtd: 4, uni: 59.9 }, M: { qtd: 8, uni: 59.9 }, G: { qtd: 8, uni: 59.9 }, GG: { qtd: 4, uni: 59.9 } } }),
+      L({ refCod: 'REF-3310', ref: 'Regata treino sublimada', grade: 'adulto', genero: 'Masculino', tecidos: ['Dry-fit PET'], cor: 'Royal', corHex: '#2456C6', design: [dt('Subli', ['S73'])], tamanhos: { M: { qtd: 6, uni: 79.9 }, G: { qtd: 6, uni: 79.9 } } }),
+      L({ refCod: 'REF-2087', ref: 'Uniforme infantil sublimado', grade: 'infantil', genero: 'Infantil', tecidos: ['Dry-fit PET'], cor: 'Azul-marinho', corHex: '#12213F', design: [dt('Subli', ['S79'])], tamanhos: { '8A': { qtd: 4, uni: 99.9 }, '10A': { qtd: 6, uni: 99.9 }, '12A': { qtd: 4, uni: 99.9 } } }),
+      L({ refCod: 'REF-5502', ref: 'Polo comissão bordada', grade: 'adulto', tecidos: ['Piquet'], cor: 'Grafite', corHex: '#3A3F47', design: [dt('Bordado')], tamanhos: { M: { qtd: 4, uni: 98.0 }, G: { qtd: 4, uni: 98.0 } } }),
+      L({ refCod: 'REF-4021', ref: 'Camiseta patch aplicado', grade: 'adulto', genero: 'Feminino', tecidos: ['Dry-fit 100% poliéster'], cor: 'Rosa pink', corHex: '#DB2777', design: [dt('DTF', ['125']), dt('Patch')], tamanhos: { P: { qtd: 6, uni: 74.9 }, M: { qtd: 6, uni: 74.9 } } }),
+      L({ refCod: 'REF-1150', ref: 'Camiseta staff silk', grade: 'adulto', tecidos: ['Algodão penteado 30.1'], cor: 'Vermelho Fourtime', corHex: '#C6161B', design: [dt('Silk')], tamanhos: { G: { qtd: 8, uni: 44.9 }, GG: { qtd: 4, uni: 44.9 } } }),
+      L({ refCod: 'REF-3310', ref: 'Regata feminina DTF', grade: 'adulto', genero: 'Feminino', tecidos: ['Dry-fit PET'], cor: 'Roxo', corHex: '#6D28D9', design: [dt('DTF', ['098'])], tamanhos: { P: { qtd: 5, uni: 69.9 }, M: { qtd: 7, uni: 69.9 } } }),
     ] },
   /* ---- +16 pedidos de teste (total 20) — gerados de forma determinística ---- */
   ...(() => {

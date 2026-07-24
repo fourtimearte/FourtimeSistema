@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import {
-  PEDIDOS_SEED, TECNICAS, CLIENTES, novoLayout, ROTA_TECNICA,
+  PEDIDOS_SEED, TECNICAS, CLIENTES, novoLayout, ROTA_TECNICA, STATIONS,
   type Pedido, type KCard, type TecnicaKey, type Cliente, type Layout,
   pedTotais, pedTecnicas,
 } from './model'
@@ -144,6 +144,21 @@ export const useApp = create<AppState>((set, get) => {
       set({ pedidos: [...get().pedidos], kcards: roteia(get().pedidos, get().kcards) }); return tecs
     },
     moveCard: (cardId, station) => {
+      const atual = get().kcards.find(c => c.id === cardId); if (!atual) return
+      /* REGRA MARK42: nenhum pedido entra em CQ+Embalagem (nem Despacho/
+         Entregue) enquanto TODAS as fatias não terminarem seus departamentos
+         e chegarem à CD Costura — o pedido só chega no CQ quando está pronto. */
+      const PORTAO = ['cq', 'despacho', 'entregue']
+      if (PORTAO.includes(station)) {
+        const ordem = STATIONS.map(s => s.id)
+        const idxCostura = ordem.indexOf('costura')
+        const irmas = get().kcards.filter(c => c.pedido === atual.pedido && c.id !== cardId)
+        const faltam = irmas.filter(c => ordem.indexOf(c.station) < idxCostura)
+        if (faltam.length) {
+          get().toast('Pedido ainda não está pronto — ' + faltam.length + ' layout(s) precisam chegar à CD Costura antes do CQ')
+          return
+        }
+      }
       const kcards = get().kcards.map(c => c.id === cardId ? { ...c, station, late: station === 'entregue' ? false : c.late } : c)
       /* sincroniza o pedido-mãe: todas as fatias entregues → pedido entregue */
       const moved = kcards.find(c => c.id === cardId)

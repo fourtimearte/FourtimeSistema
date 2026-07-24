@@ -187,24 +187,20 @@ const boxVal: React.CSSProperties = { minWidth: 0, fontWeight: 600 }
 const lbl: React.CSSProperties = { fontSize: 9, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', fontWeight: 700, marginTop: 2, flex: '0 0 auto' }
 
 /* =====================================================================
-   Painel do orçamento — abre em tela cheia na LATERAL DIREITA (não num
-   box dentro do modal). Desliza da direita, altura total, com a versão
-   HTML do pedido num iframe que preenche o painel.
+   Orçamento em TELA CHEIA — o documento HTML do pedido ocupa toda a tela
+   (não um box lateral). Barra fina no topo + iframe preenchendo o resto.
    ===================================================================== */
 function OrcPanel({ pedido, onClose }: { pedido: Pedido; onClose: () => void }) {
   const html = useMemo(() => exportarHtml(pedido), [pedido])
   return createPortal(
-    <div style={{ position: 'fixed', inset: 0, zIndex: 95 }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(10,12,16,.5)' }} />
-      <aside style={{ position: 'absolute', top: 0, right: 0, height: '100vh', width: 'min(960px,96vw)', background: 'var(--bg-surface)', borderLeft: '1px solid var(--border)', boxShadow: 'var(--sh-4)', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-          <FileText size={16} style={{ color: 'var(--set-comercial)' }} />
-          <span className="mono" style={{ fontWeight: 700, fontSize: 14 }}>{(pedido.cliente || 'Orçamento')} · {pedido.pedido}.html</span>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>versão HTML — sem valores</span>
-          <button onClick={onClose} style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', color: 'var(--text)', cursor: 'pointer', font: 'inherit', fontSize: 13 }}><X size={15} />Fechar</button>
-        </div>
-        <iframe title="orçamento" srcDoc={html} style={{ flex: 1, width: '100%', border: 'none', display: 'block', background: '#EEF1F4' }} />
-      </aside>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 95, display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)' }}>
+      <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 20px', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)' }}>
+        <FileText size={16} style={{ color: 'var(--set-comercial)' }} />
+        <span className="mono" style={{ fontWeight: 700, fontSize: 14 }}>{(pedido.cliente || 'Orçamento')} · {pedido.pedido}.html</span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>versão HTML — sem valores</span>
+        <button onClick={onClose} style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', color: 'var(--text)', cursor: 'pointer', font: 'inherit', fontSize: 13, fontWeight: 600 }}><X size={15} />Fechar</button>
+      </div>
+      <iframe title="orçamento" srcDoc={html} style={{ flex: 1, width: '100%', border: 'none', display: 'block', background: '#EEF1F4' }} />
     </div>,
     document.body,
   )
@@ -220,7 +216,6 @@ function CardModal({ card, pedido, onClose, onMove, onEditor }: {
 }) {
   const [verOrc, setVerOrc] = useState(false)
   const [zoomImg, setZoomImg] = useState<string | null>(null)
-  const st = STATIONS.find(s => s.id === card.station)
   const cor = cvar(TECNICAS[card.tec].cor)
   /* a fatia: índices dos layouts que este departamento produz (L-01 → 0) */
   const fatiaIdx = card.lays.map(l => parseInt(l.slice(2), 10) - 1)
@@ -245,10 +240,10 @@ function CardModal({ card, pedido, onClose, onMove, onEditor }: {
               <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, color: 'var(--info-fg)', background: 'var(--info-bg)', borderRadius: 999, padding: '2px 8px' }}><Layers size={11} />{card.lays.join(' · ') || '—'}</span>
               {card.late && <span style={alertChip}><Clock size={12} />ATRASADO</span>}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: 'var(--text-muted)', marginTop: 5, flexWrap: 'wrap' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Calendar size={13} />{card.prazo || 'sem data'}</span>
-              <span className="mono">{card.pecas} pçs desta fatia</span>
-              <span>na estação <b style={{ color: 'var(--text)' }}>{st?.nome ?? card.station}</b></span>
+            {/* sticky header enxuto: nome, número, vendedor, entrega */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 12, color: 'var(--text-muted)', marginTop: 5, flexWrap: 'wrap' }}>
+              <span><span style={hLbl}>Vendedor</span> <b style={{ color: 'var(--text)' }}>{pedido?.vendedor || '—'}</b></span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: card.late ? 'var(--alert)' : undefined }}><Calendar size={13} /><span style={hLbl}>Entrega</span> <b style={{ color: card.late ? 'var(--alert)' : 'var(--text)' }}>{card.prazo || 'sem data'}</b></span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '0 0 auto' }}>
@@ -262,6 +257,23 @@ function CardModal({ card, pedido, onClose, onMove, onEditor }: {
         </div>
 
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 20px' }}>
+          {/* CABEÇALHO DO ORÇAMENTO (acima dos layouts; some ao rolar — o topo
+              fixo do modal continua mostrando nome, número, vendedor, entrega) */}
+          {pedido && (
+            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', marginBottom: 16, background: 'var(--bg-surface-2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>{pedido.cliente || 'Orçamento'}</span>
+                <span className="mono" style={{ fontSize: 13, color: 'var(--text-muted)' }}>· {pedido.pedido}</span>
+                <span className="mono" style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)' }}>{pedTotais(pedido).pecas} pçs · {pedido.layouts.length} layouts</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: '8px 16px' }}>
+                {([['Cliente', pedido.cliente], ['CPF/CNPJ', pedido.cpf], ['Departamento', pedido.depto], ['Vendedor', pedido.vendedor], ['Contato', pedido.contato], ['Embalagem', pedido.embalagem], ['Entrega', pedido.entrega], ['Envio', pedido.envio], ['Pagamento', pedido.pagamento]] as [string, string][]).map(([k, v]) => (
+                  <div key={k}><div style={hLbl2}>{k}</div><div style={{ fontSize: 12, fontWeight: 500 }}>{v || '—'}</div></div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* anexos */}
           <h4 style={secH4}><Paperclip size={13} />Anexos ({anexos.length})</h4>
           {anexos.length ? (
@@ -306,6 +318,8 @@ function CardModal({ card, pedido, onClose, onMove, onEditor }: {
   )
 }
 const secH4: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 7, fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', margin: '0 0 9px', fontWeight: 700 }
+const hLbl: React.CSSProperties = { fontSize: 9, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', fontWeight: 700 }
+const hLbl2: React.CSSProperties = { fontSize: 9, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', fontWeight: 700, marginBottom: 1 }
 
 /* =====================================================================
    Modal do pedido (fila): TODOS os módulos de layout, do primeiro ao
