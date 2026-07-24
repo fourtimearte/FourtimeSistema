@@ -23,6 +23,7 @@ interface AppState {
   rebuildKanban: () => void
   aprovarPedido: (pedido: string) => TecnicaKey[] | null
   moveCard: (cardId: string, station: string) => void
+  abrirNoEditor: (pedido: string) => void
   setCurPed: (i: number) => void
   novoOrcamento: () => void
   criarPedidoDe: (base: Pedido, cli?: Cliente) => void
@@ -61,11 +62,26 @@ interface AppState {
 
 let KID = 0, TID = 0
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x))
-function roteia(pedidos: Pedido[]): KCard[] {
+/* Roteador MARK42: o orçamento APROVADO se divide pelas tags de Design de
+   cada layout e vira vários "pedidos de departamento" — um card por técnica,
+   carregando exatamente os layouts (L-NN) que aquele departamento produz. */
+function roteia(pedidos: Pedido[], prev?: KCard[]): KCard[] {
   KID = 0; const cards: KCard[] = []
   pedidos.filter(p => p.aprovado).forEach(p => {
     const tot = pedTotais(p)
-    pedTecnicas(p).forEach(tec => { KID++; cards.push({ id: 'k' + KID, pedido: p.pedido, cliente: p.cliente, tec, station: TECNICAS[tec].entry as string, prazo: p.entrega, late: !!p.late, val: tot.valor, artes: p.layouts.length }) })
+    pedTecnicas(p).forEach(tec => {
+      KID++
+      const lays: string[] = []; let pecas = 0
+      p.layouts.forEach((l, i) => {
+        if (l.design.some(d => d.tag === tec)) {
+          lays.push('L-' + String(i + 1).padStart(2, '0'))
+          pecas += Object.values(l.tamanhos).reduce((s, t) => s + (t?.qtd ?? 0), 0)
+        }
+      })
+      /* preserva a estação de um card já em produção (re-rotear não “volta” o card) */
+      const antes = prev?.find(c => c.pedido === p.pedido && c.tec === tec)
+      cards.push({ id: 'k' + KID, pedido: p.pedido, cliente: p.cliente, tec, station: antes?.station ?? (TECNICAS[tec].entry as string), prazo: p.entrega, late: !!p.late, val: tot.valor, artes: p.layouts.length, lays, pecas })
+    })
   })
   return cards
 }
@@ -81,7 +97,7 @@ export const useApp = create<AppState>((set, get) => {
     const pedidos = st.pedidos
     mut(pedidos)
     if (pedidos[pIdx]) pedidos[pIdx].atualizadoEm = new Date().toISOString()
-    set({ pedidos: [...pedidos], past, future: [], kcards: pedidos[pIdx].aprovado ? roteia(pedidos) : st.kcards })
+    set({ pedidos: [...pedidos], past, future: [], kcards: pedidos[pIdx].aprovado ? roteia(pedidos, st.kcards) : st.kcards })
   }
   return {
     logged: false, perfil: 'Administração', page: 'dashboard',
@@ -110,14 +126,35 @@ export const useApp = create<AppState>((set, get) => {
     login: (perfil) => set({ logged: true, perfil, page: perfil === 'Produção' ? 'producao' : perfil === 'Comercial' ? 'comercial' : 'dashboard' }),
     goto: (page) => set({ page }),
     toggleDinheiro: () => set({ semDinheiro: !get().semDinheiro }),
-    rebuildKanban: () => set({ kcards: roteia(get().pedidos) }),
+    rebuildKanban: () => set({ kcards: roteia(get().pedidos, get().kcards) }),
     aprovarPedido: (pedido) => {
       const p = get().pedidos.find(x => x.pedido === pedido); if (!p) return null
       const tecs = pedTecnicas(p); if (!tecs.length) return null
       p.aprovado = true; p.status = 'producao'
-      set({ pedidos: [...get().pedidos], kcards: roteia(get().pedidos) }); return tecs
+      set({ pedidos: [...get().pedidos], kcards: roteia(get().pedidos, get().kcards) }); return tecs
     },
-    moveCard: (cardId, station) => set({ kcards: get().kcards.map(c => c.id === cardId ? { ...c, station, late: station === 'entregue' ? false : c.late } : c) }),
+    moveCard: (cardId, station) => {
+      const kcards = get().kcards.map(c => c.id === cardId ? { ...c, station, late: station === 'entregue' ? false : c.late } : c)
+      /* sincroniza o pedido-mãe: todas as fatias entregues → pedido entregue */
+      const moved = kcards.find(c => c.id === cardId)
+      let pedidos = get().pedidos
+      if (moved) {
+        const irmas = kcards.filter(c => c.pedido === moved.pedido)
+        const todasEntregues = irmas.every(c => c.station === 'entregue')
+        const p = pedidos.find(x => x.pedido === moved.pedido)
+        if (p) {
+          const novo: typeof p.status = todasEntregues ? 'entregue' : 'producao'
+          if (p.status !== novo) { p.status = novo; if (todasEntregues) p.late = false; pedidos = [...pedidos] }
+        }
+      }
+      set({ kcards, pedidos })
+    },
+    abrirNoEditor: (pedido) => {
+      const i = get().pedidos.findIndex(p => p.pedido === pedido)
+      if (i < 0) return
+      set({ curPed: i, page: 'comercial', past: [], future: [] })
+      get().toast('Aberto no editor: ' + pedido)
+    },
     setCurPed: (curPed) => set({ curPed, past: [], future: [] }),
 
     novoOrcamento: () => { const seq = get().seq + 1; const p = novoPedido(seq, get().perfil); set({ pedidos: [p, ...get().pedidos], fin: { ...get().fin, [p.pedido]: { sinal: 0 } }, seq, curPed: 0, page: 'comercial', past: [], future: [] }); get().toast('Novo orçamento ' + p.pedido) },
@@ -132,13 +169,13 @@ export const useApp = create<AppState>((set, get) => {
       const st = get(); if (!st.past.length) return
       const past = [...st.past]; const prev = past.pop() as Pedido
       const pedidos = st.pedidos; const cur = clone(pedidos[st.curPed]); pedidos[st.curPed] = prev
-      set({ pedidos: [...pedidos], past, future: [cur, ...st.future].slice(0, 40), kcards: pedidos[st.curPed].aprovado ? roteia(pedidos) : st.kcards })
+      set({ pedidos: [...pedidos], past, future: [cur, ...st.future].slice(0, 40), kcards: pedidos[st.curPed].aprovado ? roteia(pedidos, st.kcards) : st.kcards })
     },
     redo: () => {
       const st = get(); if (!st.future.length) return
       const future = [...st.future]; const next = future.shift() as Pedido
       const pedidos = st.pedidos; const cur = clone(pedidos[st.curPed]); pedidos[st.curPed] = next
-      set({ pedidos: [...pedidos], future, past: [...st.past, cur].slice(-40), kcards: pedidos[st.curPed].aprovado ? roteia(pedidos) : st.kcards })
+      set({ pedidos: [...pedidos], future, past: [...st.past, cur].slice(-40), kcards: pedidos[st.curPed].aprovado ? roteia(pedidos, st.kcards) : st.kcards })
     },
 
     copyLayout: (pIdx, lIdx) => { set({ layoutClip: clone(get().pedidos[pIdx].layouts[lIdx]) }); get().toast('Layout L-' + String(lIdx + 1).padStart(2, '0') + ' copiado') },

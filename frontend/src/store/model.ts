@@ -95,7 +95,16 @@ export interface Pedido {
   status: Status; aprovado: boolean; late?: boolean; layouts: Layout[]; anotacoes?: Anotacao[]
   criadoPor?: string; atualizadoEm?: string
 }
-export interface KCard { id: string; pedido: string; cliente: string; tec: TecnicaKey; station: string; prazo: string; late: boolean; val: number; artes: number }
+export interface KCard {
+  id: string; pedido: string; cliente: string; tec: TecnicaKey; station: string; prazo: string; late: boolean; val: number; artes: number
+  lays: string[]   // quais layouts do pedido este departamento produz (L-01, L-03…) — a fatia MARK42
+  pecas: number    // peças somadas dos layouts desta fatia
+}
+/** dd/mm/aaaa → timestamp p/ ordenação por entrega (datas inválidas vão pro fim) */
+export function entregaTs(prazo: string): number {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((prazo ?? '').trim())
+  return m ? new Date(+m[3], +m[2] - 1, +m[1]).getTime() : Number.MAX_SAFE_INTEGER
+}
 
 export interface Station { id: string; nome: string; lane: string }
 export const STATIONS: Station[] = [
