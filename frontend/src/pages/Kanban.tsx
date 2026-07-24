@@ -1,8 +1,11 @@
+import { useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { DndContext, useDraggable, useDroppable, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { Plus, Clock, Calendar, Paperclip, Layers, PencilLine, PackageCheck } from 'lucide-react'
+import { Plus, Clock, Calendar, Paperclip, Layers, PencilLine, PackageCheck, X, FileText, PencilRuler, ArrowRight } from 'lucide-react'
 import { useApp } from '../store/useApp'
 import { STATIONS, TECNICAS, money, entregaTs, pedTotais, type KCard, type Pedido } from '../store/model'
 import { PageHead, Btn, TecTag, Badge, cvar } from '../components/ui'
+import { exportarHtml } from '../lib/exportHtml'
 
 /* =====================================================================
    Produção — 2 kanbans na mesma página (PESQUISA §8 + MARK42):
@@ -25,6 +28,8 @@ export default function Kanban() {
   const { pedidos, kcards, moveCard, goto, abrirNoEditor, semDinheiro, toast } = useApp()
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
   const nLate = kcards.filter(c => c.late).length
+  const [selCardId, setSelCardId] = useState<string | null>(null)
+  const selCard = kcards.find(c => c.id === selCardId) ?? null
 
   /* pedidos aprovados em ordem de entrega (mais urgente primeiro) */
   const fila = pedidos.filter(p => p.aprovado).sort((a, b) => entregaTs(a.entrega) - entregaTs(b.entrega))
@@ -70,13 +75,123 @@ export default function Kanban() {
       <DndContext sensors={sensors} onDragEnd={onDragEnd}>
         <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 12, alignItems: 'flex-start' }}>
           {STATIONS.map(st => (
-            <Column key={st.id} id={st.id} nome={st.nome} lane={st.lane} cards={kcards.filter(c => c.station === st.id)} onOpen={abrirNoEditor} />
+            <Column key={st.id} id={st.id} nome={st.nome} lane={st.lane} cards={kcards.filter(c => c.station === st.id)} onOpen={id => setSelCardId(id)} />
           ))}
         </div>
       </DndContext>
+
+      {selCard && <CardModal card={selCard} pedido={pedidos.find(p => p.pedido === selCard.pedido) ?? null}
+        onClose={() => setSelCardId(null)}
+        onMove={st => moveCard(selCard.id, st)}
+        onEditor={() => { setSelCardId(null); abrirNoEditor(selCard.pedido) }} />}
     </div>
   )
 }
+
+/* =====================================================================
+   Modal do cartão (estilo Trello): fatia do pedido + anexos (imagens dos
+   layouts) + o orçamento em versão HTML embutido — sem sair do Kanban.
+   ===================================================================== */
+function CardModal({ card, pedido, onClose, onMove, onEditor }: {
+  card: KCard; pedido: Pedido | null; onClose: () => void; onMove: (station: string) => void; onEditor: () => void
+}) {
+  const [verOrc, setVerOrc] = useState(false)
+  const [zoomImg, setZoomImg] = useState<string | null>(null)
+  const st = STATIONS.find(s => s.id === card.station)
+  /* layouts da fatia (L-01 → índice 0) + demais anexos do pedido */
+  const fatiaIdx = card.lays.map(l => parseInt(l.slice(2), 10) - 1)
+  const anexos = (pedido?.layouts ?? []).map((l, i) => ({ l, i, daFatia: fatiaIdx.includes(i) })).filter(a => a.l.img)
+  const html = useMemo(() => (pedido && verOrc) ? exportarHtml(pedido) : '', [pedido, verOrc])
+
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, zIndex: 80, display: 'grid', placeItems: 'center', padding: 16 }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(14,17,22,.55)' }} />
+      <div style={{ position: 'relative', width: 880, maxWidth: '100%', maxHeight: '94vh', overflowY: 'auto', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderTop: '4px solid ' + cvar(TECNICAS[card.tec].cor), borderRadius: 12, boxShadow: 'var(--sh-4)' }}>
+        {/* cabeçalho */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '16px 20px', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-surface)', zIndex: 2 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span className="mono" style={{ fontWeight: 700, fontSize: 15 }}>{card.pedido}</span>
+              <TecTag tec={card.tec} />
+              <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, color: 'var(--info-fg)', background: 'var(--info-bg)', borderRadius: 999, padding: '2px 8px' }}><Layers size={11} />{card.lays.join(' · ') || '—'}</span>
+              {card.late && <span style={alertChip}><Clock size={12} />ATRASADO</span>}
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginTop: 5 }}>{card.cliente}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: 'var(--text-muted)', marginTop: 4, flexWrap: 'wrap' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Calendar size={13} />{card.prazo || 'sem data'}</span>
+              <span className="mono">{card.pecas} pçs desta fatia</span>
+              <span>na estação <b style={{ color: 'var(--text)' }}>{st?.nome ?? card.station}</b></span>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center', flex: '0 0 auto' }}><X size={15} /></button>
+        </div>
+
+        <div style={{ padding: '16px 20px' }}>
+          {/* ações (mover estação + editor) */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
+            <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', fontWeight: 700 }}>Mover para</span>
+            <select value={card.station} onChange={e => onMove(e.target.value)} style={{ height: 32, padding: '0 8px', borderRadius: 8, font: 'inherit', fontSize: 13, background: 'var(--bg-surface-2)', color: 'var(--text)', border: '1px solid var(--border-strong)', cursor: 'pointer' }}>
+              {STATIONS.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
+            </select>
+            <span style={{ flex: 1 }} />
+            <Btn size="sm" onClick={onEditor}><PencilRuler size={14} />Editar no Editor</Btn>
+          </div>
+
+          {/* anexos */}
+          <h4 style={secH4}><Paperclip size={13} />Anexos ({anexos.length})</h4>
+          {anexos.length ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 10, marginBottom: 18 }}>
+              {anexos.map(a => (
+                <div key={a.i} onClick={() => setZoomImg(a.l.img)} style={{ cursor: 'zoom-in', border: '1px solid ' + (a.daFatia ? 'color-mix(in srgb,' + cvar(TECNICAS[card.tec].cor) + ' 55%,transparent)' : 'var(--border)'), borderRadius: 10, overflow: 'hidden', background: 'var(--bg-surface-2)' }}>
+                  <img src={a.l.img as string} style={{ width: '100%', height: 110, objectFit: 'cover', display: 'block' }} />
+                  <div style={{ padding: '5px 8px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="mono" style={{ fontWeight: 700 }}>L-{String(a.i + 1).padStart(2, '0')}</span>
+                    <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.l.ref}</span>
+                    {a.daFatia && <span style={{ marginLeft: 'auto', width: 7, height: 7, borderRadius: 99, background: cvar(TECNICAS[card.tec].cor), flex: '0 0 auto' }} title="layout desta fatia" />}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : <div style={{ color: 'var(--text-subtle)', fontSize: 13, marginBottom: 18 }}>Nenhuma imagem anexada nos layouts deste pedido.</div>}
+
+          {/* orçamento embutido (HTML) */}
+          <h4 style={secH4}><FileText size={13} />Orçamento</h4>
+          {!verOrc ? (
+            <button onClick={() => setVerOrc(true)} style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', cursor: 'pointer', font: 'inherit',
+              padding: '12px 14px', borderRadius: 10, border: '1px dashed var(--border-strong)', background: 'var(--bg-surface-2)', color: 'var(--text)',
+            }}>
+              <FileText size={18} style={{ color: 'var(--set-comercial)' }} />
+              <span style={{ flex: 1 }}>
+                <b style={{ display: 'block', fontSize: 13 }}>{(card.cliente || 'Orçamento')} · {card.pedido}.html</b>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Abrir a versão HTML do pedido aqui dentro (como no Trello) — sem valores.</span>
+              </span>
+              <ArrowRight size={16} style={{ color: 'var(--text-subtle)' }} />
+            </button>
+          ) : (
+            <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: 'var(--bg-surface-2)', borderBottom: '1px solid var(--border)', fontSize: 12 }}>
+                <FileText size={13} style={{ color: 'var(--set-comercial)' }} />
+                <span className="mono" style={{ fontWeight: 600 }}>{card.pedido}.html</span>
+                <button onClick={() => setVerOrc(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', font: 'inherit', fontSize: 12 }}>Fechar visualização</button>
+              </div>
+              <iframe title="orçamento" srcDoc={html} style={{ width: '100%', height: 560, border: 'none', display: 'block', background: '#EEF1F4' }} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* zoom de anexo */}
+      {zoomImg && (
+        <div onClick={() => setZoomImg(null)} style={{ position: 'absolute', inset: 0, zIndex: 5, background: 'rgba(10,12,16,.82)', display: 'grid', placeItems: 'center', cursor: 'zoom-out', padding: 24 }}>
+          <img src={zoomImg} style={{ maxWidth: '92%', maxHeight: '92%', borderRadius: 10, boxShadow: 'var(--sh-4)' }} />
+        </div>
+      )}
+    </div>,
+    document.body,
+  )
+}
+const secH4: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 7, fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', margin: '0 0 9px', fontWeight: 700 }
 
 /* ---------- card do pedido-mãe (fileira horizontal) ---------- */
 function PedidoCard({ p, cards, semDinheiro, onOpen }: { p: Pedido; cards: KCard[]; semDinheiro: boolean; onOpen: () => void }) {
@@ -140,18 +255,18 @@ function Column({ id, nome, lane, cards, onOpen }: { id: string; nome: string; l
 }
 
 /* ---------- card de departamento (fatia MARK42 do pedido) ---------- */
-function Card({ card, onOpen }: { card: KCard; onOpen: (pedido: string) => void }) {
+function Card({ card, onOpen }: { card: KCard; onOpen: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: card.id })
   const style: React.CSSProperties = {
-    border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-surface)', padding: 14, boxShadow: 'var(--sh-1)', cursor: 'grab', opacity: isDragging ? 0.4 : 1,
+    border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-surface)', padding: 14, boxShadow: 'var(--sh-1)', cursor: 'pointer', opacity: isDragging ? 0.4 : 1,
     transform: transform ? `translate(${transform.x}px,${transform.y}px)` : undefined,
     ...(card.late ? { borderLeft: '3px solid var(--alert)', background: 'linear-gradient(0deg,var(--alert-bg),var(--alert-bg)),var(--bg-surface)' } : {}),
   }
+  /* clique simples abre o modal do cartão; arrastar (>5px) continua sendo drag */
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes} onClick={() => onOpen(card.id)} title="Abrir cartão">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-        <span className="mono" onClick={e => { e.stopPropagation(); onOpen(card.pedido) }} onPointerDown={e => e.stopPropagation()} title="Abrir no Editor"
-          style={{ fontWeight: 600, fontSize: 13, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'color-mix(in srgb,var(--text) 25%,transparent)', textUnderlineOffset: 3 }}>{card.pedido}</span>
+        <span className="mono" style={{ fontWeight: 600, fontSize: 13 }}>{card.pedido}</span>
         {card.late && <span style={alertChip}><Clock size={12} />ATRASADO</span>}
       </div>
       <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{card.cliente}</div>

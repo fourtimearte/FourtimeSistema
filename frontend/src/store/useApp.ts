@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import {
-  PEDIDOS_SEED, TECNICAS, CLIENTES, novoLayout,
+  PEDIDOS_SEED, TECNICAS, CLIENTES, novoLayout, ROTA_TECNICA,
   type Pedido, type KCard, type TecnicaKey, type Cliente, type Layout,
   pedTotais, pedTecnicas,
 } from './model'
@@ -85,6 +85,16 @@ function roteia(pedidos: Pedido[], prev?: KCard[]): KCard[] {
   })
   return cards
 }
+/* só para o seed de demonstração: espalha as fatias ao longo da rota da sua
+   técnica (sem chegar em 'entregue'), para o quadro nascer povoado */
+function espalhaSeed(cards: KCard[]): KCard[] {
+  return cards.map((c, i) => {
+    const rota = ROTA_TECNICA[c.tec] ?? []
+    if (rota.length < 2) return c
+    const passos = rota.length - 1 // exclui 'entregue'
+    return { ...c, station: rota[(i * 5 + 3) % passos] }
+  })
+}
 function novoPedido(seq: number, perfil: string): Pedido {
   return { pedido: 'PD' + String(seq).padStart(6, '0'), clienteId: null, cliente: '', cpf: '', vendedor: perfil === 'Comercial' ? '' : perfil, contato: '', depto: '', embalagem: '', entrega: '', envio: '', pagamento: '50% sinal + saldo', obs: '', obsTags: [], status: 'rascunho', aprovado: false, layouts: [novoLayout()], criadoPor: perfil, atualizadoEm: new Date().toISOString() }
 }
@@ -101,7 +111,7 @@ export const useApp = create<AppState>((set, get) => {
   }
   return {
     logged: false, perfil: 'Administração', page: 'dashboard',
-    pedidos: clone(PEDIDOS_SEED), kcards: roteia(PEDIDOS_SEED),
+    pedidos: clone(PEDIDOS_SEED), kcards: espalhaSeed(roteia(PEDIDOS_SEED)),
     fin: { PD003929: { sinal: 0 }, PD003912: { sinal: 1798.5 }, PD003940: { sinal: 299 }, PD003944: { sinal: 0 } },
     seq: 3945, curPed: 0, semDinheiro: false, toasts: [], past: [], future: [], layoutClip: null,
     clientes: clone(CLIENTES), cliSeq: CLIENTES.length,

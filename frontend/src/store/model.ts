@@ -6,12 +6,23 @@
 export type TecnicaKey = 'DTF' | 'Subli' | 'Silk' | 'Patch' | 'Bordado' | 'Etiqueta'
 export interface Tecnica { label: string; cor: string; entry: string | null }
 export const TECNICAS: Record<TecnicaKey, Tecnica> = {
-  DTF: { label: 'DTF', cor: '--set-dtf', entry: 'dtf_arte' },
-  Subli: { label: 'Sublimação', cor: '--set-sublimacao', entry: 'sub_imp' },
-  Silk: { label: 'Silk', cor: '--set-silk', entry: 'silk_arte' },
+  /* entry = 1ª estação da faixa (MARK42): Corte Manual distribui p/ DTF e
+     Silk; Sublimação vem direto do estoque (tecido cru) → Subli Montagem */
+  DTF: { label: 'DTF', cor: '--set-dtf', entry: 'corte' },
+  Subli: { label: 'Sublimação', cor: '--set-sublimacao', entry: 'sub_mont' },
+  Silk: { label: 'Silk', cor: '--set-silk', entry: 'corte' },
   Patch: { label: 'Patch', cor: '--set-corte', entry: 'acab' },
   Bordado: { label: 'Bordado', cor: '--set-bordado', entry: 'acab' },
   Etiqueta: { label: 'Etiqueta', cor: '--set-costura', entry: null },
+}
+/** rota completa de cada técnica pelas estações (MARK42 MK-V-29/30) */
+export const ROTA_TECNICA: Record<TecnicaKey, string[]> = {
+  DTF: ['corte', 'dtf_mont', 'dtf_imp', 'dtf_rec', 'dtf_prensa', 'dtf_etq', 'acab', 'costura', 'cq', 'despacho', 'entregue'],
+  Silk: ['corte', 'silk_mont', 'silk_imp', 'silk_tela', 'silk_etq', 'silk_peca', 'acab', 'costura', 'cq', 'despacho', 'entregue'],
+  Subli: ['sub_mont', 'sub_imp', 'sub_etq', 'sub_cal', 'laser', 'acab', 'costura', 'cq', 'despacho', 'entregue'],
+  Patch: ['acab', 'costura', 'cq', 'despacho', 'entregue'],
+  Bordado: ['acab', 'costura', 'cq', 'despacho', 'entregue'],
+  Etiqueta: [],
 }
 export const DESIGN_ORDER: TecnicaKey[] = ['DTF', 'Subli', 'Silk', 'Patch', 'Bordado', 'Etiqueta']
 /** técnicas que abrem seletor de código de cor (como no v172) */
@@ -107,16 +118,28 @@ export function entregaTs(prazo: string): number {
 }
 
 export interface Station { id: string; nome: string; lane: string }
+/* Estações = colunas do Kanban de Produção, fiéis ao pipeline MARK42
+   (MK-V-29/30): Preparo → faixas DTF/Silk/Subli (com etiquetas) →
+   Corte a Laser → Acabamento → CD Costura → CQ → Despacho → Entregue. */
 export const STATIONS: Station[] = [
-  { id: 'dtf_arte', nome: 'Arte DTF', lane: '--set-dtf' },
-  { id: 'dtf_imp', nome: 'Impressão DTF', lane: '--set-dtf' },
-  { id: 'dtf_prensa', nome: 'Recorte + Prensa', lane: '--set-dtf' },
-  { id: 'silk_arte', nome: 'Arte / Tela Silk', lane: '--set-silk' },
-  { id: 'silk_imp', nome: 'Silkar a Peça', lane: '--set-silk' },
-  { id: 'sub_imp', nome: 'Impressão Subli', lane: '--set-sublimacao' },
-  { id: 'sub_cal', nome: 'Calandra + Laser', lane: '--set-sublimacao' },
-  { id: 'acab', nome: 'Acabamento', lane: '--set-bordado' },
-  { id: 'costura', nome: 'CD Costura', lane: '--set-costura' },
+  { id: 'corte', nome: 'Corte Manual', lane: '--set-corte' },
+  { id: 'dtf_mont', nome: 'DTF Montagem', lane: '--set-dtf' },
+  { id: 'dtf_imp', nome: 'DTF Impressão', lane: '--set-dtf' },
+  { id: 'dtf_rec', nome: 'DTF Recorte', lane: '--set-dtf' },
+  { id: 'dtf_prensa', nome: 'DTF Prensa', lane: '--set-dtf' },
+  { id: 'dtf_etq', nome: 'Etiqueta DTF', lane: '--set-dtf' },
+  { id: 'silk_mont', nome: 'Silk Montagem', lane: '--set-silk' },
+  { id: 'silk_imp', nome: 'Silk Impressão / VEG', lane: '--set-silk' },
+  { id: 'silk_tela', nome: 'Revelação de Tela', lane: '--set-silk' },
+  { id: 'silk_etq', nome: 'Etiqueta Silk', lane: '--set-silk' },
+  { id: 'silk_peca', nome: 'Silkar a Peça', lane: '--set-silk' },
+  { id: 'sub_mont', nome: 'Subli Montagem', lane: '--set-sublimacao' },
+  { id: 'sub_imp', nome: 'Subli Impressão', lane: '--set-sublimacao' },
+  { id: 'sub_etq', nome: 'Etiqueta Sublimada', lane: '--set-sublimacao' },
+  { id: 'sub_cal', nome: 'Calandra', lane: '--set-sublimacao' },
+  { id: 'laser', nome: 'Corte a Laser', lane: '--set-corte' },
+  { id: 'acab', nome: 'Acabamento · Patch/Bordado', lane: '--set-bordado' },
+  { id: 'costura', nome: 'CD Costura (Remonta)', lane: '--set-costura' },
   { id: 'cq', nome: 'CQ + Embalagem', lane: '--set-embalagem' },
   { id: 'despacho', nome: 'Despacho', lane: '--set-expedicao' },
   { id: 'entregue', nome: 'Entregue', lane: '--set-expedicao' },
@@ -169,6 +192,50 @@ export const PEDIDOS_SEED: Pedido[] = [
       L({ refCod: 'REF-3310', ref: 'Regata dry treino', grade: 'adulto', tecidos: ['Dry-fit PET'], cor: 'Royal', corHex: '#2456C6', design: [dt('DTF', ['201'])], tamanhos: { P: { qtd: 10, uni: 69.9 }, M: { qtd: 14, uni: 69.9 }, G: { qtd: 8, uni: 69.9 } } }),
       L({ refCod: 'REF-5502', ref: 'Polo piquet bordada', grade: 'adulto', tecidos: ['Piquet'], cor: 'Marinho', corHex: '#12213F', design: [dt('Bordado')], tamanhos: { M: { qtd: 6, uni: 98.0 }, G: { qtd: 6, uni: 98.0 } } }),
     ] },
+  /* ---- +16 pedidos de teste (total 20) — gerados de forma determinística ---- */
+  ...(() => {
+    const CLI: [number, string, string, string, string][] = [
+      [1, 'Escola João XXIII', '12.345.678/0001-11', '(62) 99912-3421', 'Henrique'],
+      [2, 'Time Vôlei Sub-15', '—', '(62) 98110-7788', 'Daniele'],
+      [3, 'Academia Pulse', '22.987.654/0001-90', '(62) 99740-1122', 'Henrique'],
+      [4, 'Padaria Estrela', '33.111.222/0001-45', '(62) 99655-3030', 'Kevelin'],
+      [5, 'Auto Peças Silva', '44.222.333/0001-70', '(62) 99333-8080', 'Daniele'],
+      [6, 'Faculdade Sigma', '55.444.555/0001-32', '(62) 98800-4545', 'Henrique'],
+    ]
+    const REFS: [string, string, string, string][] = [
+      ['REF-4021', 'Camiseta dry-fit gola careca', 'Dry-fit 100% poliéster', 'Royal'],
+      ['REF-2087', 'Uniforme sublimado manga curta', 'Dry-fit PET', 'Full print'],
+      ['REF-1150', 'Camiseta silk algodão', 'Algodão penteado 30.1', 'Preto'],
+      ['REF-3310', 'Regata dry treino', 'Dry-fit PET', 'Grafite'],
+      ['REF-5502', 'Polo piquet bordada', 'Piquet', 'Azul-marinho'],
+    ]
+    const DESIGNS: DesignTag[][] = [
+      [dt('DTF', ['012', '152'])], [dt('Subli', ['S17'])], [dt('Silk')], [dt('DTF', ['054']), dt('Bordado')],
+      [dt('Subli', ['S23', 'S77']), dt('Patch')], [dt('Silk'), dt('DTF', ['188'])], [dt('DTF', ['235'])], [dt('Subli', ['S36'])],
+    ]
+    /* entregas em volta de 24/07/2026 — as anteriores ficam atrasadas */
+    const DATAS = ['18/07/2026', '21/07/2026', '23/07/2026', '24/07/2026', '27/07/2026', '29/07/2026', '31/07/2026', '03/08/2026', '05/08/2026', '08/08/2026', '11/08/2026', '14/08/2026', '17/08/2026', '20/08/2026', '24/08/2026', '28/08/2026']
+    const HOJE = entregaTs('24/07/2026')
+    return DATAS.map((entrega, i) => {
+      const c = CLI[i % CLI.length]
+      const late = entregaTs(entrega) < HOJE
+      const nLay = 1 + (i % 2)
+      const layouts: Layout[] = Array.from({ length: nLay }, (_, li) => {
+        const r = REFS[(i + li) % REFS.length]
+        return L({
+          refCod: r[0], ref: r[1], grade: 'adulto', tecidos: [r[2]], cor: r[3], corHex: corHexPorNome(r[3]),
+          design: DESIGNS[(i * 2 + li) % DESIGNS.length].map(d => ({ ...d, cores: [...d.cores] })),
+          tamanhos: { P: { qtd: 4 + (i % 5), uni: 59.9 + (i % 4) * 10 }, M: { qtd: 6 + (i % 6), uni: 59.9 + (i % 4) * 10 }, G: { qtd: 4 + (i % 4), uni: 59.9 + (i % 4) * 10 } },
+        })
+      })
+      return {
+        pedido: 'PD00' + (3860 + i * 3), clienteId: c[0], cliente: c[1], cpf: c[2], vendedor: c[4], contato: c[3],
+        depto: ['Uniformes', 'Esporte', 'Academia', 'Comércio'][i % 4], embalagem: i % 3 === 0 ? 'Saco individual' : '', entrega, envio: '',
+        pagamento: i % 2 ? 'À vista' : '50% sinal + saldo', obs: '', obsTags: [], status: 'producao', aprovado: true,
+        late, criadoPor: c[4], atualizadoEm: '2026-07-2' + (i % 4) + 'T10:00:00', layouts,
+      } as Pedido
+    })
+  })(),
 ]
 
 /* ---- helpers de negócio ---- */
