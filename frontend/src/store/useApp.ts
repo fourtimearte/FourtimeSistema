@@ -13,6 +13,10 @@ interface AppState {
   pedidos: Pedido[]; kcards: KCard[]; fin: Record<string, { sinal: number }>
   seq: number; curPed: number; semDinheiro: boolean; toasts: Toast[]
   past: Pedido[]; future: Pedido[]; layoutClip: Layout | null
+  clientes: Cliente[]; cliSeq: number
+  addCliente: (c: Omit<Cliente, 'id' | 'criadoEm'>) => Cliente
+  updateCliente: (id: number, partial: Partial<Cliente>) => void
+  deleteCliente: (id: number) => void
   login: (perfil: string) => void
   goto: (p: PageId) => void
   toggleDinheiro: () => void
@@ -84,6 +88,24 @@ export const useApp = create<AppState>((set, get) => {
     pedidos: clone(PEDIDOS_SEED), kcards: roteia(PEDIDOS_SEED),
     fin: { PD003929: { sinal: 0 }, PD003912: { sinal: 1798.5 }, PD003940: { sinal: 299 }, PD003944: { sinal: 0 } },
     seq: 3945, curPed: 0, semDinheiro: false, toasts: [], past: [], future: [], layoutClip: null,
+    clientes: clone(CLIENTES), cliSeq: CLIENTES.length,
+
+    addCliente: (c) => {
+      const cliSeq = get().cliSeq + 1
+      const novo: Cliente = { ativo: true, ...c, id: cliSeq, criadoEm: new Date().toISOString() }
+      set({ clientes: [novo, ...get().clientes], cliSeq })
+      get().toast('Cliente "' + novo.nome + '" cadastrado')
+      return novo
+    },
+    updateCliente: (id, partial) => {
+      set({ clientes: get().clientes.map(c => c.id === id ? { ...c, ...partial, id } : c) })
+      get().toast('Cliente atualizado')
+    },
+    deleteCliente: (id) => {
+      const c = get().clientes.find(x => x.id === id)
+      set({ clientes: get().clientes.filter(x => x.id !== id) })
+      get().toast(c ? 'Cliente "' + c.nome + '" removido' : 'Cliente removido')
+    },
 
     login: (perfil) => set({ logged: true, perfil, page: perfil === 'Produção' ? 'producao' : perfil === 'Comercial' ? 'comercial' : 'dashboard' }),
     goto: (page) => set({ page }),
@@ -103,7 +125,7 @@ export const useApp = create<AppState>((set, get) => {
       const seq = get().seq + 1; const p: Pedido = clone(base)
       p.pedido = 'PD' + String(seq).padStart(6, '0'); p.status = 'rascunho'; p.aprovado = false; p.late = false
       p.criadoPor = get().perfil; p.atualizadoEm = new Date().toISOString()
-      if (cli) { p.clienteId = cli.id; p.cliente = cli.nome; p.cpf = cli.doc; p.contato = cli.contato; p.vendedor = cli.vendedor }
+      if (cli) { p.clienteId = cli.id; p.cliente = cli.nome; p.cpf = cli.doc; p.contato = cli.contato; p.vendedor = cli.vendedor; p.endereco = [cli.endereco, cli.cidade].filter(Boolean).join(' — ') }
       set({ pedidos: [p, ...get().pedidos], fin: { ...get().fin, [p.pedido]: { sinal: 0 } }, seq, curPed: 0, page: 'comercial', past: [], future: [] }); get().toast('Novo orçamento ' + p.pedido + ' criado')
     },
     undo: () => {

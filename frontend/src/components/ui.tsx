@@ -1,4 +1,5 @@
 import type { ReactNode, CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { TECNICAS, type TecnicaKey } from '../store/model'
 
 /** cor de token (CSS var) usada em estilo inline dinâmico */
@@ -77,7 +78,9 @@ export function Badge({ kind = 'neutral', children }: { kind?: BadgeKind; childr
 }
 
 export function Drawer({ open, onClose, accent, title, sub, children }: { open: boolean; onClose: () => void; accent?: string; title: ReactNode; sub?: ReactNode; children: ReactNode }) {
-  return (
+  /* portal para o body: fora do fluxo da página, o drawer nunca fica sob o
+     topbar sticky do Shell (mesma lição do AnotarModal) */
+  return createPortal(
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(14,17,22,.45)', zIndex: 55, opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none', transition: 'opacity .2s' }} />
       <aside style={{ position: 'fixed', top: 0, right: 0, height: '100vh', width: 440, maxWidth: '94vw', zIndex: 60, background: 'var(--bg-surface)', borderLeft: '1px solid var(--border)', transform: open ? 'none' : 'translateX(100%)', transition: 'transform .2s var(--ease)', display: 'flex', flexDirection: 'column', boxShadow: 'var(--sh-4)' }}>
@@ -87,7 +90,8 @@ export function Drawer({ open, onClose, accent, title, sub, children }: { open: 
         </div>
         <div style={{ padding: '18px 20px', overflowY: 'auto', flex: 1, fontSize: 13 }}>{open ? children : null}</div>
       </aside>
-    </>
+    </>,
+    document.body,
   )
 }
 export const drawerH4: CSSProperties = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', margin: '16px 0 8px' }

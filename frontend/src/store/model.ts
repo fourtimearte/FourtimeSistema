@@ -59,7 +59,18 @@ export const EMBALAGENS = ['Saco individual', 'Caixa', 'A granel', 'Sacola perso
 export const PAGAMENTOS = ['À vista', '50% sinal + saldo', '30/60', 'Pix', 'Cartão 3x', 'Boleto']
 
 /* ---- tipos ---- */
-export interface Cliente { id: number; nome: string; doc: string; contato: string; endereco: string; vendedor: string; segmento: string }
+export interface Cliente {
+  id: number; nome: string; doc: string; contato: string; endereco: string; vendedor: string; segmento: string
+  /* cadastro completo (CRM) — campos novos são opcionais p/ tolerância (mesmo espírito do .ft) */
+  tipo?: 'PF' | 'PJ'          // pessoa física ou jurídica (define máscara/validação do doc)
+  email?: string
+  cidade?: string             // cidade/UF (ex.: Goiânia-GO)
+  cep?: string
+  obs?: string
+  criadoEm?: string           // ISO
+  ativo?: boolean             // default true
+}
+export const SEGMENTOS = ['Escola', 'Faculdade', 'Academia', 'Esporte', 'Comércio', 'Indústria', 'Igreja', 'Evento', 'Corporativo', 'Outro']
 export interface BomItem { insumoId: number; qtd: number; un: string }
 export interface Referencia { cod: string; nome: string; genero: string; design: TecnicaKey[]; bom: BomItem[] }
 export interface Insumo { id: number; nome: string; tipo: string; un: string; saldo: number; minimo: number; custo: number }
@@ -104,12 +115,12 @@ export const STATIONS: Station[] = [
 
 /* ---- dados mock ---- */
 export const CLIENTES: Cliente[] = [
-  { id: 1, nome: 'Escola João XXIII', doc: '12.345.678/0001-11', contato: '(62) 99912-3421', endereco: 'Goiânia-GO', vendedor: 'Henrique', segmento: 'Escola' },
-  { id: 2, nome: 'Time Vôlei Sub-15', doc: '—', contato: '(62) 98110-7788', endereco: 'Aparecida-GO', vendedor: 'Daniele', segmento: 'Esporte' },
-  { id: 3, nome: 'Academia Pulse', doc: '22.987.654/0001-90', contato: '(62) 99740-1122', endereco: 'Goiânia-GO', vendedor: 'Henrique', segmento: 'Academia' },
-  { id: 4, nome: 'Padaria Estrela', doc: '33.111.222/0001-45', contato: '(62) 99655-3030', endereco: 'Trindade-GO', vendedor: 'Kevelin', segmento: 'Comércio' },
-  { id: 5, nome: 'Auto Peças Silva', doc: '44.222.333/0001-70', contato: '(62) 99333-8080', endereco: 'Goiânia-GO', vendedor: 'Daniele', segmento: 'Indústria' },
-  { id: 6, nome: 'Faculdade Sigma', doc: '55.444.555/0001-32', contato: '(62) 98800-4545', endereco: 'Anápolis-GO', vendedor: 'Henrique', segmento: 'Faculdade' },
+  { id: 1, nome: 'Escola João XXIII', tipo: 'PJ', doc: '12.345.678/0001-11', contato: '(62) 99912-3421', email: 'secretaria@joaoxxiii.edu.br', endereco: 'Av. T-9, 1200 — St. Bueno', cidade: 'Goiânia-GO', cep: '74215-020', vendedor: 'Henrique', segmento: 'Escola', criadoEm: '2025-03-11T10:00:00Z', ativo: true },
+  { id: 2, nome: 'Time Vôlei Sub-15', tipo: 'PF', doc: '—', contato: '(62) 98110-7788', email: '', endereco: 'Gin. Rio Vermelho', cidade: 'Aparecida-GO', cep: '', vendedor: 'Daniele', segmento: 'Esporte', criadoEm: '2025-06-02T14:30:00Z', ativo: true },
+  { id: 3, nome: 'Academia Pulse', tipo: 'PJ', doc: '22.987.654/0001-90', contato: '(62) 99740-1122', email: 'contato@pulsefit.com.br', endereco: 'R. 90, 455 — St. Sul', cidade: 'Goiânia-GO', cep: '74093-020', vendedor: 'Henrique', segmento: 'Academia', criadoEm: '2025-01-20T09:00:00Z', ativo: true },
+  { id: 4, nome: 'Padaria Estrela', tipo: 'PJ', doc: '33.111.222/0001-45', contato: '(62) 99655-3030', email: 'padariaestrela@gmail.com', endereco: 'Av. Manoel Monteiro, 88', cidade: 'Trindade-GO', cep: '75380-000', vendedor: 'Kevelin', segmento: 'Comércio', criadoEm: '2025-05-15T16:00:00Z', ativo: true },
+  { id: 5, nome: 'Auto Peças Silva', tipo: 'PJ', doc: '44.222.333/0001-70', contato: '(62) 99333-8080', email: 'vendas@autosilva.com.br', endereco: 'Av. Anhanguera, 7420', cidade: 'Goiânia-GO', cep: '74403-010', vendedor: 'Daniele', segmento: 'Indústria', criadoEm: '2024-11-08T11:00:00Z', ativo: true },
+  { id: 6, nome: 'Faculdade Sigma', tipo: 'PJ', doc: '55.444.555/0001-32', contato: '(62) 98800-4545', email: 'compras@sigma.edu.br', endereco: 'BR-153, km 4', cidade: 'Anápolis-GO', cep: '75132-100', vendedor: 'Henrique', segmento: 'Faculdade', criadoEm: '2025-02-27T08:45:00Z', ativo: true },
 ]
 export const INSUMOS: Insumo[] = [
   { id: 1, nome: 'Malha Dry-fit PET', tipo: 'Tecido', un: 'kg', saldo: 180, minimo: 60, custo: 38.0 },

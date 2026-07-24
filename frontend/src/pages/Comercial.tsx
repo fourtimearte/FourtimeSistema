@@ -6,7 +6,7 @@ import { toFt, fromFt, ehFt, nomeFt } from '../lib/ft'
 import { exportarHtml } from '../lib/exportHtml'
 import AnotarModal from '../components/AnotarModal'
 import {
-  REFERENCIAS, CLIENTES, TECNICAS, DESIGN_ORDER, CORES, TECIDOS, corHexPorNome, generoClasse, GENEROS,
+  REFERENCIAS, TECNICAS, DESIGN_ORDER, CORES, TECIDOS, corHexPorNome, generoClasse, GENEROS,
   VENDEDORES, DEPARTAMENTOS, EMBALAGENS, PAGAMENTOS, validarPedido,
   DTF_CORES, SB_CORES, codigoHex, isInfantil, ordemTamanhos, OBS_TAGS,
   pedTotais, money, type Pedido, type Layout, type TecnicaKey,
@@ -25,7 +25,7 @@ function toISO(br: string) { const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); 
 function fromISO(iso: string) { const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : iso }
 
 export default function Comercial() {
-  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, toggleHeaderObsTag, aprovarPedido, toggleDinheiro, semDinheiro, toast, undo, redo, past, future, pasteLayout, layoutClip, abrirPedido, fecharAba } = useApp()
+  const { pedidos, curPed, setCurPed, novoOrcamento, updateHeader, patchPedido, toggleHeaderObsTag, aprovarPedido, toggleDinheiro, semDinheiro, toast, undo, redo, past, future, pasteLayout, layoutClip, abrirPedido, fecharAba, clientes } = useApp()
   const p: Pedido | undefined = pedidos[curPed]
   const [viewImg, setViewImg] = useState<string | null>(null)
   const [anotar, setAnotar] = useState(false)
@@ -69,8 +69,8 @@ export default function Comercial() {
   }, [undo, redo])
 
   function onCliente(v: string) {
-    const m = CLIENTES.find(c => c.nome.toLowerCase() === v.trim().toLowerCase())
-    if (m) patchPedido(curPed, { cliente: m.nome, clienteId: m.id, cpf: m.doc, contato: m.contato, vendedor: m.vendedor, endereco: m.endereco })
+    const m = clientes.find(c => c.nome.toLowerCase() === v.trim().toLowerCase())
+    if (m) patchPedido(curPed, { cliente: m.nome, clienteId: m.id, cpf: m.doc, contato: m.contato, vendedor: m.vendedor, endereco: [m.endereco, m.cidade].filter(Boolean).join(' — ') })
     else updateHeader(curPed, 'cliente', v)
   }
   function aprovar() {
@@ -85,7 +85,7 @@ export default function Comercial() {
 
   return (
     <div>
-      <datalist id="dl-clientes">{CLIENTES.map(c => <option key={c.id} value={c.nome} />)}</datalist>
+      <datalist id="dl-clientes">{clientes.map(c => <option key={c.id} value={c.nome} />)}</datalist>
       <datalist id="dl-vend">{VENDEDORES.map(v => <option key={v} value={v} />)}</datalist>
       <datalist id="dl-dep">{DEPARTAMENTOS.map(v => <option key={v} value={v} />)}</datalist>
       <datalist id="dl-emb">{EMBALAGENS.map(v => <option key={v} value={v} />)}</datalist>
