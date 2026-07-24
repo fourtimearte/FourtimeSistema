@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import {
-  LayoutGrid, Briefcase, Users, Kanban, Layers, Box, Wallet, Search, Bell, Sun, Moon,
+  LayoutGrid, Briefcase, Users, Kanban, Layers, Box, Wallet, Search, Bell, Sun, Moon, Menu, X,
 } from 'lucide-react'
 import { useApp, type PageId } from '../store/useApp'
 import Logo from './Logo'
@@ -27,8 +27,11 @@ const NAV: NavGroup[] = [
 export default function Shell({ children }: { children: ReactNode }) {
   const { page, goto, perfil, kcards, toast } = useApp()
   const [dark, setDark] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const av = perfil === 'Administração' ? 'AF' : perfil.slice(0, 2).toUpperCase()
   const nLate = kcards.filter(c => c.late).length
+  const fullBleed = page === 'producao' // Kanban ocupa toda a tela (estilo Trello)
+  const irPara = (id: PageId) => { goto(id); setMenuOpen(false) } // navegar fecha o menu mobile
 
   const toggleTheme = () => {
     const d = document.documentElement.getAttribute('data-theme') === 'dark'
@@ -37,17 +40,19 @@ export default function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="app-root" style={{ minHeight: '100vh' }}>
-      <header style={topbar}>
-        <div style={{ display: 'flex', alignItems: 'center', paddingLeft: 2 }}><Logo variant="light" height={22} /></div>
+      <header style={topbar} className="ft-topbar">
+        <button className="only-mobile" onClick={() => setMenuOpen(o => !o)} style={{ ...iconBtnNav, marginRight: 2, flex: '0 0 auto' }} aria-label="Menu">{menuOpen ? <X size={18} /> : <Menu size={18} />}</button>
+        <div className="ft-logo" style={{ display: 'flex', alignItems: 'center', paddingLeft: 2, minWidth: 0 }}><Logo variant="light" height={22} /></div>
         <div style={{ flex: 1 }} />
-        <div style={search}><Search size={15} /><input placeholder="Buscar pedido, cliente, PD####…" style={searchInput} onKeyDown={e => { if (e.key === 'Enter' && (e.target as HTMLInputElement).value) toast('Busca (protótipo)') }} /></div>
+        <div style={search} className="ft-search"><Search size={15} /><input placeholder="Buscar pedido, cliente, PD####…" style={searchInput} onKeyDown={e => { if (e.key === 'Enter' && (e.target as HTMLInputElement).value) toast('Busca (protótipo)') }} /></div>
         <button style={iconBtnNav} onClick={toggleTheme}>{dark ? <Sun size={17} /> : <Moon size={17} />}</button>
         <button style={iconBtnNav} onClick={() => toast(nLate + ' card(s) atrasado(s)')}><Bell size={17} /><span style={dot} /></button>
-        <div style={userchip}><div style={avatar}>{av}</div><small style={{ fontSize: 12, color: 'var(--nav-fg)' }}>{perfil}</small></div>
+        <div style={userchip}><div style={avatar}>{av}</div><small className="ft-perfil" style={{ fontSize: 12, color: 'var(--nav-fg)' }}>{perfil}</small></div>
       </header>
 
+      {menuOpen && <div className="only-mobile" onClick={() => setMenuOpen(false)} style={{ position: 'fixed', inset: '56px 0 0 0', background: 'rgba(10,12,16,.5)', zIndex: 44 }} />}
       <div style={{ display: 'grid', gridTemplateColumns: '250px 1fr', alignItems: 'start' }} className="ft-layout">
-        <nav className="sidenav" style={sidenav}>
+        <nav className={'sidenav' + (menuOpen ? ' open' : '')} style={sidenav}>
           {NAV.map(g => (
             <div key={g.grupo}>
               <div style={grp}>{g.grupo}</div>
@@ -56,7 +61,7 @@ export default function Shell({ children }: { children: ReactNode }) {
                 let cnt: ReactNode = null
                 if (it.id === 'producao') cnt = <span style={cntBadge}>{kcards.filter(c => c.station !== 'entregue').length}</span>
                 return (
-                  <button key={it.id} onClick={() => goto(it.id)}
+                  <button key={it.id} onClick={() => irPara(it.id)}
                     style={{ ...navItem, ...(on ? { background: `linear-gradient(90deg,color-mix(in srgb,var(${it.cor}) 34%,transparent),transparent)`, color: '#fff', boxShadow: `inset 3px 0 0 var(${it.cor})` } : {}) }}>
                     {it.icon}<span style={{ flex: 1, textAlign: 'left' }}>{it.nome}</span>{cnt}
                   </button>
@@ -65,15 +70,18 @@ export default function Shell({ children }: { children: ReactNode }) {
             </div>
           ))}
         </nav>
-        <main style={{ padding: '32px 40px', maxWidth: 1280, minHeight: 'calc(100vh - 56px)' }} className="ft-main">
-          <div className="play-surgir" key={page}>{children}</div>
+        <main style={fullBleed
+          ? { padding: 0, maxWidth: 'none', height: 'calc(100vh - 56px)', overflow: 'hidden', minWidth: 0 }
+          : { padding: '32px 40px', maxWidth: 1280, minHeight: 'calc(100vh - 56px)', minWidth: 0 }} className={'ft-main' + (fullBleed ? ' ft-main-full' : '')}>
+          <div className="play-surgir" key={page} style={fullBleed ? { height: '100%' } : undefined}>{children}</div>
         </main>
       </div>
       <style>{`
-        @media(max-width:980px){.ft-layout{grid-template-columns:1fr!important}.sidenav{position:fixed;left:0;top:56px;bottom:0;width:250px;z-index:45;transform:translateX(-100%);transition:transform .2s var(--ease)}.sidenav.open{transform:none}.only-mobile{display:inline-grid!important}}
-        @media(max-width:640px){.ft-main{padding:20px!important}}
-        .only-mobile{display:none}
+        .only-mobile{display:none!important}
+        @media(max-width:980px){.ft-layout{grid-template-columns:1fr!important}.sidenav{position:fixed!important;left:0;top:56px;bottom:0;height:auto!important;width:min(280px,82vw);z-index:45;transform:translateX(-100%)!important;transition:transform .2s var(--ease);box-shadow:var(--sh-4)}.sidenav.open{transform:none!important}.only-mobile{display:inline-grid!important}}
+        @media(max-width:640px){.ft-main:not(.ft-main-full){padding:20px!important}}
         @media(max-width:760px){.ft-search{display:none!important}}
+        @media(max-width:520px){.ft-perfil{display:none!important}.ft-topbar{padding:0 10px!important;gap:8px!important}.ft-logo img{height:19px!important}}
       `}</style>
     </div>
   )
