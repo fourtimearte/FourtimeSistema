@@ -1,47 +1,30 @@
-# Fourtime · Sistema (React) — Fase 1
+import {
+  LayoutDashboard, Users, FileText, PenTool, Printer, DollarSign,
+  Columns3, BookMarked, Boxes, Palette, LogIn, type LucideIcon,
+} from 'lucide-react'
 
-Base de produção do sistema CRM + ERP + Produção da Fourtime, na stack oficial.
-Este é o **scaffold da Fase 1**: fundação React + a ponte de tokens do Design System v5,
-o shell (topbar + rail escuros), o store com o **motor de roteamento** e as páginas de
-prova **Dashboard** e **Kanban** funcionando. As demais páginas são stubs (Fase 2).
+export type Modulo = {
+  rota: string
+  nome: string
+  icone: LucideIcon
+  grupo: 'Visão' | 'Comercial' | 'Produção' | 'Sistema'
+  cor?: string
+}
 
-O protótipo single-file `fourtime-sistema-v1.html` continua sendo a referência viva do fluxo
-e do visual — este projeto porta aquilo para a stack que vai para produção.
+/** Um ícone por conceito, nomeado pelo conceito e não pelo desenho.
+ *  Sem isto, cada tela escolhe o seu e o sistema fica com três "editar". */
+export const MODULOS: Modulo[] = [
+  { rota: '/', nome: 'Dashboard', icone: LayoutDashboard, grupo: 'Visão' },
+  { rota: '/clientes', nome: 'Clientes', icone: Users, grupo: 'Comercial', cor: 'var(--cat-6)' },
+  { rota: '/orcamentos', nome: 'Orçamentos', icone: FileText, grupo: 'Comercial', cor: 'var(--cat-6)' },
+  { rota: '/editor', nome: 'Editor', icone: PenTool, grupo: 'Comercial', cor: 'var(--cat-6)' },
+  { rota: '/a4', nome: 'Folha A4', icone: Printer, grupo: 'Comercial', cor: 'var(--cat-6)' },
+  { rota: '/financeiro', nome: 'Financeiro', icone: DollarSign, grupo: 'Comercial', cor: 'var(--cat-4)' },
+  { rota: '/kanban', nome: 'Kanban', icone: Columns3, grupo: 'Produção', cor: 'var(--cat-1)' },
+  { rota: '/referencias', nome: 'Referências · BOM', icone: BookMarked, grupo: 'Produção', cor: 'var(--cat-7)' },
+  { rota: '/estoque', nome: 'Estoque', icone: Boxes, grupo: 'Produção', cor: 'var(--cat-7)' },
+  { rota: '/kit', nome: '/kit', icone: Palette, grupo: 'Sistema' },
+  { rota: '/login', nome: 'Login & perfis', icone: LogIn, grupo: 'Sistema' },
+]
 
-## Stack
-React 18 + TypeScript + Vite · Tailwind (via `tailwind.preset` que espelha os tokens) ·
-Zustand (estado + roteamento) · @dnd-kit (Kanban) · lucide-react (ícones) · Framer Motion.
-
-## Rodar
-```bash
-cd frontend
-npm install
-npm run dev      # http://localhost:5173
-npm run build    # gera dist/ (verificado: build limpo)
-npm run preview  # serve o dist/
-```
-
-## Estrutura
-```
-frontend/
-├─ src/
-│  ├─ styles/tokens.css        ← FONTE ÚNICA DA VERDADE (copiada do design kit v5)
-│  ├─ theme/tailwind.preset.ts ← espelha os tokens: bg-set-dtf === var(--set-dtf)
-│  ├─ store/model.ts           ← tipos + dados mock + helpers de negócio
-│  ├─ store/useApp.ts          ← Zustand: estado + MOTOR DE ROTEAMENTO (aprovar → Kanban)
-│  ├─ components/  Shell, Login, Toasts, ui
-│  └─ pages/       Dashboard, Kanban (funcionais) · Stub (demais, Fase 2)
-```
-
-## O motor central (igual ao protótipo)
-Aprovar um pedido lê `layout.design[]` (as tags de técnica) e gera um card por técnica na
-faixa correta do Kanban — `store/useApp.ts → roteia()`. Uma técnica = uma cor, do editor ao card.
-
-## Regras herdadas (não quebrar)
-- `tokens.css` é a fonte única — só acrescentar, nunca renomear.
-- O `.ft` é contrato inviolável — o editor v172 continua dono do formato (Fase 4, via iframe + postMessage).
-- Cores por setor e tipografia (Plex Sans/Mono, Roboto no A4) vêm do kit v5.
-
-## Próximas fases
-Ver `PLANO-MIGRACAO-REACT.md`: Fase 2 (páginas restantes) · Fase 3 (backend FastAPI + Postgres) ·
-Fase 4 (editor v172 embutido + .ft) · Fase 5 (deploy/produção).
+export const GRUPOS = ['Visão', 'Comercial', 'Produção', 'Sistema'] as const
