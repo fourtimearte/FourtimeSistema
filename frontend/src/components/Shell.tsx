@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import {
-  LayoutGrid, Briefcase, Users, Kanban, Layers, Box, Wallet, Search, Bell, Sun, Moon, Menu, X,
+  LayoutGrid, Briefcase, Users, Kanban, Layers, Box, Wallet, Search, Bell, Sun, Moon, Menu, X, Settings,
 } from 'lucide-react'
 import { useApp, type PageId } from '../store/useApp'
 import Logo from './Logo'
@@ -29,21 +29,23 @@ const NAV: NavGroup[] = [
     { id: 'estoque', nome: 'Estoque', icon: <Box size={17} />, cor: '--set-estoque' },
     { id: 'financeiro', nome: 'Financeiro', icon: <Wallet size={17} />, cor: '--set-financeiro' },
   ] },
+  { grupo: 'Sistema', itens: [
+    { id: 'configuracoes', nome: 'Configurações', icon: <Settings size={17} />, cor: '--set-expedicao' },
+  ] },
 ]
 
 export default function Shell({ children }: { children: ReactNode }) {
-  const { page, goto, perfil, kcards, toast } = useApp()
-  const [dark, setDark] = useState(false)
+  const { page, goto, perfil, kcards, toast, prefs, setPrefs } = useApp()
   const [menuOpen, setMenuOpen] = useState(false)
+  const dark = prefs.tema === 'dark'
   const av = perfil === 'Administração' ? 'AF' : perfil.slice(0, 2).toUpperCase()
   const nLate = kcards.filter(c => c.late).length
   const full = page === 'producao' // Kanban ocupa toda a tela (estilo Trello)
   const irPara = (id: PageId) => { goto(id); setMenuOpen(false) }
 
-  const toggleTheme = () => {
-    const d = document.documentElement.getAttribute('data-theme') === 'dark'
-    document.documentElement.setAttribute('data-theme', d ? 'light' : 'dark'); setDark(!d)
-  }
+  /* um caminho só para o tema: o botão da barra e a aba Aparência mexem na
+     mesma preferência, então nunca ficam contando histórias diferentes */
+  const toggleTheme = () => setPrefs({ tema: dark ? 'light' : 'dark' })
 
   return (
     <div className="app-root" style={{ minHeight: '100vh' }}>

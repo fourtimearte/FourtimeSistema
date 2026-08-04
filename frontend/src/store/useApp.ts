@@ -4,8 +4,9 @@ import {
   type Pedido, type KCard, type TecnicaKey, type Cliente, type Layout,
   pedTotais, pedTecnicas,
 } from './model'
+import { carregarPrefs, salvarPrefs, aplicarPrefs, type Prefs } from './prefs'
 
-export type PageId = 'dashboard' | 'comercial' | 'crm' | 'producao' | 'ficha' | 'estoque' | 'financeiro'
+export type PageId = 'dashboard' | 'comercial' | 'crm' | 'producao' | 'ficha' | 'estoque' | 'financeiro' | 'configuracoes'
 interface Toast { id: number; msg: string }
 
 interface AppState {
@@ -14,6 +15,11 @@ interface AppState {
   seq: number; curPed: number; semDinheiro: boolean; toasts: Toast[]
   past: Pedido[]; future: Pedido[]; layoutClip: Layout | null
   clientes: Cliente[]; cliSeq: number
+  prefs: Prefs
+  setPrefs: (partial: Partial<Prefs>) => void
+  setCorSetor: (token: string, hex: string) => void
+  resetCorSetor: (token: string) => void
+  resetCoresSetor: () => void
   addCliente: (c: Omit<Cliente, 'id' | 'criadoEm'>) => Cliente
   updateCliente: (id: number, partial: Partial<Cliente>) => void
   deleteCliente: (id: number) => void
@@ -99,6 +105,10 @@ function novoPedido(seq: number, perfil: string): Pedido {
   return { pedido: 'PD' + String(seq).padStart(6, '0'), clienteId: null, cliente: '', cpf: '', vendedor: perfil === 'Comercial' ? '' : perfil, contato: '', depto: '', embalagem: '', entrega: '', envio: '', pagamento: '50% sinal + saldo', obs: '', obsTags: [], status: 'rascunho', aprovado: false, layouts: [novoLayout()], criadoPor: perfil, atualizadoEm: new Date().toISOString() }
 }
 
+/* preferências salvas: carrega e já pinta o <html> antes do 1º render */
+const PREFS0 = carregarPrefs()
+aplicarPrefs(PREFS0)
+
 export const useApp = create<AppState>((set, get) => {
   /** ponto único de edição: grava histórico do pedido ativo, aplica e re-roteia */
   const edit = (pIdx: number, mut: (pedidos: Pedido[]) => void) => {
@@ -115,6 +125,24 @@ export const useApp = create<AppState>((set, get) => {
     fin: { PD003929: { sinal: 0 }, PD003912: { sinal: 1798.5 }, PD003940: { sinal: 299 }, PD003944: { sinal: 0 } },
     seq: 3945, curPed: 0, semDinheiro: false, toasts: [], past: [], future: [], layoutClip: null,
     clientes: clone(CLIENTES), cliSeq: CLIENTES.length,
+    prefs: PREFS0,
+
+    /* ---- Configurações: um único caminho para mudar preferência ------- */
+    setPrefs: (partial) => {
+      const prefs: Prefs = { ...get().prefs, ...partial, cores: { ...get().prefs.cores, ...(partial.cores ?? {}) } }
+      aplicarPrefs(prefs); salvarPrefs(prefs); set({ prefs })
+    },
+    setCorSetor: (token, hex) => get().setPrefs({ cores: { [token]: hex } }),
+    resetCorSetor: (token) => {
+      const cores = { ...get().prefs.cores }; delete cores[token]
+      const prefs: Prefs = { ...get().prefs, cores }
+      aplicarPrefs(prefs); salvarPrefs(prefs); set({ prefs })
+    },
+    resetCoresSetor: () => {
+      const prefs: Prefs = { ...get().prefs, cores: {} }
+      aplicarPrefs(prefs); salvarPrefs(prefs); set({ prefs })
+      get().toast('Cores dos departamentos restauradas')
+    },
 
     addCliente: (c) => {
       const cliSeq = get().cliSeq + 1

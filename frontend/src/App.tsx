@@ -9,6 +9,7 @@ import CRM from './pages/CRM'
 import BOM from './pages/BOM'
 import Estoque from './pages/Estoque'
 import Financeiro from './pages/Financeiro'
+import Configuracoes from './pages/Configuracoes'
 import PrintDoc from './components/PrintDoc'
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
         {page === 'ficha' && <BOM />}
         {page === 'estoque' && <Estoque />}
         {page === 'financeiro' && <Financeiro />}
+        {page === 'configuracoes' && <Configuracoes />}
       </Shell>
       <Toasts />
       <PrintDoc />

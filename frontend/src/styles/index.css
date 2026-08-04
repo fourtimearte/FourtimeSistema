@@ -44,6 +44,11 @@ svg { display: block; }
   html, body { background: #fff !important; }
   .app-root, .toasts-root { display: none !important; }
   .print-doc { display: block !important; }
+  /* os fundos da folha (cabeçalho, selo, tarja, tabela) TÊM que sair no
+     papel — sem isto o navegador descarta toda cor de fundo. */
+  .print-doc, .print-doc * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  /* "sem imagem" é dica de tela; no papel a moldura tracejada basta. */
+  .print-doc .lay-img-txt { display: none !important; }
 }
 
 /* ===== Cor de gênero no campo Referência (harmonizada com os tokens) ===== */

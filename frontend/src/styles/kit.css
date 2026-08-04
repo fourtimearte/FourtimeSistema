@@ -394,6 +394,62 @@ table.qtd tfoot td.tam{text-align:left;color:var(--text)}
 @media(max-width:640px){.lmod-grid{grid-template-columns:1fr}}
 
 /* =====================================================================
+   CONFIGURAÇÕES — abas, grade de setores e linhas de preferência.
+   Toda a aparência mora aqui; a página só põe classe e a cor do setor
+   (dado, não estilo) na custom property --sc.
+   ===================================================================== */
+.tabs{display:flex;align-items:center;gap:var(--sp-2);border-bottom:1px solid var(--border);margin-bottom:var(--sp-10);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:7px;height:var(--control-h-lg);padding:0 var(--sp-6);cursor:pointer;font-size:var(--fs-13);font-weight:600;color:var(--text-muted);white-space:nowrap;border-bottom:2px solid transparent;transition:color var(--mov-rapido) var(--ease),border-color var(--mov-rapido) var(--ease)}
+.tab svg{width:16px;height:16px;flex:0 0 auto}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--primary);border-bottom-color:var(--primary)}
+.tab:focus-visible{outline:none;box-shadow:0 0 0 3px var(--ring);border-radius:var(--r-sm) var(--r-sm) 0 0}
+.tab .cnt{font-family:var(--font-mono);font-size:10px;font-weight:700;background:var(--bg-muted);color:var(--text-muted);border-radius:var(--r-full);padding:1px 7px}
+.tab.on .cnt{background:var(--danger-bg);color:var(--danger-fg)}
+
+.grpttl{font-size:var(--fs-11);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-subtle);margin:var(--sp-10) 0 var(--sp-5);display:flex;align-items:center;gap:var(--sp-4)}
+.grpttl::after{content:"";flex:1;height:1px;background:var(--border)}
+.grpttl:first-child{margin-top:0}
+
+.setgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:var(--sp-6)}
+.setcard{display:flex;flex-direction:column;gap:var(--sp-5);padding:var(--sp-6);background:var(--bg-surface);border:1px solid var(--border);border-top:3px solid var(--sc,var(--primary));border-radius:var(--r-lg);box-shadow:var(--sh-1);transition:box-shadow var(--mov-rapido) var(--ease)}
+.setcard:hover{box-shadow:var(--sh-2)}
+.setcard .sc-top{display:flex;align-items:center;gap:var(--sp-4)}
+.setcard .sc-nm{font-size:var(--fs-14);font-weight:600;line-height:1.2}
+.setcard .sc-tok{font-family:var(--font-mono);font-size:10px;color:var(--text-subtle);margin-top:2px}
+.setcard .sc-onde{font-size:var(--fs-11);color:var(--text-muted);line-height:1.35}
+.setcard .sc-rst{margin-left:auto;flex:0 0 auto}
+.swatch{width:40px;height:40px;flex:0 0 auto;padding:0;border:1px solid var(--border-strong);border-radius:var(--r-md);background:var(--sc,var(--primary));cursor:pointer;overflow:hidden}
+.swatch::-webkit-color-swatch-wrapper{padding:0}
+.swatch::-webkit-color-swatch{border:none}
+.swatch::-moz-color-swatch{border:none}
+.swatch:focus-visible{outline:none;box-shadow:0 0 0 3px var(--ring)}
+.hexin{height:var(--control-h-sm);font-family:var(--font-mono);font-size:var(--fs-12);text-transform:uppercase;letter-spacing:.02em}
+.presets{display:flex;flex-wrap:wrap;gap:var(--sp-2)}
+.preset{all:unset;box-sizing:border-box;width:20px;height:20px;border-radius:var(--r-full);background:var(--sc,var(--primary));cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15);transition:transform var(--mov-rapido) var(--ease)}
+.preset:hover{transform:scale(1.18)}
+.preset:focus-visible{outline:none;box-shadow:0 0 0 3px var(--ring)}
+.preset.on{box-shadow:0 0 0 2px var(--bg-surface),0 0 0 4px var(--text)}
+.sc-prev{display:flex;align-items:center;gap:var(--sp-4);padding-top:var(--sp-5);border-top:1px dashed var(--border)}
+.sc-prev .tg{display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:var(--r-full);background:var(--sc);color:#fff;font-family:var(--font-mono);font-size:var(--fs-11);font-weight:600;white-space:nowrap}
+.sc-prev .col{flex:1;min-width:80px;height:26px;background:var(--bg-surface-2);border:1px solid var(--border);border-top:3px solid var(--sc);border-radius:var(--r-sm) var(--r-sm) 0 0}
+
+.cfg-row{display:flex;align-items:center;gap:var(--sp-6);flex-wrap:wrap;padding:var(--sp-6) 0;border-bottom:1px solid var(--border)}
+.cfg-row:first-child{padding-top:0}
+.cfg-row:last-child{border-bottom:none;padding-bottom:0}
+.cfg-row .lb{font-size:var(--fs-13);font-weight:600}
+.cfg-row .hint{font-size:var(--fs-12);color:var(--text-muted);margin-top:3px;max-width:64ch;line-height:1.4}
+.cfg-row .ctl{margin-left:auto;display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
+.seg{display:inline-flex;gap:3px;padding:3px;background:var(--bg-muted);border-radius:var(--r-md)}
+.seg button{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;height:var(--control-h-sm);padding:0 12px;border-radius:var(--r-sm);font-size:var(--fs-12);font-weight:600;color:var(--text-muted);cursor:pointer;transition:all var(--mov-rapido) var(--ease)}
+.seg button svg{width:14px;height:14px}
+.seg button:hover{color:var(--text)}
+.seg button.on{background:var(--bg-surface);color:var(--text);box-shadow:var(--sh-1)}
+.seg button:focus-visible{outline:none;box-shadow:0 0 0 3px var(--ring)}
+@media(max-width:560px){.cfg-row .ctl{margin-left:0;width:100%}}
+
+/* =====================================================================
    RESPONSIVO — rail vira gaveta (o HTML de uma página só escondia o menu)
    ===================================================================== */
 .only-mobile{display:none!important}

@@ -69,6 +69,36 @@ export const TECIDOS = ['Dry-fit 100% poliéster', 'Dry-fit PET', 'Malha PV (Pol
 export const VENDEDORES = ['Henrique', 'Daniele', 'Kevelin', 'Planejamento', 'Arte']
 export const DEPARTAMENTOS = ['Uniformes', 'Esporte', 'Comércio', 'Academia', 'Faculdade', 'Escola', 'Eventos', 'Corporativo']
 export const EMBALAGENS = ['Saco individual', 'Caixa', 'A granel', 'Sacola personalizada']
+
+/* ---------------------------------------------------------------------
+   SETORES (departamentos) — cada um é um token --set-* que o sistema
+   inteiro lê: colunas do Kanban, faixas, tags de técnica, rail lateral e
+   as pílulas de Design da folha A4. Trocar o token no <html> repinta tudo
+   de uma vez; é isso que a aba "Cores dos departamentos" faz.
+   `padrao` = valor de fábrica (o mesmo que está em tokens.css).
+   --------------------------------------------------------------------- */
+export interface Setor { token: string; nome: string; grupo: string; padrao: string; onde: string }
+export const SETORES: Setor[] = [
+  { token: '--set-comercial', nome: 'Comercial', grupo: 'Atendimento', padrao: '#2563EB', onde: 'Rail · Editor · cabeçalho de layout' },
+  { token: '--set-arte', nome: 'Arte', grupo: 'Atendimento', padrao: '#7C3AED', onde: 'Marcações e revisões de arte' },
+  { token: '--set-dtf', nome: 'DTF', grupo: 'Produção', padrao: '#DB2777', onde: 'Faixa DTF (5 colunas) · tag DTF · pílula A4' },
+  { token: '--set-sublimacao', nome: 'Sublimação', grupo: 'Produção', padrao: '#0E7490', onde: 'Faixa Subli (4 colunas) · tag Subli · pílula A4' },
+  { token: '--set-silk', nome: 'Silk', grupo: 'Produção', padrao: '#047857', onde: 'Faixa Silk (5 colunas) · tag Silk · pílula A4' },
+  { token: '--set-corte', nome: 'Corte', grupo: 'Produção', padrao: '#C2410C', onde: 'Corte Manual · Corte a Laser · tag Patch' },
+  { token: '--set-bordado', nome: 'Bordado / Patch', grupo: 'Produção', padrao: '#B45309', onde: 'Acabamento · tag Bordado' },
+  { token: '--set-costura', nome: 'CD Costura', grupo: 'Produção', padrao: '#4F46E5', onde: 'CD Costura (remonta) · tag Etiqueta' },
+  { token: '--set-embalagem', nome: 'CQ + Embalagem', grupo: 'Expedição', padrao: '#0F766E', onde: 'Portão do CQ (regra MARK42)' },
+  { token: '--set-expedicao', nome: 'Expedição', grupo: 'Expedição', padrao: '#475569', onde: 'Despacho · Entregue' },
+  { token: '--set-estoque', nome: 'Estoque', grupo: 'Gestão', padrao: '#9333EA', onde: 'Estoque · Ficha Técnica · avatar PJ do CRM' },
+  { token: '--set-financeiro', nome: 'Financeiro', grupo: 'Gestão', padrao: '#15803D', onde: 'Financeiro · KPIs de recebimento' },
+]
+export const SETOR_GRUPOS = ['Atendimento', 'Produção', 'Expedição', 'Gestão']
+/** paleta sugerida na aba de cores (tons que passam em contraste sobre branco) */
+export const PALETA_SETOR = [
+  '#C6161B', '#DB2777', '#BE185D', '#9333EA', '#7C3AED', '#4F46E5',
+  '#2563EB', '#0284C7', '#0E7490', '#0F766E', '#047857', '#15803D',
+  '#65A30D', '#CA8A04', '#B45309', '#C2410C', '#57534E', '#475569',
+]
 export const PAGAMENTOS = ['À vista', '50% sinal + saldo', '30/60', 'Pix', 'Cartão 3x', 'Boleto']
 
 /* ---- tipos ---- */
