@@ -1,8 +1,14 @@
 /* =====================================================================
-   CRM Clientes v4 — CSS portado FIEL do fourtimeclientesv4.html.
-   Usa os mesmos tokens (Kit v5) já definidos em tokens.css. Classes
-   exclusivas da página (sem colisão com o resto do sistema).
+   PERSONIFOUR — KIT v5 · CAMADA DE COMPONENTES (fonte única da verdade)
+   Portado VERBATIM do HTML "Clientes v4" (que segue o Design Kit v5).
+   Este arquivo é GLOBAL: importado por styles/index.css, vale para o
+   sistema inteiro (Dashboard, CRM, Kanban, Estoque, Financeiro, BOM).
+
+   REGRA-3-CSS: o EDITOR DE ORÇAMENTOS, a folha A4 (impressão) e o HTML
+   exportado para o Trello NÃO usam este arquivo como base visual — eles
+   têm CSS próprio e não devem ser alterados por mudanças aqui.
    ===================================================================== */
+
 /* ===== animações do kit ===== */
 @keyframes a-subir{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 @keyframes a-surgir{from{opacity:0}to{opacity:1}}
@@ -10,6 +16,38 @@
 .reveal{opacity:0;transform:translateY(18px);transition:opacity .5s var(--ease-reveal),transform .5s var(--ease-reveal)}
 .reveal.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){.reveal{opacity:1!important;transform:none!important;transition:none!important}*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
+/* ===== topbar ===== */
+.topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:var(--sp-6);height:calc(var(--control-h) + 20px);padding:0 var(--sp-12);background:var(--nav-bg);border-bottom:1px solid var(--nav-border);color:var(--nav-fg-strong)}
+.brand{display:flex;align-items:center;gap:var(--sp-6);font-weight:600;color:var(--nav-fg-strong)}
+.brand .logo{width:32px;height:32px;border-radius:var(--r-md);background:var(--grad-brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:15px;box-shadow:0 2px 10px rgba(198,22,27,.5)}
+.brand small{display:block;font-weight:500;font-size:var(--fs-11);color:var(--nav-group);letter-spacing:.02em}
+.topbar .spacer{flex:1}
+.topbar .tag{font-family:var(--font-mono);font-size:var(--fs-11);color:var(--nav-fg);padding:3px 8px;border:1px solid var(--nav-border);border-radius:var(--r-full)}
+@media(max-width:860px){.topbar .tag{display:none}}
+.switch{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;font-size:var(--fs-12);color:var(--nav-fg);border:1px solid var(--nav-border);background:rgba(255,255,255,.04);padding:6px 10px;border-radius:var(--r-md);transition:all var(--mov-rapido) var(--ease);min-height:var(--tap-min)}
+.switch:hover{background:var(--nav-hover);color:var(--nav-fg-strong)}
+.switch svg{width:15px;height:15px}
+
+/* ===== layout + rail ===== */
+.layout{display:grid;grid-template-columns:240px 1fr;align-items:start}
+/* (no HTML de uma página só o rail sumia no mobile; aqui ele vira gaveta —
+   ver o bloco RESPONSIVO no fim do arquivo) */
+.sidenav{position:sticky;top:calc(var(--control-h) + 20px);align-self:start;height:calc(100vh - var(--control-h) - 20px);overflow:auto;padding:var(--sp-10) var(--sp-3);background:var(--nav-bg);border-right:1px solid var(--nav-border);color:var(--nav-fg)}
+.sidenav .grp{font-size:var(--fs-11);font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--nav-group);padding:var(--sp-10) var(--sp-4) var(--sp-3)}
+.sidenav a,.sidenav .navlink{border:none;background:none;width:100%;font-family:inherit;text-align:left;display:flex;align-items:center;gap:11px;padding:8px 11px;border-radius:var(--r-md);font-size:var(--fs-13);font-weight:500;color:var(--nav-fg);transition:all var(--mov-rapido) var(--ease);min-height:var(--tap-min);position:relative;cursor:pointer}
+.sidenav a svg,.sidenav .navlink svg{width:17px;height:17px;flex:0 0 auto;opacity:.9}
+.sidenav a:hover,.sidenav .navlink:hover{background:var(--nav-hover);color:var(--nav-fg-strong)}
+.sidenav a.on,.sidenav .navlink.on{background:linear-gradient(90deg,color-mix(in srgb,var(--acc,var(--primary)) 30%,transparent),transparent);color:#fff;box-shadow:inset 3px 0 0 var(--acc,var(--primary))}
+.sidenav a.on svg,.sidenav .navlink.on svg{opacity:1;color:var(--acc,#fff)}
+.sidenav a .cnt,.sidenav .navlink .cnt{margin-left:auto;font-family:var(--font-mono);font-size:10px;background:rgba(255,255,255,.1);color:var(--nav-fg-strong);border-radius:var(--r-full);padding:1px 7px}
+/* min-width:0 é obrigatório: item de grid não encolhe abaixo do conteúdo por
+   padrão, e era isso que empurrava a página inteira para fora da tela no
+   celular (a tabela larga esticava a coluna em vez de rolar dentro do .tscroll) */
+.layout > *{min-width:0}
+.main{padding:var(--sp-12) var(--sp-16);max-width:1280px;width:100%;min-width:0;overflow-x:clip}
+@media(max-width:640px){.main{padding:var(--sp-6)}}
+
 /* ===== cabeçalho da página ===== */
 .pagehead{display:flex;align-items:flex-start;gap:var(--sp-8);margin-bottom:var(--sp-10);flex-wrap:wrap}
 .pagehead .tt h1{font-size:var(--fs-24);letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
@@ -201,3 +239,169 @@ table.clientes{width:100%;border-collapse:collapse;font-size:var(--fs-13);min-wi
 [data-theme="dark"] .toast{background:var(--n-800);border:1px solid var(--border-strong)}
 .toast.show{transform:none}
 .toast .d{width:8px;height:8px;border-radius:50%;background:var(--success);flex:0 0 auto}
+
+/* =====================================================================
+   ACRÉSCIMOS DO SISTEMA (não existiam no HTML de uma página só)
+   Nada aqui redefine regra do kit — só estende para o app inteiro.
+   ===================================================================== */
+
+/* ----- topbar do app: logo real, busca, perfil, hambúrguer ----- */
+.topbar .ft-logo{display:flex;align-items:center;gap:var(--sp-6);text-decoration:none}
+.topbar .ft-logo img{height:26px;width:auto;display:block}
+.ft-search{position:relative;flex:1;max-width:420px}
+.ft-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--nav-group);pointer-events:none}
+.ft-search input{width:100%;height:var(--control-h-sm);padding:0 12px 0 33px;border-radius:var(--r-md);border:1px solid var(--nav-border);background:rgba(255,255,255,.05);color:var(--nav-fg-strong);font:inherit;font-size:var(--fs-12);outline:none;transition:all var(--mov-rapido) var(--ease)}
+.ft-search input::placeholder{color:var(--nav-group)}
+.ft-search input:focus{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.18)}
+.ft-perfil{display:flex;align-items:center;gap:8px;font-size:var(--fs-12);color:var(--nav-fg)}
+.ft-perfil .av{width:28px;height:28px;border-radius:var(--r-full);background:var(--grad-brand);color:#fff;display:grid;place-items:center;font-size:var(--fs-11);font-weight:700}
+.navbtn{display:inline-grid;place-items:center;width:var(--control-h-sm);height:var(--control-h-sm);border-radius:var(--r-md);border:1px solid var(--nav-border);background:rgba(255,255,255,.04);color:var(--nav-fg);cursor:pointer;transition:all var(--mov-rapido) var(--ease)}
+.navbtn:hover{background:var(--nav-hover);color:var(--nav-fg-strong)}
+.navbtn svg{width:16px;height:16px}
+
+/* ----- main em modo full-bleed (Kanban estilo Trello) ----- */
+.main.full{max-width:none;padding:0;height:calc(100vh - var(--control-h) - 20px);overflow:hidden}
+
+/* ----- superfícies genéricas (cards de conteúdo fora de tabela) ----- */
+.panel{background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-1);margin-bottom:var(--sp-16);overflow:hidden}
+.panel > .p-head{display:flex;align-items:center;gap:var(--sp-6);padding:var(--sp-6) var(--sp-8);border-bottom:1px solid var(--border)}
+.panel > .p-head .p-ico{width:32px;height:32px;border-radius:var(--r-md);background:var(--grad-brand);color:#fff;display:grid;place-items:center;flex:0 0 auto}
+.panel > .p-head .p-ico svg{width:16px;height:16px}
+.panel > .p-head h2{font-size:var(--fs-16)}
+.panel > .p-head .p-sub{font-size:var(--fs-12);color:var(--text-muted);margin-top:1px}
+.panel > .p-head .p-right{margin-left:auto;display:flex;align-items:center;gap:var(--sp-5);flex-wrap:wrap}
+.panel > .p-body{padding:var(--sp-8)}
+.panel > .p-body.flush{padding:0}
+
+/* ----- tabela genérica do sistema (mesmas regras da .clientes) ----- */
+table.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-13)}
+.tbl thead th{position:sticky;top:0;z-index:2;background:var(--bg-muted);color:var(--text-muted);font-size:var(--fs-11);text-transform:uppercase;letter-spacing:.04em;font-weight:600;text-align:left;padding:9px 14px;border-bottom:1px solid var(--border);white-space:nowrap;user-select:none}
+.tbl thead th.num,.tbl tbody td.num{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.tbl tbody td{padding:8px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tbody tr{transition:background var(--mov-rapido) var(--ease)}
+.tbl tbody tr:hover{background:var(--bg-hover)}
+.tbl tbody tr:last-child td{border-bottom:none}
+
+/* ----- variantes de botão que o app usa e a página de clientes não tinha ----- */
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{filter:brightness(1.08)}
+.btn.lg{height:var(--control-h-lg,42px);padding:0 20px;font-size:var(--fs-14);width:100%}
+
+/* ----- formulário (labels + campos) ----- */
+.field{display:flex;flex-direction:column;gap:var(--sp-3)}
+.field > label{font-size:var(--fs-11);font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-subtle)}
+.field .hint{font-size:var(--fs-11);color:var(--text-subtle)}
+.field .err{font-size:var(--fs-11);color:var(--danger);font-weight:600}
+.field.bad .input{border-color:var(--danger)}
+textarea.input{height:auto;min-height:76px;padding:9px var(--control-px);line-height:1.45;resize:vertical}
+select.input{cursor:pointer}
+
+/* ----- badges de setor (roteamento MARK42) ----- */
+.badge-set{color:#fff}
+.badge-info{background:var(--info-bg);color:var(--info-fg)}
+.badge-danger{background:var(--danger-bg);color:var(--danger-fg)}
+/* aviso "no mínimo": contorno, não preenchido — chama mais atenção na tabela */
+.badge-alert{background:transparent;color:var(--alert);border:1.5px solid var(--alert);height:23px;font-weight:700}
+.badge-alert svg{width:12px;height:12px}
+
+/* ----- linha de lista (separação do Estoque, receita da BOM) ----- */
+.listrow{display:flex;align-items:center;gap:var(--sp-5);padding:9px 11px;border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:7px;background:var(--bg-surface);font-size:var(--fs-13);transition:background var(--mov-rapido) var(--ease),border-color var(--mov-rapido) var(--ease)}
+.listrow.click{cursor:pointer}
+.listrow.click:hover{background:var(--bg-hover);border-color:var(--border-strong)}
+.listrow .lbl{flex:1;min-width:0}
+.listrow .qt{font-family:var(--font-mono);font-size:var(--fs-12);color:var(--text-muted);font-variant-numeric:tabular-nums}
+.listrow .qt.falta{color:var(--danger);font-weight:700}
+.listrow .qt.right{min-width:86px;text-align:right}
+.listrow.total{background:var(--bg-surface-2);font-weight:700}
+.listrow.done .lbl{text-decoration:line-through;color:var(--text-muted)}
+.chk{width:20px;height:20px;border-radius:var(--r-sm);border:2px solid var(--border-strong);display:grid;place-items:center;flex:0 0 auto;color:transparent;transition:all var(--mov-rapido) var(--ease)}
+.chk svg{width:12px;height:12px}
+.listrow.done .chk{background:var(--success);border-color:var(--success);color:#fff}
+
+/* ----- bloco de nota / explicação dentro de painel ou drawer ----- */
+.notecard{border:1px solid var(--border);border-left:3px solid var(--acc,var(--primary));border-radius:var(--r-md);padding:10px 12px;background:var(--bg-surface-2);font-size:var(--fs-12);color:var(--text-muted);margin-top:var(--sp-8)}
+.notecard b{color:var(--text)}
+
+/* ----- estado vazio compacto (dentro de painel) ----- */
+.emptybox{padding:22px 14px;text-align:center;color:var(--text-subtle);font-size:var(--fs-13)}
+
+/* ----- chips de escolha (perfil no login, filtros rápidos) ----- */
+.chipset{display:flex;gap:var(--sp-3);flex-wrap:wrap}
+.chip{font-size:var(--fs-11);font-weight:600;padding:5px 10px;border-radius:var(--r-full);cursor:pointer;border:1px solid var(--border-strong);background:var(--bg-surface);color:var(--text-muted);transition:all var(--mov-rapido) var(--ease)}
+.chip:hover{background:var(--bg-hover);color:var(--text)}
+.chip.on{background:var(--primary);border-color:var(--primary);color:var(--primary-fg)}
+
+/* ----- tela de login ----- */
+.loginwrap{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:radial-gradient(1100px 620px at 78% -8%,rgba(198,22,27,.22),transparent 60%),var(--bg-app)}
+.logincard{width:100%;max-width:400px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--sh-4);padding:var(--sp-16) 30px}
+.logincard .lg-brand{display:flex;align-items:center;gap:11px;margin-bottom:var(--sp-12)}
+.logincard .lg-brand .mark{width:44px;height:44px;border-radius:var(--r-lg);background:var(--grad-brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:var(--fs-20);box-shadow:0 6px 18px rgba(198,22,27,.4)}
+.logincard .lg-brand b{font-size:var(--fs-18)}
+.logincard .lg-brand small{display:block;color:var(--text-muted);font-size:var(--fs-12)}
+.logincard h1{font-size:var(--fs-20);margin-bottom:var(--sp-2)}
+.logincard .lg-sub{color:var(--text-muted);font-size:var(--fs-13);margin-bottom:var(--sp-10)}
+.logincard .field{margin-bottom:var(--sp-8)}
+.logincard .field .input{height:var(--control-h-lg)}
+.logincard .lg-note{font-size:var(--fs-11);color:var(--text-subtle);text-align:center;margin-top:var(--sp-8)}
+
+/* =====================================================================
+   KANBAN / MODAIS — mesmas peças do kit, sem estilo inline nas páginas.
+   (não vale para o Editor de Orçamentos: REGRA-3-CSS.)
+   ===================================================================== */
+/* ----- cabeçalho de seção do quadro ----- */
+.sechead{display:flex;align-items:baseline;gap:var(--sp-6);margin-bottom:var(--sp-5);flex-wrap:wrap}
+.sectitle{font-size:var(--fs-13);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted)}
+.sech4{display:flex;align-items:center;gap:7px;font-size:var(--fs-11);text-transform:uppercase;letter-spacing:.05em;color:var(--text-subtle);margin:0 0 9px;font-weight:700}
+
+/* variantes compactas usadas nos cabeçalhos de modal */
+.input.sm{height:var(--control-h-sm);font-size:var(--fs-12);padding:0 var(--sp-4);width:auto;background:var(--bg-surface-2)}
+.iconbtn.sm{width:30px;height:30px;border-color:var(--border);background:var(--bg-surface-2)}
+.iconbtn.sm svg{width:15px;height:15px}
+
+/* ----- chip de atraso (vermelho cheio, o mais forte da tela) ----- */
+.alertchip{display:inline-flex;align-items:center;gap:5px;height:23px;padding:0 10px;border-radius:var(--r-full);font-size:var(--fs-11);font-weight:800;background:var(--alert);color:#fff;flex:0 0 auto}
+
+/* ----- micro-rótulo (VENDEDOR, ENTREGA, TECIDO…) ----- */
+.microlbl{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-subtle);font-weight:700;flex:0 0 auto}
+.microlbl.block{display:block;margin-bottom:1px}
+
+/* ----- caixinha rótulo+valor da coluna direita do módulo de layout ----- */
+.databox{display:flex;align-items:flex-start;gap:var(--sp-4);border:1px solid var(--border);border-radius:var(--r-md);padding:7px 10px;background:var(--bg-surface-2);font-size:var(--fs-12)}
+.databox .microlbl{margin-top:2px}
+.databox .v{min-width:0;font-weight:600}
+.databox.stack{display:block}
+.databox.ph{color:var(--text-subtle);font-size:var(--fs-11)}
+
+/* ----- módulo de layout (espelho do módulo do Editor, versão sem dinheiro) ----- */
+.lmod{border:1px solid var(--acc-b,var(--border));border-radius:var(--r-lg);background:var(--bg-surface);box-shadow:var(--sh-1);padding:14px}
+.lmod.click{cursor:pointer}
+.lmod-head{display:flex;align-items:center;gap:var(--sp-4);margin-bottom:var(--sp-5)}
+.lmod-n{font-family:var(--font-mono);font-size:var(--fs-11);font-weight:700;color:var(--info-fg);background:var(--info-bg);border:1px solid color-mix(in srgb,var(--set-comercial) 30%,transparent);border-radius:var(--r-md);padding:4px 10px}
+.lmod-ref{flex:0 1 auto;min-width:0;display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:var(--r-md);border:1px solid var(--border-strong);background:var(--bg-surface-2);font-size:var(--fs-13);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lmod-grid{display:grid;grid-template-columns:minmax(120px,1.1fr) auto minmax(150px,1fr);gap:var(--sp-6);align-items:start}
+.lmod-grid > img{width:100%;border-radius:var(--r-md);border:1px solid var(--border);display:block}
+.lmod-noimg{min-height:110px;border:1px dashed var(--border-strong);border-radius:var(--r-md);display:grid;place-items:center;color:var(--text-subtle);font-size:var(--fs-11)}
+.lmod-side{display:flex;flex-direction:column;gap:var(--sp-4);min-width:0}
+table.qtd{border-collapse:collapse;font-family:var(--font-mono);font-size:var(--fs-11)}
+table.qtd th,table.qtd td{border:1px solid var(--border);padding:3px 9px;text-align:center;min-width:34px}
+table.qtd th,table.qtd tfoot td{background:var(--bg-surface-2);color:var(--text-muted);font-weight:700;font-size:10px}
+table.qtd td.tam{font-family:var(--font-sans);font-weight:600;text-align:left}
+table.qtd tfoot td.tam{text-align:left;color:var(--text)}
+.tectag-mini{font-size:9px;font-weight:700;border-radius:var(--r-full);padding:2px 8px;color:#fff}
+@media(max-width:640px){.lmod-grid{grid-template-columns:1fr}}
+
+/* =====================================================================
+   RESPONSIVO — rail vira gaveta (o HTML de uma página só escondia o menu)
+   ===================================================================== */
+.only-mobile{display:none!important}
+@media(max-width:980px){
+  .layout{grid-template-columns:1fr}
+  .sidenav{position:fixed!important;top:calc(var(--control-h) + 20px);left:0;bottom:0;width:248px;height:auto!important;z-index:50;
+           transform:translateX(-100%)!important;transition:transform var(--mov-medio) var(--ease);display:block}
+  .sidenav.open{transform:none!important;box-shadow:var(--sh-4)}
+  .nav-scrim{position:fixed;inset:calc(var(--control-h) + 20px) 0 0 0;background:rgba(14,17,22,.45);z-index:45}
+  .only-mobile{display:inline-grid!important}
+}
+@media(max-width:760px){.ft-search{display:none!important}}
+@media(max-width:640px){.main:not(.full){padding:var(--sp-6)}.kpis{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+@media(max-width:520px){.ft-perfil{display:none!important}.topbar{padding:0 var(--sp-5);gap:var(--sp-4)}.topbar .ft-logo img{height:19px}}

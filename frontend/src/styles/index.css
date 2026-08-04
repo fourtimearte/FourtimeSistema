@@ -1,19 +1,26 @@
+/* @import sempre no topo (exigência do CSS/postcss-import) */
 @import './tokens.css';
+@import './kit.css';   /* camada de componentes do kit v5 — global */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Base fora do Tailwind (usa os tokens direto) */
+/* Base fora do Tailwind (usa os tokens direto) — igual ao kit v5 */
+*, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
   margin: 0;
   font-family: var(--font-ui);
   background: var(--bg-app);
   color: var(--text);
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: var(--fs-14);
+  line-height: var(--lh-normal);
   -webkit-font-smoothing: antialiased;
+  transition: background var(--mov-medio) var(--ease), color var(--mov-medio) var(--ease);
 }
+h1, h2, h3, h4 { margin: 0; font-weight: 600; line-height: var(--lh-tight); letter-spacing: -.01em; }
+a { color: var(--primary); text-decoration: none; }
+svg { display: block; }
 .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
 /* scrollbar custom (reutilizável) */

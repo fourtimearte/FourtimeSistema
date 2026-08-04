@@ -9,7 +9,7 @@ import { useApp } from '../store/useApp'
 import { pedTotais, money, cidadeUf, VENDEDORES, SEGMENTOS, type Cliente } from '../store/model'
 import { maskDoc, maskFone, maskCep, validaDoc, validaEmail, linkWhats, consultaCnpj } from '../lib/br'
 import { transportadorasPara, FONTE_LABEL, calcularFrete, pacotePorPecas, consultaCep, type FreteOpcao } from '../lib/frete'
-import './crm.v4.css'
+// CSS do kit v5 agora é global (styles/kit.css) — importado em styles/index.css
 
 /* =====================================================================
    CRM / Clientes v4 — porte FIEL de fourtimeclientesv4.html para o React,

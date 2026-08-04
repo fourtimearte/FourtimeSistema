@@ -79,17 +79,17 @@ export default function Kanban() {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
       {/* topo fixo: título + fila de pedidos + cabeçalho dos departamentos */}
       <div style={{ flex: '0 0 auto', padding: '24px 32px 0', minWidth: 0 }}>
-        <PageHead crumb="Produção · MES/PCP" title="Produção"
+        <PageHead crumb="MES" title="Produção"
           desc="No topo, a fila de pedidos em ordem de entrega. Abaixo, o pedido aprovado se divide pelas tags de Design e vira um card por departamento — arraste entre as estações."
           actions={<>
-            {nLate > 0 && <span style={alertChip}><Clock size={12} />{nLate} atrasado(s)</span>}
+            {nLate > 0 && <span className="alertchip"><Clock size={12} />{nLate} atrasado(s)</span>}
             <Btn size="sm" onClick={() => goto('comercial')}><Plus size={16} />Novo pedido</Btn>
           </>} />
 
         {/* ============ 1 · FILA DE PEDIDOS (fileira horizontal) ============ */}
         <div style={{ marginBottom: 18 }}>
-          <div style={secHead}>
-            <span style={secTitle}>Fila de pedidos</span>
+          <div className="sechead">
+            <span className="sectitle">Fila de pedidos</span>
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>ordem de entrega · {fila.length} pedido(s) · clique abre os módulos do pedido</span>
           </div>
           <div style={{ display: 'flex', gap: 12, overflowX: 'auto', overflowY: 'hidden', paddingBottom: 10 }}>
@@ -99,8 +99,8 @@ export default function Kanban() {
         </div>
 
         {/* ============ 2 · KANBAN DE PRODUÇÃO (por departamento) ============ */}
-        <div style={secHead}>
-          <span style={secTitle}>Departamentos</span>
+        <div className="sechead">
+          <span className="sectitle">Departamentos</span>
           <span style={{ fontSize: 11, color: 'var(--text-muted)', display: 'inline-flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             Faixas: {LANES.map(([n, c]) => <span key={n} style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: '#fff', background: cvar(c), borderRadius: 4, padding: '1px 6px' }}>{n}</span>)}
           </span>
@@ -142,64 +142,51 @@ function LayoutModule({ l, idx, destaque, rodape, onClick }: {
   const qtdTot = linhas.reduce((s, t) => s + (l.tamanhos[t]?.qtd ?? 0), 0)
   const gen = generoClasse(l.genero)
   return (
-    <div onClick={onClick} style={{
-      border: '1px solid ' + (destaque ? 'color-mix(in srgb,' + destaque + ' 45%,transparent)' : 'var(--border)'),
-      borderRadius: 12, background: 'var(--bg-surface)', boxShadow: 'var(--sh-1)', padding: 14, cursor: onClick ? 'pointer' : 'default',
-    }}>
+    <div onClick={onClick} className={'lmod' + (onClick ? ' click' : '')}
+      style={destaque ? { ['--acc-b' as string]: 'color-mix(in srgb,' + destaque + ' 45%,transparent)' } : undefined}>
       {/* cabeçalho: L-NN + referência (tinta de gênero, como no Editor) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-        <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: 'var(--info-fg)', background: 'var(--info-bg)', border: '1px solid color-mix(in srgb,var(--set-comercial) 30%,transparent)', borderRadius: 8, padding: '4px 10px' }}>L-{String(idx + 1).padStart(2, '0')}</span>
-        <span className={'cb-ctrl' + (gen ? ' ' + gen : '')} style={{ flex: '0 1 auto', minWidth: 0, display: 'inline-flex', alignItems: 'center', height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid var(--border-strong)', background: 'var(--bg-surface-2)', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l.ref || '—'}</span>
+      <div className="lmod-head">
+        <span className="lmod-n">L-{String(idx + 1).padStart(2, '0')}</span>
+        <span className={'lmod-ref cb-ctrl' + (gen ? ' ' + gen : '')}>{l.ref || '—'}</span>
       </div>
       {/* corpo no mesmo grid do Editor: imagem · tabela · coluna direita */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(120px,1.1fr) auto minmax(150px,1fr)', gap: 12, alignItems: 'start' }}>
+      <div className="lmod-grid">
         {l.img
-          ? <img src={l.img} style={{ width: '100%', borderRadius: 8, border: '1px solid var(--border)', display: 'block' }} />
-          : <div style={{ minHeight: 110, border: '1px dashed var(--border-strong)', borderRadius: 8, display: 'grid', placeItems: 'center', color: 'var(--text-subtle)', fontSize: 11 }}>sem imagem</div>}
-        <table className="mono" style={{ borderCollapse: 'collapse', fontSize: 11 }}>
-          <thead><tr>
-            <th style={tCel(true)}>Tam</th><th style={tCel(true)}>Qtd</th>
-          </tr></thead>
+          ? <img src={l.img} />
+          : <div className="lmod-noimg">sem imagem</div>}
+        <table className="qtd">
+          <thead><tr><th>Tam</th><th>Qtd</th></tr></thead>
           <tbody>
             {linhas.map(t => (
               <tr key={t}>
-                <td style={{ ...tCel(), fontFamily: 'inherit', fontWeight: 600, textAlign: 'left' }}>{t}</td>
-                <td style={tCel()}>{l.tamanhos[t]?.qtd || ''}</td>
+                <td className="tam">{t}</td>
+                <td>{l.tamanhos[t]?.qtd || ''}</td>
               </tr>
             ))}
           </tbody>
-          <tfoot><tr>
-            <td style={{ ...tCel(true), textAlign: 'left' }}>Total</td><td style={tCel(true)}>{qtdTot}</td>
-          </tr></tfoot>
+          <tfoot><tr><td className="tam">Total</td><td>{qtdTot}</td></tr></tfoot>
         </table>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
-          <div style={boxSt}><span style={lbl}>Tecido</span><span style={boxVal}>{l.tecidos.filter(Boolean).join(' · ') || '—'}</span></div>
-          <div style={boxSt}><span style={lbl}>Cor</span><span style={{ ...boxVal, display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 12, height: 12, borderRadius: 4, border: '1px solid var(--border-strong)', background: l.corHex, display: 'inline-block', flex: '0 0 auto' }} />{l.cor || '—'}</span></div>
-          <div style={boxSt}>
-            <span style={lbl}>Design</span>
+        <div className="lmod-side">
+          <div className="databox"><span className="microlbl">Tecido</span><span className="v">{l.tecidos.filter(Boolean).join(' · ') || '—'}</span></div>
+          <div className="databox"><span className="microlbl">Cor</span><span className="v" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 12, height: 12, borderRadius: 4, border: '1px solid var(--border-strong)', background: l.corHex, display: 'inline-block', flex: '0 0 auto' }} />{l.cor || '—'}</span></div>
+          <div className="databox">
+            <span className="microlbl">Design</span>
             <span style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap' }}>
               {l.design.map(d => (
-                <span key={d.tag} style={{ background: cvar(TECNICAS[d.tag].cor), color: '#fff', fontSize: 9, fontWeight: 700, borderRadius: 999, padding: '2px 8px' }}>
+                <span key={d.tag} className="tectag-mini" style={{ background: cvar(TECNICAS[d.tag].cor) }}>
                   {TECNICAS[d.tag].label}{d.cores.length ? ' ' + d.cores.join(',') : ''}
                 </span>
               ))}
             </span>
           </div>
-          {l.obs ? <div style={{ ...boxSt, display: 'block' }}><div style={{ fontSize: 11, color: 'var(--text-muted)' }} dangerouslySetInnerHTML={{ __html: l.obs }} /></div>
-            : <div style={{ ...boxSt, color: 'var(--text-subtle)', fontSize: 11 }}>Observações da peça…</div>}
+          {l.obs ? <div className="databox stack"><div style={{ fontSize: 'var(--fs-11)', color: 'var(--text-muted)' }} dangerouslySetInnerHTML={{ __html: l.obs }} /></div>
+            : <div className="databox ph">Observações da peça…</div>}
         </div>
       </div>
       {rodape}
     </div>
   )
 }
-const tCel = (head = false): React.CSSProperties => ({
-  border: '1px solid var(--border)', padding: '3px 9px', textAlign: 'center', minWidth: 34,
-  ...(head ? { background: 'var(--bg-surface-2)', color: 'var(--text-muted)', fontWeight: 700, fontSize: 10 } : {}),
-})
-const boxSt: React.CSSProperties = { display: 'flex', alignItems: 'flex-start', gap: 8, border: '1px solid var(--border)', borderRadius: 8, padding: '7px 10px', background: 'var(--bg-surface-2)', fontSize: 12 }
-const boxVal: React.CSSProperties = { minWidth: 0, fontWeight: 600 }
-const lbl: React.CSSProperties = { fontSize: 9, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', fontWeight: 700, marginTop: 2, flex: '0 0 auto' }
 
 /* =====================================================================
    Orçamento em TELA CHEIA — o documento HTML do pedido ocupa toda a tela
@@ -213,7 +200,7 @@ function OrcPanel({ pedido, onClose }: { pedido: Pedido; onClose: () => void }) 
         <FileText size={16} style={{ color: 'var(--set-comercial)' }} />
         <span className="mono" style={{ fontWeight: 700, fontSize: 14 }}>{(pedido.cliente || 'Orçamento')} · {pedido.pedido}.html</span>
         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>versão HTML — sem valores</span>
-        <button onClick={onClose} style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', color: 'var(--text)', cursor: 'pointer', font: 'inherit', fontSize: 13, fontWeight: 600 }}><X size={15} />Fechar</button>
+        <button className="btn" onClick={onClose} style={{ marginLeft: 'auto' }}><X size={15} />Fechar</button>
       </div>
       <iframe title="orçamento" srcDoc={html} style={{ flex: 1, width: '100%', border: 'none', display: 'block', background: '#EEF1F4' }} />
     </div>,
@@ -253,21 +240,21 @@ function CardModal({ card, pedido, onClose, onMove, onEditor }: {
               </button>
               <TecTag tec={card.tec} />
               <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, color: 'var(--info-fg)', background: 'var(--info-bg)', borderRadius: 999, padding: '2px 8px' }}><Layers size={11} />{card.lays.join(' · ') || '—'}</span>
-              {card.late && <span style={alertChip}><Clock size={12} />ATRASADO</span>}
+              {card.late && <span className="alertchip"><Clock size={12} />ATRASADO</span>}
             </div>
             {/* sticky header enxuto: nome, número, vendedor, entrega */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 12, color: 'var(--text-muted)', marginTop: 5, flexWrap: 'wrap' }}>
-              <span><span style={hLbl}>Vendedor</span> <b style={{ color: 'var(--text)' }}>{pedido?.vendedor || '—'}</b></span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: card.late ? 'var(--alert)' : undefined }}><Calendar size={13} /><span style={hLbl}>Entrega</span> <b style={{ color: card.late ? 'var(--alert)' : 'var(--text)' }}>{card.prazo || 'sem data'}</b></span>
+              <span><span className="microlbl">Vendedor</span> <b style={{ color: 'var(--text)' }}>{pedido?.vendedor || '—'}</b></span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: card.late ? 'var(--alert)' : undefined }}><Calendar size={13} /><span className="microlbl">Entrega</span> <b style={{ color: card.late ? 'var(--alert)' : 'var(--text)' }}>{card.prazo || 'sem data'}</b></span>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '0 0 auto' }}>
-            <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', fontWeight: 700 }}>Mover</span>
-            <select value={card.station} onChange={e => onMove(e.target.value)} title="Mover para"
-              style={{ height: 32, maxWidth: 200, padding: '0 8px', borderRadius: 8, font: 'inherit', fontSize: 12, background: 'var(--bg-surface-2)', color: 'var(--text)', border: '1px solid var(--border-strong)', cursor: 'pointer' }}>
+            <span className="microlbl">Mover</span>
+            <select className="input sm" value={card.station} onChange={e => onMove(e.target.value)} title="Mover para"
+              style={{ maxWidth: 200 }}>
               {STATIONS.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
             </select>
-            <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={15} /></button>
+            <button className="iconbtn sm" onClick={onClose} title="Fechar"><X size={15} /></button>
           </div>
         </div>
 
@@ -283,14 +270,14 @@ function CardModal({ card, pedido, onClose, onMove, onEditor }: {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: '8px 16px' }}>
                 {([['Cliente', pedido.cliente], ['CPF/CNPJ', pedido.cpf], ['Departamento', pedido.depto], ['Vendedor', pedido.vendedor], ['Contato', pedido.contato], ['Embalagem', pedido.embalagem], ['Entrega', pedido.entrega], ['Envio', pedido.envio], ['Pagamento', pedido.pagamento]] as [string, string][]).map(([k, v]) => (
-                  <div key={k}><div style={hLbl2}>{k}</div><div style={{ fontSize: 12, fontWeight: 500 }}>{v || '—'}</div></div>
+                  <div key={k}><div className="microlbl block">{k}</div><div style={{ fontSize: 12, fontWeight: 500 }}>{v || '—'}</div></div>
                 ))}
               </div>
             </div>
           )}
 
           {/* anexos */}
-          <h4 style={secH4}><Paperclip size={13} />Anexos ({anexos.length})</h4>
+          <h4 className="sech4"><Paperclip size={13} />Anexos ({anexos.length})</h4>
           {anexos.length ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 10, marginBottom: 18 }}>
               {anexos.map(a => (
@@ -307,7 +294,7 @@ function CardModal({ card, pedido, onClose, onMove, onEditor }: {
           ) : <div style={{ color: 'var(--text-subtle)', fontSize: 13, marginBottom: 18 }}>Nenhuma imagem anexada nos layouts deste pedido.</div>}
 
           {/* a DIVISÃO do pedido: módulos de layout desta fatia */}
-          <h4 style={secH4}><Layers size={13} />Módulos de layout desta fatia ({fatiaIdx.length}) — {TECNICAS[card.tec].label}</h4>
+          <h4 className="sech4"><Layers size={13} />Módulos de layout desta fatia ({fatiaIdx.length}) — {TECNICAS[card.tec].label}</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
             {fatiaIdx.map(i => pedido?.layouts[i] && (
               <LayoutModule key={i} l={pedido.layouts[i]} idx={i} destaque={cor} />
@@ -332,9 +319,6 @@ function CardModal({ card, pedido, onClose, onMove, onEditor }: {
     document.body,
   )
 }
-const secH4: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 7, fontSize: 11, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', margin: '0 0 9px', fontWeight: 700 }
-const hLbl: React.CSSProperties = { fontSize: 9, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', fontWeight: 700 }
-const hLbl2: React.CSSProperties = { fontSize: 9, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-subtle)', fontWeight: 700, marginBottom: 1 }
 
 /* =====================================================================
    Modal do pedido (fila): TODOS os módulos de layout, do primeiro ao
@@ -357,7 +341,7 @@ function PedidoModal({ p, cards, onClose, onLocate, onEditor }: {
                 <FileText size={15} style={{ color: 'var(--set-comercial)' }} />
                 <span style={{ fontWeight: 700, fontSize: 15, textDecoration: 'underline', textDecorationColor: 'color-mix(in srgb,var(--set-comercial) 45%,transparent)', textUnderlineOffset: 3 }}>{p.cliente || 'Orçamento'} <span className="mono">· {p.pedido}</span></span>
               </button>
-              {p.status === 'entregue' ? <Badge kind="success">entregue</Badge> : p.late ? <span style={alertChip}><Clock size={12} />ATRASADO</span> : null}
+              {p.status === 'entregue' ? <Badge kind="success">entregue</Badge> : p.late ? <span className="alertchip"><Clock size={12} />ATRASADO</span> : null}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: 'var(--text-muted)', marginTop: 5, flexWrap: 'wrap' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Calendar size={13} />{p.entrega || 'sem data'}</span>
@@ -366,12 +350,12 @@ function PedidoModal({ p, cards, onClose, onLocate, onEditor }: {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '0 0 auto' }}>
             <Btn size="sm" onClick={onEditor}><PencilRuler size={14} />Editor</Btn>
-            <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-surface-2)', color: 'var(--text-muted)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}><X size={15} /></button>
+            <button className="iconbtn sm" onClick={onClose} title="Fechar"><X size={15} /></button>
           </div>
         </div>
 
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 20px' }}>
-          <h4 style={secH4}><Layers size={13} />Módulos de layout ({p.layouts.length}) — clique para localizar no kanban de departamentos</h4>
+          <h4 className="sech4"><Layers size={13} />Módulos de layout ({p.layouts.length}) — clique para localizar no kanban de departamentos</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {p.layouts.map((l, i) => {
               const lay = 'L-' + String(i + 1).padStart(2, '0')
@@ -421,7 +405,7 @@ const PedidoCard = memo(function PedidoCard({ p, cards, semDinheiro, onOpen }: {
     } as React.CSSProperties}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
         <span className="mono" style={{ fontWeight: 600, fontSize: 13 }}>{p.pedido}</span>
-        {done ? <Badge kind="success">entregue</Badge> : p.late ? <span style={alertChip}><Clock size={11} />ATRASADO</span> : null}
+        {done ? <Badge kind="success">entregue</Badge> : p.late ? <span className="alertchip"><Clock size={11} />ATRASADO</span> : null}
         <Layers size={13} style={{ marginLeft: 'auto', color: 'var(--text-subtle)' }} />
       </div>
       <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 7, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.cliente || '—'}</div>
@@ -487,7 +471,7 @@ const Card = memo(function Card({ card, hl, onOpen }: { card: KCard; hl: boolean
     <div ref={setNodeRef} id={'kcard-' + card.id} style={style} {...listeners} {...attributes} onClick={() => onOpen(card.id)} title="Abrir cartão">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
         <span className="mono" style={{ fontWeight: 600, fontSize: 13 }}>{card.pedido}</span>
-        {card.late && <span style={alertChip}><Clock size={12} />ATRASADO</span>}
+        {card.late && <span className="alertchip"><Clock size={12} />ATRASADO</span>}
       </div>
       <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{card.cliente}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -507,6 +491,3 @@ const Card = memo(function Card({ card, hl, onOpen }: { card: KCard; hl: boolean
 })
 
 const EMPTY: KCard[] = []
-const secHead: React.CSSProperties = { display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 10, flexWrap: 'wrap' }
-const secTitle: React.CSSProperties = { fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--text-muted)' }
-const alertChip: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, height: 23, padding: '0 10px', borderRadius: 999, fontSize: 11, fontWeight: 800, background: 'var(--alert)', color: '#fff' }

@@ -4,3 +4,6 @@ dist/
 .DS_Store
 frontend/vite.config.d.ts
 frontend/vite.config.js
+
+# harness de screenshot (scratch, não faz parte do app)
+frontend/shot_*.mjs
