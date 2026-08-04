@@ -204,15 +204,19 @@ export default function CRM() {
         </div>
       </div>
 
-      {/* ficha (drawer) */}
-      <div className={'scrim' + (sel ? ' show' : '')} onClick={() => setSelId(null)} />
-      <aside className={'drawer' + (sel ? ' show' : '')} aria-hidden={!sel}>
-        {sel && <Ficha c={sel} pedidos={pedidos.filter(p => p.clienteId === sel.id)} dup={dupSet.has(sel.id)}
-          onClose={() => setSelId(null)} onCopy={(v, l) => copiar(v, l, toast)} onEdit={() => setModal(sel)}
-          onDel={() => { deleteCliente(sel.id); setSelId(null) }}
-          onRepetir={base => { setSelId(null); criarPedidoDe(base, sel) }}
-          onNovo={() => { const b = pedidos.filter(p => p.clienteId === sel.id)[0]; setSelId(null); if (b) criarPedidoDe(b, sel); else toast('Cliente sem pedido base — crie um orçamento no Editor') }} />}
-      </aside>
+      {/* ficha (drawer) — PORTAL para o body: dentro do .main o wrapper .play-surgir
+         cria contexto de empilhamento (animation fill both) e o drawer ficava
+         pintado ABAIXO da .topbar mesmo com z-index maior. */}
+      {createPortal(<>
+        <div className={'scrim' + (sel ? ' show' : '')} onClick={() => setSelId(null)} />
+        <aside className={'drawer' + (sel ? ' show' : '')} aria-hidden={!sel}>
+          {sel && <Ficha c={sel} pedidos={pedidos.filter(p => p.clienteId === sel.id)} dup={dupSet.has(sel.id)}
+            onClose={() => setSelId(null)} onCopy={(v, l) => copiar(v, l, toast)} onEdit={() => setModal(sel)}
+            onDel={() => { deleteCliente(sel.id); setSelId(null) }}
+            onRepetir={base => { setSelId(null); criarPedidoDe(base, sel) }}
+            onNovo={() => { const b = pedidos.filter(p => p.clienteId === sel.id)[0]; setSelId(null); if (b) criarPedidoDe(b, sel); else toast('Cliente sem pedido base — crie um orçamento no Editor') }} />}
+        </aside>
+      </>, document.body)}
 
       {transpDe && <TranspModal c={transpDe} onClose={() => setTranspDe(null)} />}
       {modal && <ClienteModal editar={modal === 'novo' ? null : modal} onClose={() => setModal(null)} />}
@@ -351,7 +355,7 @@ function Ficha({ c, pedidos, dup, onClose, onCopy, onEdit, onDel, onRepetir, onN
       {endParts.length ? <Dw lb="Endereço" vl={endParts.join(' · ')} /> : <Dw lb="—" vl={<span className="muted">Sem endereço cadastrado</span>} />}
 
       <div className="dw-sec">Entrega · transportadoras</div>
-      {transp.length ? transp.map(({ t, hit }) => <TpItem key={t.nome} nome={t.nome} obs={t.obs} prazo={t.prazo} cor={t.cor} fonte={hit} />) : <div className="tp-empty" style={{ padding: '10px 0', textAlign: 'left' }}>Sem cidade/CEP no cadastro — nenhuma cobertura calculada.</div>}
+      {transp.length ? transp.map(({ t, hit }) => <TpItem key={t.nome} nome={t.nome} obs={t.obs} prazo={t.prazo} cor={t.cor} fonte={hit} />) : <div className="tp-empty">Sem cidade/CEP no cadastro — nenhuma cobertura calculada.</div>}
       <FreteEstimativa c={c} pecas={pedidos.length ? Math.max(...pedidos.map(p => pedTotais(p).pecas)) : 0} />
 
       {pedidos.length > 0 && <>
