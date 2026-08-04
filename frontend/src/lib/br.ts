@@ -69,3 +69,22 @@ export function linkWhats(fone: string): string {
   const d = dig(fone)
   return d.length >= 10 ? `https://wa.me/55${d}` : ''
 }
+
+/** Consulta CNPJ na BrasilAPI (grátis, sem token, com CORS) para auto-preencher
+ * o cadastro PJ. Retorna null se inválido/erro. */
+export interface DadosCnpj { razao: string; fantasia: string; cep: string; logradouro: string; numero: string; bairro: string; cidade: string; uf: string; email: string; telefone: string }
+export async function consultaCnpj(v: string): Promise<DadosCnpj | null> {
+  const d = dig(v)
+  if (d.length !== 14) return null
+  try {
+    const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${d}`)
+    if (!r.ok) return null
+    const j = await r.json()
+    return {
+      razao: j.razao_social ?? '', fantasia: j.nome_fantasia ?? '', cep: j.cep ?? '',
+      logradouro: j.logradouro ?? '', numero: j.numero ?? '', bairro: j.bairro ?? '',
+      cidade: j.municipio ?? '', uf: j.uf ?? '', email: j.email ?? '',
+      telefone: j.ddd_telefone_1 ?? '',
+    }
+  } catch { return null }
+}

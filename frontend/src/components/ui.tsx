@@ -5,18 +5,18 @@ import { TECNICAS, type TecnicaKey } from '../store/model'
 /** cor de token (CSS var) usada em estilo inline dinâmico */
 export const cvar = (name: string): string => `var(${name})`
 
-export function Btn({ children, variant = 'secondary', size = 'md', onClick, style }: {
-  children: ReactNode; variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; size?: 'sm' | 'md' | 'lg'; onClick?: () => void; style?: CSSProperties
+export function Btn({ children, variant = 'secondary', size = 'md', onClick, style, disabled }: {
+  children: ReactNode; variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; size?: 'sm' | 'md' | 'lg'; onClick?: () => void; style?: CSSProperties; disabled?: boolean
 }) {
   const h = size === 'sm' ? 'var(--control-h-sm)' : size === 'lg' ? 'var(--control-h-lg)' : 'var(--control-h)'
-  const base: CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: h, padding: size === 'sm' ? '0 11px' : '0 16px', borderRadius: 8, fontSize: size === 'sm' ? 12 : 13, fontWeight: 600, cursor: 'pointer', border: '1px solid transparent', whiteSpace: 'nowrap', fontFamily: 'inherit', transition: 'all var(--mov-rapido) var(--ease)', width: size === 'lg' ? '100%' : undefined }
+  const base: CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: h, padding: size === 'sm' ? '0 11px' : '0 16px', borderRadius: 8, fontSize: size === 'sm' ? 12 : 13, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', border: '1px solid transparent', whiteSpace: 'nowrap', fontFamily: 'inherit', transition: 'all var(--mov-rapido) var(--ease)', width: size === 'lg' ? '100%' : undefined, opacity: disabled ? 0.5 : 1 }
   const v: Record<string, CSSProperties> = {
     primary: { background: 'var(--primary)', color: 'var(--primary-fg)' },
     secondary: { background: 'var(--bg-surface)', color: 'var(--text)', borderColor: 'var(--border-strong)' },
     ghost: { background: 'transparent', color: 'var(--text-muted)' },
     danger: { background: 'var(--danger)', color: '#fff' },
   }
-  return <button style={{ ...base, ...v[variant], ...style }} onClick={onClick}>{children}</button>
+  return <button style={{ ...base, ...v[variant], ...style }} onClick={onClick} disabled={disabled}>{children}</button>
 }
 
 export function Panel({ title, sub, icon, right, children }: { title?: string; sub?: string; icon?: ReactNode; right?: ReactNode; children: ReactNode }) {

@@ -74,14 +74,25 @@ export const PAGAMENTOS = ['À vista', '50% sinal + saldo', '30/60', 'Pix', 'Car
 /* ---- tipos ---- */
 export interface Cliente {
   id: number; nome: string; doc: string; contato: string; endereco: string; vendedor: string; segmento: string
-  /* cadastro completo (CRM) — campos novos são opcionais p/ tolerância (mesmo espírito do .ft) */
+  /* cadastro completo (CRM v4) — campos novos são opcionais p/ tolerância (mesmo espírito do .ft) */
   tipo?: 'PF' | 'PJ'          // pessoa física ou jurídica (define máscara/validação do doc)
+  fantasia?: string           // nome fantasia (PJ)
+  ie?: string                 // inscrição estadual (PJ) / RG (PF)
   email?: string
-  cidade?: string             // cidade/UF (ex.: Goiânia-GO)
+  cidade?: string             // cidade (ex.: Goiânia)
+  uf?: string                 // estado (ex.: GO) — usado no casamento de frete
   cep?: string
+  bairro?: string
+  complemento?: string
   obs?: string
   criadoEm?: string           // ISO
   ativo?: boolean             // default true
+}
+/** cidade "Goiânia-GO" → { cidade:'Goiânia', uf:'GO' } (tolerante) */
+export function cidadeUf(c: Cliente): { cidade: string; uf: string } {
+  if (c.uf) return { cidade: c.cidade ?? '', uf: c.uf }
+  const m = /^(.*?)[\s-]+([A-Za-z]{2})$/.exec((c.cidade ?? '').trim())
+  return m ? { cidade: m[1].trim(), uf: m[2].toUpperCase() } : { cidade: c.cidade ?? '', uf: '' }
 }
 export const SEGMENTOS = ['Escola', 'Faculdade', 'Academia', 'Esporte', 'Comércio', 'Indústria', 'Igreja', 'Evento', 'Corporativo', 'Outro']
 export interface BomItem { insumoId: number; qtd: number; un: string }
@@ -149,12 +160,16 @@ export const STATIONS: Station[] = [
 
 /* ---- dados mock ---- */
 export const CLIENTES: Cliente[] = [
-  { id: 1, nome: 'Escola João XXIII', tipo: 'PJ', doc: '12.345.678/0001-11', contato: '(62) 99912-3421', email: 'secretaria@joaoxxiii.edu.br', endereco: 'Av. T-9, 1200 — St. Bueno', cidade: 'Goiânia-GO', cep: '74215-020', vendedor: 'Henrique', segmento: 'Escola', criadoEm: '2025-03-11T10:00:00Z', ativo: true },
-  { id: 2, nome: 'Time Vôlei Sub-15', tipo: 'PF', doc: '—', contato: '(62) 98110-7788', email: '', endereco: 'Gin. Rio Vermelho', cidade: 'Aparecida-GO', cep: '', vendedor: 'Daniele', segmento: 'Esporte', criadoEm: '2025-06-02T14:30:00Z', ativo: true },
-  { id: 3, nome: 'Academia Pulse', tipo: 'PJ', doc: '22.987.654/0001-90', contato: '(62) 99740-1122', email: 'contato@pulsefit.com.br', endereco: 'R. 90, 455 — St. Sul', cidade: 'Goiânia-GO', cep: '74093-020', vendedor: 'Henrique', segmento: 'Academia', criadoEm: '2025-01-20T09:00:00Z', ativo: true },
-  { id: 4, nome: 'Padaria Estrela', tipo: 'PJ', doc: '33.111.222/0001-45', contato: '(62) 99655-3030', email: 'padariaestrela@gmail.com', endereco: 'Av. Manoel Monteiro, 88', cidade: 'Trindade-GO', cep: '75380-000', vendedor: 'Kevelin', segmento: 'Comércio', criadoEm: '2025-05-15T16:00:00Z', ativo: true },
-  { id: 5, nome: 'Auto Peças Silva', tipo: 'PJ', doc: '44.222.333/0001-70', contato: '(62) 99333-8080', email: 'vendas@autosilva.com.br', endereco: 'Av. Anhanguera, 7420', cidade: 'Goiânia-GO', cep: '74403-010', vendedor: 'Daniele', segmento: 'Indústria', criadoEm: '2024-11-08T11:00:00Z', ativo: true },
-  { id: 6, nome: 'Faculdade Sigma', tipo: 'PJ', doc: '55.444.555/0001-32', contato: '(62) 98800-4545', email: 'compras@sigma.edu.br', endereco: 'BR-153, km 4', cidade: 'Anápolis-GO', cep: '75132-100', vendedor: 'Henrique', segmento: 'Faculdade', criadoEm: '2025-02-27T08:45:00Z', ativo: true },
+  { id: 1, nome: 'Escola João XXIII', tipo: 'PJ', doc: '12.345.678/0001-11', fantasia: 'Colégio João XXIII', ie: '10.123.456-7', contato: '(62) 99912-3421', email: 'secretaria@joaoxxiii.edu.br', endereco: 'Av. T-9, 1200', bairro: 'St. Bueno', cidade: 'Goiânia', uf: 'GO', cep: '74215-020', vendedor: 'Henrique', segmento: 'Escola', criadoEm: '2025-03-11T10:00:00Z', ativo: true },
+  { id: 2, nome: 'Time Vôlei Sub-15', tipo: 'PF', doc: '—', contato: '(62) 98110-7788', email: '', endereco: 'Gin. Rio Vermelho', cidade: 'Aparecida de Goiânia', uf: 'GO', cep: '74911-000', vendedor: 'Daniele', segmento: 'Esporte', criadoEm: '2025-06-02T14:30:00Z', ativo: true },
+  { id: 3, nome: 'Academia Pulse', tipo: 'PJ', doc: '22.987.654/0001-90', fantasia: 'Pulse Fit', ie: '10.987.654-3', contato: '(62) 99740-1122', email: 'contato@pulsefit.com.br', endereco: 'R. 90, 455', bairro: 'St. Sul', cidade: 'Goiânia', uf: 'GO', cep: '74093-020', vendedor: 'Henrique', segmento: 'Academia', criadoEm: '2025-01-20T09:00:00Z', ativo: true },
+  { id: 4, nome: 'Padaria Estrela', tipo: 'PJ', doc: '33.111.222/0001-45', contato: '(62) 99655-3030', email: 'padariaestrela@gmail.com', endereco: 'Av. Manoel Monteiro, 88', cidade: 'Trindade', uf: 'GO', cep: '75380-000', vendedor: 'Kevelin', segmento: 'Comércio', criadoEm: '2025-05-15T16:00:00Z', ativo: true },
+  { id: 5, nome: 'Auto Peças Silva', tipo: 'PJ', doc: '44.222.333/0001-70', contato: '(62) 99333-8080', email: 'vendas@autosilva.com.br', endereco: 'Av. Anhanguera, 7420', cidade: 'Goiânia', uf: 'GO', cep: '74403-010', vendedor: 'Daniele', segmento: 'Indústria', criadoEm: '2024-11-08T11:00:00Z', ativo: true },
+  { id: 6, nome: 'Faculdade Sigma', tipo: 'PJ', doc: '55.444.555/0001-32', contato: '(62) 98800-4545', email: 'compras@sigma.edu.br', endereco: 'BR-153, km 4', cidade: 'Anápolis', uf: 'GO', cep: '75132-100', vendedor: 'Henrique', segmento: 'Faculdade', criadoEm: '2025-02-27T08:45:00Z', ativo: true },
+  { id: 7, nome: 'Handebol União', tipo: 'PF', doc: '460.828.578-52', contato: '(11) 97488-8724', email: 'handebol.uniao@gmail.com', endereco: 'Av. Araucária, 1348', bairro: 'Parque Oratório', cidade: 'Santo André', uf: 'SP', cep: '09251-040', vendedor: 'Daniele', segmento: 'Esporte', criadoEm: '2026-07-30T10:00:00Z', ativo: true },
+  { id: 8, nome: 'Inova Comercial', tipo: 'PJ', doc: '23.383.705/0001-30', fantasia: 'INOVA', ie: '10.644.237-6', contato: '(64) 99640-1020', email: 'inovabm@gmail.com', endereco: 'Rua 05, Qd 03 Lt 09', bairro: 'Res. Pôr do Sol', cidade: 'Palminópolis', uf: 'GO', cep: '75990-000', vendedor: 'Kevelin', segmento: 'Comércio', criadoEm: '2026-07-31T09:00:00Z', ativo: true },
+  { id: 9, nome: 'CrossFit 3B', tipo: 'PJ', doc: '31.222.444/0001-08', fantasia: '3B Cross', contato: '(11) 98123-4567', email: 'contato@3bcross.com.br', endereco: 'R. Vergueiro, 900', bairro: 'Liberdade', cidade: 'São Paulo', uf: 'SP', cep: '01504-000', vendedor: 'Henrique', segmento: 'Academia', criadoEm: '2026-06-18T14:00:00Z', ativo: true },
+  { id: 10, nome: 'Vôlei Praia Clube', tipo: 'PF', doc: '—', contato: '(48) 99011-2233', email: '', endereco: 'Av. Beira-Mar Norte, 500', cidade: 'Florianópolis', uf: 'SC', cep: '88015-700', vendedor: 'Daniele', segmento: 'Esporte', criadoEm: '2026-05-10T11:00:00Z', ativo: true },
 ]
 export const INSUMOS: Insumo[] = [
   { id: 1, nome: 'Malha Dry-fit PET', tipo: 'Tecido', un: 'kg', saldo: 180, minimo: 60, custo: 38.0 },
