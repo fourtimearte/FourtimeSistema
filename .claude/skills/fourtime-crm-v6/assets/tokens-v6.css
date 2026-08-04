@@ -1,0 +1,344 @@
+/* ============================================================================
+   FOURTIME — DESIGN KIT V6 · tokens.css
+   Fonte ÚNICA de todo valor de aparência do sistema.
+
+   Base: preset b7AJGDOVg8 do ui.shadcn.com/create
+   Luma · Neutral · chart Red · IBM Plex Sans + Montserrat · Lucide · radius Small
+
+   Ordem do arquivo:
+     1. @import de fontes e do Tailwind
+     2. :root  — tokens do tema claro
+     3. .dark  — tokens do tema escuro
+     4. Densidade — a camada que aperta grades sem quebrar a identidade
+     5. @theme inline — expõe os tokens como utilitários do Tailwind v4
+     6. @layer base — o mínimo indispensável
+
+   REGRA: nenhum valor de cor, raio, sombra ou espaçamento nasce fora daqui.
+   ========================================================================= */
+
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Self-host em produção (@fontsource) para não depender do Google.
+   Durante o protótipo, o import abaixo resolve. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   1. TEMA CLARO
+   ========================================================================== */
+:root {
+  /* -- superfícies e texto (verbatim do preset) -------------------------- */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+
+  --radius: 0.45rem;
+
+  /* -- sidebar ----------------------------------------------------------- */
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* -- gráficos: rampa SEQUENCIAL (uma série, varia intensidade) ---------
+     Do preset. Use para volume, faturamento, evolução no tempo.
+     NÃO use para categorias — ver --cat-* abaixo.                         */
+  --chart-1: oklch(0.808 0.114 19.571);
+  --chart-2: oklch(0.637 0.237 25.331);
+  --chart-3: oklch(0.577 0.245 27.325);
+  --chart-4: oklch(0.505 0.213 27.518);
+  --chart-5: oklch(0.444 0.177 26.899);
+
+  /* -- gráficos: paleta CATEGÓRICA (setores, status, tipos) --------------
+     Luminosidade e croma quase constantes, matiz variando — é o que faz
+     categorias se distinguirem sem depender de "mais claro / mais escuro".
+     Também são as cores das tarjas de setor no Kanban.                    */
+  --cat-1: oklch(0.58 0.19 25);    /* vermelho   */
+  --cat-2: oklch(0.62 0.15 55);    /* laranja    */
+  --cat-3: oklch(0.64 0.13 95);    /* ocre       */
+  --cat-4: oklch(0.58 0.14 150);   /* verde      */
+  --cat-5: oklch(0.60 0.11 195);   /* teal       */
+  --cat-6: oklch(0.55 0.15 250);   /* azul       */
+  --cat-7: oklch(0.55 0.17 300);   /* roxo       */
+  --cat-8: oklch(0.58 0.16 350);   /* magenta    */
+  --cat-foreground: oklch(0.985 0 0);
+
+  /* -- estado: o tema neutro do shadcn só traz destructive ----------------
+     Um CRM precisa dizer "deu certo", "atenção" e "informação". Sem isso
+     cada tela inventa um verde diferente.                                 */
+  --success: oklch(0.55 0.14 150);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.68 0.15 75);
+  --warning-foreground: oklch(0.205 0 0);
+  --info: oklch(0.56 0.13 250);
+  --info-foreground: oklch(0.985 0 0);
+
+  /* -- WhatsApp: cor de marca externa, não é decisão nossa --------------- */
+  --whatsapp: oklch(0.68 0.16 152);
+  --whatsapp-foreground: oklch(0.145 0 0);
+
+  /* -- tipografia -------------------------------------------------------- */
+  --font-heading: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'IBM Plex Mono', monospace;
+
+  /* -- movimento --------------------------------------------------------- */
+  --ft-dur-fast: 120ms;   /* hover, foco */
+  --ft-dur: 200ms;        /* padrão: abrir/fechar, trocar estado */
+  --ft-dur-slow: 300ms;   /* entrada de painel, drawer */
+  --ft-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   2. TEMA ESCURO
+   ========================================================================== */
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.145 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  /* CORRIGIDO: o preset trazia oklch(0.488 0.243 264.376) — azul-roxo, sobra
+     do default do shadcn. Acendia o item de menu ativo em roxo dentro de um
+     sistema preto-e-vermelho. Agora espelha o --primary do escuro.        */
+  --sidebar-primary: oklch(0.922 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+
+  --chart-1: oklch(0.808 0.114 19.571);
+  --chart-2: oklch(0.637 0.237 25.331);
+  --chart-3: oklch(0.577 0.245 27.325);
+  --chart-4: oklch(0.505 0.213 27.518);
+  --chart-5: oklch(0.444 0.177 26.899);
+
+  /* categóricas mais claras no escuro: contra fundo preto, L 0.58 some.    */
+  --cat-1: oklch(0.70 0.17 25);
+  --cat-2: oklch(0.74 0.14 55);
+  --cat-3: oklch(0.78 0.12 95);
+  --cat-4: oklch(0.72 0.13 150);
+  --cat-5: oklch(0.74 0.10 195);
+  --cat-6: oklch(0.68 0.14 250);
+  --cat-7: oklch(0.68 0.15 300);
+  --cat-8: oklch(0.71 0.15 350);
+  --cat-foreground: oklch(0.145 0 0);
+
+  --success: oklch(0.70 0.13 150);
+  --success-foreground: oklch(0.145 0 0);
+  --warning: oklch(0.78 0.14 75);
+  --warning-foreground: oklch(0.145 0 0);
+  --info: oklch(0.68 0.12 250);
+  --info-foreground: oklch(0.145 0 0);
+
+  --whatsapp: oklch(0.75 0.15 152);
+  --whatsapp-foreground: oklch(0.145 0 0);
+}
+
+/* ==========================================================================
+   3. DENSIDADE
+   Luma respira. Grade de pedidos não pode.
+
+   Esta camada mexe SÓ em espaçamento e altura de controle. Raio, cor,
+   sombra e escala tipográfica ficam intactos — é isso que faz a tabela
+   apertada continuar parecendo o mesmo sistema do cadastro.
+
+   Uso:  <div data-density="compacta"> …tabela… </div>
+   ========================================================================== */
+:root,
+[data-density="confortavel"] {
+  --ft-control-h: 2.25rem;   /* 36px — botão, input, select */
+  --ft-control-h-sm: 2rem;   /* 32px */
+  --ft-row-h: 3rem;          /* 48px — linha de tabela */
+  --ft-pad-x: 1rem;
+  --ft-pad-y: 0.75rem;
+  --ft-gap: 1rem;
+  --ft-card-pad: 1.5rem;
+}
+
+[data-density="compacta"] {
+  --ft-control-h: 1.875rem;  /* 30px */
+  --ft-control-h-sm: 1.625rem;
+  --ft-row-h: 2.25rem;       /* 36px */
+  --ft-pad-x: 0.625rem;
+  --ft-pad-y: 0.375rem;
+  --ft-gap: 0.5rem;
+  --ft-card-pad: 0.875rem;
+}
+
+/* Ponteiro grosso volta para confortável, sempre.
+   30px de altura é ótimo com mouse e impossível com o dedo. O sistema é
+   usado no celular dentro do galpão, e o alvo mínimo de toque é 44×44px.
+   Não remova esta regra para "ficar igual ao desktop". */
+@media (pointer: coarse) {
+  [data-density="compacta"] {
+    --ft-control-h: 2.75rem;   /* 44px */
+    --ft-control-h-sm: 2.5rem;
+    --ft-row-h: 3.25rem;
+    --ft-pad-x: 1rem;
+    --ft-pad-y: 0.75rem;
+    --ft-gap: 0.75rem;
+    --ft-card-pad: 1.25rem;
+  }
+}
+
+/* ==========================================================================
+   4. PONTE PARA O TAILWIND v4
+   Sem isto, `bg-card` e `text-muted-foreground` não existem.
+   ========================================================================== */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-cat-1: var(--cat-1);
+  --color-cat-2: var(--cat-2);
+  --color-cat-3: var(--cat-3);
+  --color-cat-4: var(--cat-4);
+  --color-cat-5: var(--cat-5);
+  --color-cat-6: var(--cat-6);
+  --color-cat-7: var(--cat-7);
+  --color-cat-8: var(--cat-8);
+  --color-cat-foreground: var(--cat-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-foreground: var(--whatsapp-foreground);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
+  --font-mono: var(--font-mono);
+
+  --spacing-control: var(--ft-control-h);
+  --spacing-control-sm: var(--ft-control-h-sm);
+  --spacing-row: var(--ft-row-h);
+  --spacing-pad-x: var(--ft-pad-x);
+  --spacing-pad-y: var(--ft-pad-y);
+  --spacing-gap: var(--ft-gap);
+  --spacing-card: var(--ft-card-pad);
+}
+
+/* ==========================================================================
+   5. BASE
+   O mínimo. Tudo que for aparência de componente mora no componente.
+   ========================================================================== */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* Números de tabela alinham na coluna. Sem isto, uma coluna de valores
+     em Montserrat fica com as casas decimais dançando. */
+  .num, td.num, th.num {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  /* O bug de mobile do V5: item de grid não encolhe abaixo do conteúdo
+     (min-width: auto é o padrão), então a tabela larga esticava a coluna
+     inteira em vez de rolar dentro do próprio contêiner. */
+  .layout > * {
+    min-width: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
