@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, Clock, Search, Split } from 'lucide-react'
 import { PEDIDOS_SEED } from '@/data/pedidosSeed'
-import { ESTACOES, ESTACAO_FINAL, FAIXAS, TECNICAS, ORDEM_TECNICAS, corEstacao, nomeEstacao, type Pedido, type TecnicaKey } from '@/lib/pedidos/tipos'
+import { ESTACOES, ESTACAO_FINAL, FAIXAS, TAGS_CARD, TECNICAS, ORDEM_TAGS, ORDEM_TECNICAS, corEstacao, nomeEstacao, type Pedido, type TagKey, type TecnicaKey } from '@/lib/pedidos/tipos'
 import { moedaCurta } from '@/lib/pedidos/regras'
 import {
-  aguardaIrmao, avancar, cardAtrasado, FILTROS_KANBAN_VAZIO, fila, filtrarCards,
+  aguardaIrmao, alternarTag, avancar, cardAtrasado, FILTROS_KANBAN_VAZIO, fila, filtrarCards,
   mover, porEstacao, rotear, vendedores, type FiltrosKanban, type KCard,
 } from '@/lib/pedidos/roteador'
 import { Vazio } from '@/components/fourtime/primitivos'
@@ -12,7 +12,7 @@ import { CabecalhoPagina, Nota } from '@/components/fourtime/pagina'
 import { useToast } from '@/components/fourtime/Toast'
 import { Dropdown } from '@/components/fourtime/Dropdown'
 import { CardFatia } from '@/components/fourtime/CardFatia'
-import { FichaCard } from './FichaCard'
+import { ModalFatia } from './ModalFatia'
 
 const HOJE = new Date()
 /* ENTREGUE não vira coluna: no Trello atual são 2.082 cards que ninguém
@@ -65,6 +65,14 @@ export function Kanban() {
         else toast('Esta fatia já está no fim da rota.', true)
         return r.cards
       })
+    },
+    [toast],
+  )
+
+  const trocarTag = useCallback(
+    (id: string, tag: TagKey) => {
+      setCards((atuais) => alternarTag(atuais, id, tag))
+      toast(`Etiqueta ${TAGS_CARD[tag].rotulo.toLowerCase()} alternada.`)
     },
     [toast],
   )
@@ -139,6 +147,19 @@ export function Kanban() {
             ...listaVend.map((v) => ({ valor: v, texto: v, contagem: cards.filter((c) => c.vendedor === v).length })),
           ]}
         />
+        <Dropdown
+          rotulo="Etiqueta"
+          valor={f.tag ?? ''}
+          onEscolher={(v) => setF({ ...f, tag: (v || null) as TagKey | null })}
+          opcoes={[
+            { valor: '', texto: 'Todas' },
+            ...ORDEM_TAGS.map((t) => ({
+              valor: t,
+              texto: TAGS_CARD[t].rotulo,
+              contagem: cards.filter((c) => c.tags.includes(t)).length,
+            })),
+          ]}
+        />
         <button
           onClick={() => setF({ ...f, soAtrasados: !f.soAtrasados })}
           aria-pressed={f.soAtrasados}
@@ -173,8 +194,8 @@ export function Kanban() {
       {/* -------- quadro --------
           Densidade compacta é obrigatória aqui; em ponteiro grosso ela
           volta sozinha para confortável (44×44px de alvo de toque). */}
-      <div ref={quadro} className="-mx-(--ft-gap) overflow-x-auto px-(--ft-gap) pb-2" data-density="compacta">
-        <div className="flex min-w-max gap-5">
+      <div ref={quadro} className="-mx-(--ft-gap) overflow-x-auto px-(--ft-gap) pb-3">
+        <div className="flex min-w-max gap-6">
           {FAIXAS.map((faixa) => {
             const cols = COLUNAS.filter((e) => e.faixa === faixa.key)
             return (
@@ -186,7 +207,7 @@ export function Kanban() {
                     {cols.reduce((s, e) => s + (colunas[e.id]?.length ?? 0), 0)}
                   </span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2.5">
                   {cols.map((e) => (
                     <Coluna
                       key={e.id}
@@ -229,16 +250,19 @@ export function Kanban() {
       </div>
 
       {cardAberto && (
-        <FichaCard
+        <ModalFatia
           card={cardAberto}
+          pedido={PEDIDOS_SEED.find((p) => p.pedido === cardAberto.pedido) ?? null}
           todos={cards}
           hoje={HOJE}
           aoFechar={() => setAberta(null)}
-          aoMover={(id, destino) => moverCard(id, destino)}
-          aoIrPara={(pedido) => {
+          aoMover={moverCard}
+          aoAlternarTag={trocarTag}
+          aoLocalizar={(pedido) => {
             setAberta(null)
             localizar(pedido)
           }}
+          aoEditor={() => toast('O Editor ainda não existe no V6 — entra junto com o importador de .ft.', true)}
         />
       )}
 
@@ -277,26 +301,27 @@ function Coluna({
         const arrastado = e.dataTransfer.getData('text/plain')
         if (arrastado) onSolta(arrastado)
       }}
-      className={`bg-secondary flex h-[430px] w-[188px] shrink-0 flex-col overflow-hidden rounded-3xl transition-opacity ${
+      className={`bg-secondary flex max-h-[68vh] min-h-[280px] w-[272px] shrink-0 flex-col overflow-hidden rounded-3xl transition-opacity ${
         arrastando && !aceita ? 'opacity-35' : ''
       } ${sobre ? 'ring-primary ring-2' : ''}`}
     >
       <div className="h-[3px]" style={{ background: cor }} />
-      <div className="flex items-center gap-1.5 border-b px-2.5 py-1.5">
-        <span className="font-heading truncate text-[11.5px] font-semibold">{nome}</span>
-        <span className="text-muted-foreground ml-auto font-mono text-[11px] tabular-nums">{cards.length}</span>
+      <div className="flex items-center gap-1.5 border-b px-3.5 py-2.5">
+        <span className="font-heading truncate text-[12.5px] font-semibold">{nome}</span>
+        <span className="bg-card text-muted-foreground ml-auto shrink-0 rounded-full px-2 py-0.5 font-mono text-[10.5px] tabular-nums">{cards.length}</span>
       </div>
-      <div className="flex flex-col gap-1.5 overflow-y-auto p-1.5">
+      <div className="flex flex-col gap-2.5 overflow-y-auto p-2.5">
         {cards.map((c) => (
           <CardFatia
             key={c.id}
             c={c}
             hoje={HOJE}
-            espera={aguardaIrmao(c, todos)}
+            todos={todos}
             realce={destaque.has(c.id)}
             onAbrir={() => onAbrir(c.id)}
             onAvancar={() => onAvancar(c.id)}
             onArrasta={onArrasta}
+            onAdicionarTag={() => onAbrir(c.id)}
           />
         ))}
         {cards.length === 0 && (

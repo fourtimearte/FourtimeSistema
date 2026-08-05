@@ -20,7 +20,40 @@ export interface Pedido {
   status: StatusPedido
   estacao?: string         // id da estação no Kanban
   layouts: Layout[]
+  /* cabeçalho do orçamento — vem do `.ft` e hoje ainda não está no seed.
+     Campo ausente vira "—" na tela, nunca erro: é a mesma regra do `.ft`. */
+  cpf?: string
+  departamento?: string
+  contato?: string
+  embalagem?: string
+  envio?: string
+  pagamento?: string
 }
+
+/* =====================================================================
+   TAGS DE INFORMAÇÃO DO CARD
+   ---------------------------------------------------------------------
+   São as etiquetas que a produção cola no card, como no Trello: dizem o
+   que está acontecendo com aquele trabalho AGORA. Não confundir com as
+   tags de Design (a técnica), que são a ROTA e não mudam.
+
+   Vão de CONTORNO, não preenchidas. Num quadro com dezenas de cards, três
+   tarjas sólidas por card viram um mosaico e o olho para de ler. O
+   contorno colorido chama o suficiente e deixa o card legível.
+   ===================================================================== */
+export type TagKey = 'pausado' | 'problema' | 'externo' | 'aprovacao' | 'urgente' | 'refazer' | 'material'
+
+export const TAGS_CARD: Record<TagKey, { rotulo: string; cor: string; explica: string }> = {
+  urgente: { rotulo: 'URGENTE', cor: 'var(--destructive)', explica: 'Passa na frente da fila.' },
+  problema: { rotulo: 'COM PROBLEMA', cor: 'var(--destructive)', explica: 'Defeito na peça ou na arte — não avança.' },
+  pausado: { rotulo: 'PAUSADO', cor: 'var(--warning)', explica: 'Parado de propósito, esperando uma decisão.' },
+  aprovacao: { rotulo: 'ESPERANDO APROVAÇÃO', cor: 'var(--warning)', explica: 'Aguardando o cliente responder.' },
+  material: { rotulo: 'FALTA MATERIAL', cor: 'var(--warning)', explica: 'Insumo em falta no estoque.' },
+  externo: { rotulo: 'ENVIADO PARA FACÇÃO', cor: 'var(--info)', explica: 'Saiu da casa, está com um parceiro.' },
+  refazer: { rotulo: 'REFAZER', cor: 'var(--cat-7)', explica: 'Volta para a estação anterior.' },
+}
+
+export const ORDEM_TAGS: TagKey[] = ['urgente', 'problema', 'pausado', 'aprovacao', 'material', 'externo', 'refazer']
 
 /** Uma técnica = uma cor, do editor ao card do Kanban.
  *  Sai da paleta CATEGÓRICA (--cat-*), não da rampa sequencial. */

@@ -44,3 +44,23 @@ export function gradeProvavel(linhas: LinhaGrade[]): Grade {
   const inf = linhas.filter((l) => ehInfantil(l.tamanho)).length
   return inf > linhas.length / 2 ? 'infantil' : 'adulta'
 }
+
+/** Ordem canônica dos tamanhos. Sem isto, `Object.keys` devolve a ordem de
+ *  inserção do `.ft` e a grade sai PP · GG · M — o conferente perde tempo
+ *  procurando a linha em vez de ler a coluna. */
+const ORDEM_CONHECIDA = [...TAMANHOS_INFANTIL, ...TAMANHOS_ADULTO] as readonly string[]
+
+export function ordenarTamanhos(tamanhos: Record<string, { qtd: number; uni: number }>): LinhaGrade[] {
+  return Object.entries(tamanhos)
+    .map(([tamanho, t]) => ({ tamanho, ...t }))
+    .sort((a, b) => {
+      const ia = ORDEM_CONHECIDA.indexOf(a.tamanho.toUpperCase())
+      const ib = ORDEM_CONHECIDA.indexOf(b.tamanho.toUpperCase())
+      /* tamanho que ninguém cadastrou vai para o fim, em ordem alfabética,
+         em vez de sumir ou quebrar a ordenação */
+      if (ia < 0 && ib < 0) return a.tamanho.localeCompare(b.tamanho, 'pt-BR')
+      if (ia < 0) return 1
+      if (ib < 0) return -1
+      return ia - ib
+    })
+}

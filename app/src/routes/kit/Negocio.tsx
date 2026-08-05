@@ -86,17 +86,22 @@ export function Fatia() {
       titulo="Card de fatia"
       lead={
         <>
-          A unidade que atravessa a produção. É o componente <b>real</b> do Kanban, importado — não uma versão
-          simplificada desenhada para o kit. Um kit que redesenha o componente começa a mentir no mesmo instante.
+          A unidade que atravessa a produção: <b>um pedido, uma técnica</b>, com os layouts listados. É o componente
+          <b> real</b> do Kanban, importado — não uma versão simplificada desenhada para o kit. Sem imagem de
+          propósito: na coluna o mockup vira um selo de 30px que não se lê e rouba a altura de três cards.
         </>
       }
     >
-      <Bloco titulo="Normal, atrasada, aguardando irmã, em destaque">
-        <div className="grid gap-2.5 sm:grid-cols-4" data-density="compacta">
+      <Bloco titulo="Normal, atrasada, com etiquetas, em destaque">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <CardFatia c={normal} hoje={HOJE} />
           <CardFatia c={atrasada} hoje={HOJE} />
-          <CardFatia c={{ ...normal, id: normal.id + '-b' }} hoje={HOJE} espera />
-          <CardFatia c={{ ...normal, id: normal.id + '-c' }} hoje={HOJE} realce />
+          <CardFatia
+            c={{ ...normal, id: normal.id + '-b', tags: ['pausado', 'aprovacao'] }}
+            hoje={HOJE}
+            onAdicionarTag={() => {}}
+          />
+          <CardFatia c={{ ...normal, id: normal.id + '-c', tags: ['problema'] }} hoje={HOJE} realce />
         </div>
         <Porque>
           O card atrasado ganha <b>borda</b> vermelha e tarja vazada, nunca fundo vermelho. Numa coluna com dez

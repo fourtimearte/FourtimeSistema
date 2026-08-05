@@ -9,7 +9,7 @@
    sem abrir navegador, e é o que sobra intacto quando o importador de
    `.ft` substituir o seed.
    ===================================================================== */
-import { ESTACOES, ESTACAO_FINAL, ESTACAO_REENCONTRO, ROTAS, TECNICAS, type Pedido, type TecnicaKey } from './tipos'
+import { ESTACOES, ESTACAO_FINAL, ESTACAO_REENCONTRO, ROTAS, TECNICAS, type Pedido, type TagKey, type TecnicaKey } from './tipos'
 import { dataBr, diasDeAtraso, venceu } from './regras'
 
 export interface KCard {
@@ -19,14 +19,22 @@ export interface KCard {
   cliente: string
   vendedor: string
   entrega: string
-  layIdx: number
-  ref: string
-  cor: string
   tecnica: TecnicaKey
   corTecnica: string
+  /** índices dos layouts do pedido que ESTA fatia produz — L-01 é o índice 0.
+   *  Um card só, com vários layouts, é o que o Trello já faz na prática: o
+   *  operador da prensa não quer quatro cards do mesmo pedido na mesma
+   *  coluna, quer um card dizendo quais peças estão ali. */
+  layouts: number[]
+  refs: string[]
+  /** rótulos prontos: L-01 · L-03 · L-06 */
+  rotulosLayout: string[]
+  anexos: number
   pecas: number
   valor: number
   estacao: string
+  /** etiquetas da produção — o que está acontecendo com este trabalho agora */
+  tags: TagKey[]
   /** a rota inteira viaja com o card: a tela nunca precisa recalcular por onde ele passa */
   rota: string[]
 }
@@ -52,6 +60,11 @@ const posGlobal = (id?: string) => Math.max(0, ORDEM.indexOf(id ?? ''))
  *  (vira histórico). O que sobra é aprovado — que entra na Separação — e
  *  em produção, cuja posição na faixa é derivada do avanço do pedido.
  *
+ *  A fatia é **por pedido e por técnica**, não por layout. Se três layouts
+ *  do mesmo pedido levam DTF, eles viajam JUNTOS num card só: o operador
+ *  da prensa não quer três cards iguais na mesma coluna, quer um card
+ *  dizendo quais peças estão ali (L-01 · L-03 · L-06).
+ *
  *  As fatias do mesmo pedido não avançam juntas de propósito: na fábrica
  *  o DTF não espera o bordado. É esse desencontro que faz o "aguarda
  *  irmão" na costura ser um estado real e não decoração. */
@@ -59,36 +72,52 @@ export function rotear(pedidos: Pedido[]): KCard[] {
   const cards: KCard[] = []
   for (const p of pedidos) {
     if (p.status === 'rascunho' || p.status === 'entregue') continue
-    p.layouts.forEach((l, layIdx) => {
-      const t = Object.values(l.tamanhos).reduce(
-        (a, x) => ({ pecas: a.pecas + x.qtd, valor: a.valor + x.qtd * x.uni }),
-        { pecas: 0, valor: 0 },
-      )
-      for (const tecnica of l.tecnicas) {
-        const rota = ROTAS[tecnica]
-        const id = `${p.pedido}-L${String(layIdx + 1).padStart(2, '0')}-${tecnica}`
-        cards.push({
-          id,
-          pedido: p.pedido,
-          clienteId: p.clienteId,
-          cliente: p.cliente,
-          vendedor: p.vendedor,
-          entrega: p.entrega,
-          layIdx,
-          ref: l.ref,
-          cor: l.cor,
-          tecnica,
-          corTecnica: TECNICAS[tecnica].cor,
-          pecas: t.pecas,
-          valor: t.valor,
-          rota,
-          estacao: p.status === 'aprovado' ? rota[0] : posicaoNaRota(rota, p.estacao, id),
-        })
-      }
+
+    /* agrupa os índices de layout por técnica, preservando a ordem */
+    const porTecnica = new Map<TecnicaKey, number[]>()
+    p.layouts.forEach((l, i) => {
+      for (const t of l.tecnicas) porTecnica.set(t, [...(porTecnica.get(t) ?? []), i])
     })
+
+    for (const [tecnica, layouts] of porTecnica) {
+      const rota = ROTAS[tecnica]
+      const id = `${p.pedido}-${tecnica}`
+      let pecas = 0
+      let valor = 0
+      for (const i of layouts)
+        for (const t of Object.values(p.layouts[i].tamanhos)) {
+          pecas += t.qtd
+          valor += t.qtd * t.uni
+        }
+      cards.push({
+        id,
+        pedido: p.pedido,
+        clienteId: p.clienteId,
+        cliente: p.cliente,
+        vendedor: p.vendedor,
+        entrega: p.entrega,
+        tecnica,
+        corTecnica: TECNICAS[tecnica].cor,
+        layouts,
+        refs: layouts.map((i) => p.layouts[i].ref),
+        rotulosLayout: layouts.map(rotuloLayout),
+        /* até o importador de `.ft` existir, cada layout carrega exatamente
+           um mockup — então anexos = quantidade de layouts da fatia */
+        anexos: layouts.length,
+        pecas,
+        valor,
+        tags: [],
+        rota,
+        estacao: p.status === 'aprovado' ? rota[0] : posicaoNaRota(rota, p.estacao, id),
+      })
+    }
   }
   return cards
 }
+
+/** L-01, L-02 … O rótulo é o mesmo do editor e do A4; mudar aqui quebraria
+ *  a conversa entre a produção e o orçamento impresso. */
+export const rotuloLayout = (i: number) => `L-${String(i + 1).padStart(2, '0')}`
 
 /** Converte o avanço do pedido na posição equivalente dentro da rota da
  *  fatia — rotas têm comprimentos diferentes, então é proporção, não
@@ -149,16 +178,29 @@ export function avancar(cards: KCard[], id: string): { cards: KCard[]; ok: boole
 
 export const entregue = (c: KCard) => c.estacao === ESTACAO_FINAL
 
+/** Liga ou desliga uma etiqueta. Devolve lista nova — nada é mutado, é o
+ *  que permite desfazer e testar sem navegador. */
+export function alternarTag(cards: KCard[], id: string, tag: TagKey): KCard[] {
+  return cards.map((c) =>
+    c.id === id ? { ...c, tags: c.tags.includes(tag) ? c.tags.filter((t) => t !== tag) : [...c.tags, tag] } : c,
+  )
+}
+
+/** Uma fatia com problema ou pausada não deveria avançar sozinha. O quadro
+ *  não bloqueia — quem está na estação sabe mais que o sistema —, mas avisa. */
+export const travada = (c: KCard) => c.tags.includes('problema') || c.tags.includes('pausado')
+
 /* ---------------------------------------------------------------- filtros */
 
 export interface FiltrosKanban {
   busca: string
   tecnica: TecnicaKey | null
   vendedor: string | null
+  tag: TagKey | null
   soAtrasados: boolean
 }
 export const FILTROS_KANBAN_VAZIO: FiltrosKanban = {
-  busca: '', tecnica: null, vendedor: null, soAtrasados: false,
+  busca: '', tecnica: null, vendedor: null, tag: null, soAtrasados: false,
 }
 
 const normaliza = (s: string) =>
@@ -172,9 +214,10 @@ export function filtrarCards(cards: KCard[], f: FiltrosKanban, hoje: Date): KCar
   return cards.filter((c) => {
     if (f.tecnica && c.tecnica !== f.tecnica) return false
     if (f.vendedor && c.vendedor !== f.vendedor) return false
+    if (f.tag && !c.tags.includes(f.tag)) return false
     if (f.soAtrasados && !cardAtrasado(c, hoje)) return false
     if (!q) return true
-    return normaliza(`${c.pedido} ${c.cliente} ${c.ref}`).includes(q)
+    return normaliza(`${c.pedido} ${c.cliente} ${c.refs.join(' ')}`).includes(q)
   })
 }
 

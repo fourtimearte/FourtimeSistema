@@ -3,8 +3,8 @@ import { PEDIDOS_SEED } from '@/data/pedidosSeed'
 import { ESTACOES, ROTAS, type Pedido, type TecnicaKey } from './tipos'
 import { meiaNoite, venceu } from './regras'
 import {
-  aguardaIrmao, avancar, cardAtrasado, FILTROS_KANBAN_VAZIO, fila, filtrarCards,
-  mover, porEstacao, proximaEstacao, rotear, vendedores,
+  aguardaIrmao, alternarTag, avancar, cardAtrasado, FILTROS_KANBAN_VAZIO, fila, filtrarCards,
+  mover, porEstacao, proximaEstacao, rotear, rotuloLayout, travada, vendedores,
 } from './roteador'
 
 const HOJE = new Date(2026, 7, 5)
@@ -23,7 +23,7 @@ describe('roteamento', () => {
   it('não roteia entregue — vira histórico, não coluna', () =>
     expect(rotear([P({ status: 'entregue' })])).toHaveLength(0))
 
-  it('fatia o pedido: um card por layout POR técnica', () => {
+  it('fatia o pedido: um card por TÉCNICA, não por layout', () => {
     const cards = rotear([
       P({
         layouts: [
@@ -36,8 +36,33 @@ describe('roteamento', () => {
     expect(cards.map((c) => c.tecnica)).toEqual(['DTF', 'Bordado', 'Subli'])
   })
 
-  it('o id da fatia identifica pedido, layout e técnica', () =>
-    expect(rotear([P()])[0].id).toBe('PD000001-L01-DTF'))
+  /* o ponto do reagrupamento: três layouts com DTF viajam num card só, e o
+     operador da prensa vê "L-01 · L-02 · L-03" em vez de três cards iguais */
+  it('junta num card só os layouts que levam a mesma técnica', () => {
+    const cards = rotear([
+      P({
+        layouts: [
+          { ref: 'A', cor: 'Preto', tecnicas: ['DTF'], tamanhos: { M: { qtd: 5, uni: 10 } } },
+          { ref: 'B', cor: 'Branco', tecnicas: ['Silk'], tamanhos: { M: { qtd: 3, uni: 10 } } },
+          { ref: 'C', cor: 'Azul', tecnicas: ['DTF'], tamanhos: { M: { qtd: 2, uni: 10 } } },
+        ],
+      }),
+    ])
+    const dtf = cards.find((c) => c.tecnica === 'DTF')!
+    expect(cards).toHaveLength(2)
+    expect(dtf.layouts).toEqual([0, 2])
+    expect(dtf.rotulosLayout).toEqual(['L-01', 'L-03'])
+    expect(dtf.refs).toEqual(['A', 'C'])
+    /* soma só os layouts DESTA fatia: 5 + 2, nunca os 3 do Silk */
+    expect(dtf.pecas).toBe(7)
+    expect(dtf.valor).toBe(70)
+    expect(dtf.anexos).toBe(2)
+  })
+
+  it('o id da fatia identifica pedido e técnica', () =>
+    expect(rotear([P()])[0].id).toBe('PD000001-DTF'))
+
+  it('a fatia nasce sem etiqueta', () => expect(rotear([P()])[0].tags).toEqual([]))
 
   it('aprovado entra na Separação, não no meio da faixa', () =>
     expect(rotear([P({ status: 'aprovado', estacao: 'costura' })])[0].estacao).toBe('separacao'))
@@ -123,6 +148,44 @@ describe('aguarda irmão', () => {
   it('fatia única nunca aguarda irmão', () => {
     const cards = rotear([P()]).map((c) => ({ ...c, estacao: 'costura' }))
     expect(aguardaIrmao(cards[0], cards)).toBe(false)
+  })
+})
+
+describe('etiquetas do card', () => {
+  const cards = rotear([P()])
+
+  it('liga uma etiqueta', () => expect(alternarTag(cards, cards[0].id, 'pausado')[0].tags).toEqual(['pausado']))
+
+  it('clicar de novo desliga', () => {
+    const ligada = alternarTag(cards, cards[0].id, 'pausado')
+    expect(alternarTag(ligada, cards[0].id, 'pausado')[0].tags).toEqual([])
+  })
+
+  it('não muta a lista original', () => {
+    alternarTag(cards, cards[0].id, 'urgente')
+    expect(cards[0].tags).toEqual([])
+  })
+
+  it('id inexistente não estoura nem muda nada', () =>
+    expect(alternarTag(cards, 'nao-existe', 'urgente')[0].tags).toEqual([]))
+
+  it('problema e pausado travam a fatia; urgente não', () => {
+    expect(travada({ ...cards[0], tags: ['problema'] })).toBe(true)
+    expect(travada({ ...cards[0], tags: ['pausado'] })).toBe(true)
+    expect(travada({ ...cards[0], tags: ['urgente'] })).toBe(false)
+  })
+
+  it('filtra por etiqueta', () => {
+    const com = alternarTag(cards, cards[0].id, 'urgente')
+    expect(filtrarCards(com, { ...FILTROS_KANBAN_VAZIO, tag: 'urgente' }, HOJE)).toHaveLength(1)
+    expect(filtrarCards(com, { ...FILTROS_KANBAN_VAZIO, tag: 'pausado' }, HOJE)).toHaveLength(0)
+  })
+})
+
+describe('rótulo de layout', () => {
+  it('é o mesmo do editor e do A4', () => {
+    expect(rotuloLayout(0)).toBe('L-01')
+    expect(rotuloLayout(11)).toBe('L-12')
   })
 })
 
