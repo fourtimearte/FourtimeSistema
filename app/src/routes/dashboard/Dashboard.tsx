@@ -31,7 +31,7 @@ export function Dashboard() {
         titulo="Dashboard"
         descricao="Lê de todas as páginas, não escreve em nenhuma. Todo número é clicável até a origem."
       >
-        <span className="text-muted-foreground border-warning bg-secondary rounded-lg border-l-[3px] px-3 py-1.5 text-[11.5px]">
+        <span className="text-muted-foreground border-warning bg-secondary rounded-r-2xl border-l-[3px] px-3.5 py-2 text-[11.5px]">
           Pedidos são <b className="text-foreground">seed</b> até o importador de <code>.ft</code> existir.
           Os <b className="text-foreground">1.901 clientes</b> são reais.
         </span>
@@ -190,7 +190,7 @@ const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0)
 
 function VerNo({ aoVer }: { aoVer: () => void }) {
   return (
-    <button onClick={aoVer} className="hover:bg-accent flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium">
+    <button onClick={aoVer} className="hover:bg-accent flex items-center gap-1 rounded-xl px-2.5 py-1 text-[11px] font-medium">
       ver <ArrowRight className="size-3" />
     </button>
   )

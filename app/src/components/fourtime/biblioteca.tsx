@@ -1,5 +1,6 @@
 import { Check, Plus } from 'lucide-react'
 import { fundoTextura, type CorTecido, type Tecido } from '@/lib/biblioteca'
+import { cardSuperficie } from '@/components/fourtime/superficie'
 import { cn } from '@/lib/utils'
 
 /** Amostra de cor selecionável.
@@ -22,7 +23,7 @@ export function SwatchCor({
       aria-label={cor.nome}
       title={`${cor.nome} · ${cor.hex}`}
       className={cn(
-        'relative size-9 rounded-lg border transition-transform',
+        'relative size-9 rounded-xl border transition-transform',
         'hover:-translate-y-0.5 hover:scale-105',
         'focus-visible:ring-ring focus-visible:ring-[3px] focus-visible:outline-none',
         selecionada && 'ring-primary ring-offset-background ring-2 ring-offset-2',
@@ -45,7 +46,7 @@ export function AdicionarCor({ aoClicar }: { aoClicar?: () => void }) {
       type="button"
       onClick={aoClicar}
       aria-label="Adicionar cor"
-      className="text-muted-foreground hover:bg-accent hover:text-foreground grid size-9 place-items-center rounded-lg border border-dashed transition-colors"
+      className="text-muted-foreground hover:bg-accent hover:text-foreground grid size-9 place-items-center rounded-xl border border-dashed transition-colors"
     >
       <Plus className="size-4" />
     </button>
@@ -73,9 +74,9 @@ export function PaletaCores({
 /** Card de tecido: amostra + ficha técnica curta. */
 export function CardTecido({ t }: { t: Tecido }) {
   return (
-    <article className="bg-card hover:border-ring overflow-hidden rounded-lg border transition-colors">
-      <div className="h-[86px] border-b" style={{ background: fundoTextura(t.textura, t.cor.hex) }} aria-hidden />
-      <div className="p-2.5">
+    <article className={cn(cardSuperficie, 'transition-shadow hover:shadow-lg')}>
+      <div className="h-[86px]" style={{ background: fundoTextura(t.textura, t.cor.hex) }} aria-hidden />
+      <div className="p-3.5">
         <div className="text-[13px] font-semibold">{t.nome}</div>
         <div className="text-muted-foreground font-mono text-[10.5px]">{t.ref}</div>
         <p className="text-muted-foreground mt-1.5 text-[11px] leading-snug">{t.composicao}</p>

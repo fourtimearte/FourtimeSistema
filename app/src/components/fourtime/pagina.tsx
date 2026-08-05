@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 /** Cabeçalho de página. Título, uma linha do que a tela faz, e o canto
@@ -25,7 +26,13 @@ export function CabecalhoPagina({
   )
 }
 
-/** Painel: caixa com cabeçalho, o contêiner padrão de conteúdo da tela. */
+/** Painel: caixa com cabeçalho, o contêiner padrão de conteúdo da tela.
+ *
+ *  Assenta no `Card` do shadcn — raio grande, sombra macia e um anel de 5%
+ *  no lugar da borda. É o que faz o cartão SUBIR do fundo em vez de ser
+ *  contornado. A versão anterior era um `div` com `rounded-lg border`
+ *  escrito à mão: 7px de raio e uma linha cheia em volta, o que endurecia
+ *  todas as telas e não era Luma coisa nenhuma. */
 export function Painel({
   titulo, nota, acao, semPadding, className, children,
 }: {
@@ -37,9 +44,9 @@ export function Painel({
   children: React.ReactNode
 }) {
   return (
-    <section className={cn('bg-card rounded-lg border', className)}>
+    <Card className={cn('gap-0 py-0', className)}>
       {(titulo || acao) && (
-        <div className="flex items-center gap-2 border-b px-(--ft-pad-x) py-(--ft-pad-y)">
+        <div className="flex items-center gap-2 border-b px-(--ft-card-pad) py-(--ft-pad-y)">
           {titulo && <h2 className="font-heading text-[13px] font-semibold">{titulo}</h2>}
           <span className="flex-1" />
           {nota && <span className="text-muted-foreground text-[11px]">{nota}</span>}
@@ -47,7 +54,7 @@ export function Painel({
         </div>
       )}
       <div className={semPadding ? '' : 'flex flex-col gap-3 p-(--ft-card-pad)'}>{children}</div>
-    </section>
+    </Card>
   )
 }
 
@@ -63,7 +70,7 @@ export function Nota({
   return (
     <p
       className={cn(
-        'text-muted-foreground bg-secondary rounded-r-lg border-l-[3px] px-3 py-2 text-[11.5px]',
+        'text-muted-foreground bg-secondary rounded-r-2xl border-l-[3px] px-3.5 py-2.5 text-[11.5px]',
         barra,
         className,
       )}

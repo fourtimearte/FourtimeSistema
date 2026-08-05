@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 /** Peças de montagem do próprio /kit. Não são componentes do sistema —
@@ -37,7 +38,7 @@ export function Bloco({
   children: React.ReactNode
 }) {
   return (
-    <div className={cn('bg-card rounded-lg border p-(--ft-card-pad)', className)}>
+    <Card className={cn('gap-0 px-(--ft-card-pad)', className)}>
       {titulo && (
         <div className="mb-2.5 flex flex-wrap items-baseline gap-x-2">
           <h3 className="font-heading text-muted-foreground text-[11px] font-semibold tracking-[0.06em] uppercase">
@@ -47,7 +48,7 @@ export function Bloco({
         </div>
       )}
       {children}
-    </div>
+    </Card>
   )
 }
 
@@ -59,7 +60,7 @@ export function Fileira({ className, children }: { className?: string; children:
  *  mostra não impede ninguém de repetir o erro que a regra evita. */
 export function Porque({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-muted-foreground border-info bg-secondary mt-2.5 rounded-r-lg border-l-[3px] px-3 py-2 text-[11.5px]">
+    <p className="text-muted-foreground border-info bg-secondary mt-2.5 rounded-r-2xl border-l-[3px] px-3.5 py-2.5 text-[11.5px]">
       {children}
     </p>
   )
@@ -77,7 +78,7 @@ export function Token({ nome, valor, uso }: { nome: string; valor?: string; uso:
 
 export function Amostra({ cor, rotulo, nota }: { cor: string; rotulo: string; nota?: string }) {
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className="bg-secondary overflow-hidden rounded-2xl">
       <div className="h-11" style={{ background: cor }} />
       <div className="px-2 py-1.5">
         <div className="text-[11px] font-semibold">{rotulo}</div>

@@ -1,3 +1,4 @@
+import { cardSuperficie } from '@/components/fourtime/superficie'
 import { cn } from '@/lib/utils'
 import type { ReactNode } from 'react'
 
@@ -43,8 +44,9 @@ export function KpiFiltro({
       onClick={onClick}
       aria-pressed={ativo}
       className={cn(
-        'bg-card flex flex-col gap-1.5 rounded-lg border p-(--ft-card-pad) text-left transition-colors',
-        ativo ? 'border-primary ring-primary ring-1 ring-inset' : 'hover:border-ring',
+        cardSuperficie,
+        'flex flex-col gap-1.5 p-(--ft-card-pad) text-left transition-shadow',
+        ativo ? 'ring-primary ring-2' : 'hover:shadow-lg',
       )}
     >
       <span className="text-muted-foreground flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.05em] uppercase">
@@ -64,7 +66,7 @@ export function KpiFiltro({
 
 export function Vazio({ titulo, descricao, acao }: { titulo: string; descricao: string; acao?: ReactNode }) {
   return (
-    <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed p-12 text-center">
+    <div className="text-muted-foreground flex flex-col items-center gap-2 rounded-4xl border border-dashed p-12 text-center">
       <span className="text-foreground text-[13px] font-semibold">{titulo}</span>
       <span className="max-w-[46ch] text-xs">{descricao}</span>
       {acao}
@@ -98,13 +100,13 @@ export function Erro({
   aoTentar?: () => void
 }) {
   return (
-    <div className="border-destructive/40 text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed p-8 text-center">
+    <div className="border-destructive/40 text-muted-foreground flex flex-col items-center gap-2 rounded-4xl border border-dashed p-8 text-center">
       <span className="text-destructive text-[13px] font-semibold">{titulo}</span>
       <span className="max-w-[46ch] text-xs">{descricao}</span>
       {aoTentar && (
         <button
           onClick={aoTentar}
-          className="hover:bg-accent mt-1 h-(--ft-control-h-sm) rounded-lg border px-3 text-xs font-medium"
+          className="hover:bg-accent mt-1 h-(--ft-control-h-sm) rounded-3xl border px-3 text-xs font-medium"
         >
           Tentar de novo
         </button>

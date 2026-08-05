@@ -40,7 +40,7 @@ export function FichaCard({
         role="dialog"
         aria-modal="true"
         aria-label={`Fatia ${card.id}`}
-        className="bg-card relative flex h-full w-full max-w-[440px] flex-col border-l shadow-xl"
+        className="bg-card relative flex h-full w-full max-w-[440px] flex-col rounded-l-4xl shadow-2xl ring-1 ring-foreground/5 dark:ring-foreground/10"
       >
         <header className="flex items-start gap-2 border-b p-(--ft-card-pad)">
           <div className="min-w-0">
@@ -57,7 +57,7 @@ export function FichaCard({
           <button
             onClick={aoFechar}
             aria-label="Fechar"
-            className="hover:bg-accent ml-auto grid size-7 shrink-0 place-items-center rounded-md"
+            className="hover:bg-accent ml-auto grid size-7 shrink-0 place-items-center rounded-xl"
           >
             <X className="size-4" />
           </button>
@@ -71,7 +71,7 @@ export function FichaCard({
           </div>
 
           {espera && (
-            <p className="text-muted-foreground border-warning bg-secondary rounded-r-lg border-l-[3px] px-3 py-2 text-[11.5px]">
+            <p className="text-muted-foreground border-warning bg-secondary rounded-r-2xl border-l-[3px] px-3.5 py-2.5 text-[11.5px]">
               Chegou ao reencontro, mas <b className="text-foreground">uma fatia irmã ainda está atrás</b>. A costura
               receberia meia peça.
             </p>
@@ -107,7 +107,7 @@ export function FichaCard({
                     <button
                       onClick={() => aoMover(card.id, id)}
                       disabled={aqui}
-                      className={`hover:bg-accent -mt-0.5 mb-0.5 rounded-md px-1.5 py-0.5 text-left text-[12px] disabled:hover:bg-transparent ${
+                      className={`hover:bg-accent -mt-0.5 mb-0.5 rounded-lg px-2 py-0.5 text-left text-[12px] disabled:hover:bg-transparent ${
                         aqui ? 'font-semibold' : feito ? 'text-muted-foreground' : ''
                       }`}
                     >
@@ -128,7 +128,7 @@ export function FichaCard({
                 {irmas.map((o) => (
                   <li
                     key={o.id}
-                    className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[11.5px]"
+                    className="bg-secondary flex items-center gap-2 rounded-2xl px-3 py-2 text-[11.5px]"
                   >
                     <span className="size-2 shrink-0 rounded-full" style={{ background: o.corTecnica }} />
                     <span className="font-medium">{TECNICAS[o.tecnica].rotulo}</span>
@@ -147,14 +147,14 @@ export function FichaCard({
           <button
             onClick={() => anterior && aoMover(card.id, anterior)}
             disabled={!anterior}
-            className="hover:bg-accent flex h-(--ft-control-h) items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium disabled:opacity-40"
+            className="hover:bg-accent flex h-(--ft-control-h) items-center gap-1.5 rounded-3xl border px-3 text-xs font-medium disabled:opacity-40"
           >
             <ArrowLeft className="size-3.5" /> Voltar
           </button>
           <button
             onClick={() => proxima && aoMover(card.id, proxima)}
             disabled={!proxima}
-            className="bg-primary text-primary-foreground flex h-(--ft-control-h) items-center gap-1.5 rounded-lg px-3 text-xs font-semibold disabled:opacity-40"
+            className="bg-primary text-primary-foreground flex h-(--ft-control-h) items-center gap-1.5 rounded-4xl px-3.5 text-xs font-semibold disabled:opacity-40"
           >
             Avançar para {proxima ? nomeEstacao(proxima) : '—'} <ArrowRight className="size-3.5" />
           </button>
@@ -162,7 +162,7 @@ export function FichaCard({
           <BotaoCliente clienteId={card.clienteId} />
           <button
             onClick={() => aoIrPara(card.pedido)}
-            className="hover:bg-accent flex h-(--ft-control-h) items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium"
+            className="hover:bg-accent flex h-(--ft-control-h) items-center gap-1.5 rounded-3xl border px-3 text-xs font-medium"
           >
             Ver no quadro
           </button>
@@ -178,7 +178,7 @@ function BotaoCliente({ clienteId }: { clienteId: number | null }) {
   return (
     <button
       onClick={() => ir('/clientes')}
-      className="hover:bg-accent flex h-(--ft-control-h) items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium"
+      className="hover:bg-accent flex h-(--ft-control-h) items-center gap-1.5 rounded-3xl border px-3 text-xs font-medium"
     >
       <User className="size-3.5" /> Cliente
     </button>
@@ -187,7 +187,7 @@ function BotaoCliente({ clienteId }: { clienteId: number | null }) {
 
 function Dado({ rotulo, valor, alerta }: { rotulo: string; valor: string; alerta?: boolean }) {
   return (
-    <div className="bg-secondary rounded-lg px-2.5 py-2">
+    <div className="bg-secondary rounded-2xl px-3 py-2.5">
       <div className="text-muted-foreground text-[10px] font-semibold tracking-[0.05em] uppercase">{rotulo}</div>
       <div className={`mt-0.5 font-mono text-[13px] tabular-nums ${alerta ? 'text-destructive font-semibold' : ''}`}>
         {valor}

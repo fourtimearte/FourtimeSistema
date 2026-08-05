@@ -14,6 +14,7 @@ import type { Cliente } from '@/lib/clientes/tipos'
 import { Badge, KpiFiltro, Vazio } from '@/components/fourtime/primitivos'
 import { Dropdown } from '@/components/fourtime/Dropdown'
 import { Ficha } from './Ficha'
+import { cardSuperficie } from '@/components/fourtime/superficie'
 import { cn } from '@/lib/utils'
 
 const HOJE = new Date()
@@ -83,10 +84,10 @@ export function Clientes() {
           </p>
         </div>
         <div className="flex-1" />
-        <button className="hover:bg-accent flex h-(--ft-control-h) items-center gap-1.5 rounded-lg border px-3.5 text-[13px] font-medium">
+        <button className="hover:bg-accent flex h-(--ft-control-h) items-center gap-1.5 rounded-3xl border px-4 text-[13px] font-medium">
           <Download className="size-4" /> Exportar filtro
         </button>
-        <button className="bg-primary text-primary-foreground flex h-(--ft-control-h) items-center gap-1.5 rounded-lg px-3.5 text-[13px] font-medium hover:opacity-90">
+        <button className="bg-primary text-primary-foreground flex h-(--ft-control-h) items-center gap-1.5 rounded-4xl px-4 text-[13px] font-medium hover:opacity-90">
           <Plus className="size-4" /> Novo cliente
         </button>
       </div>
@@ -108,14 +109,14 @@ export function Clientes() {
           icone={<AlertTriangle className="size-3.5" />} cor="var(--warning)" />
       </div>
 
-      <div className="bg-card flex flex-wrap items-center gap-2 rounded-lg border p-(--ft-pad-y) px-(--ft-pad-x)">
+      <div className={cn(cardSuperficie, 'flex flex-wrap items-center gap-2 p-(--ft-pad-y) px-(--ft-card-pad)')}>
         <div className="relative max-w-[340px] min-w-[220px] flex-1">
           <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
           <input
             value={f.busca}
             onChange={(e) => mudar({ busca: e.target.value })}
             placeholder="Nome, fantasia, CPF/CNPJ, e-mail, telefone, cidade…"
-            className="border-input bg-background focus-visible:ring-ring h-(--ft-control-h-sm) w-full rounded-lg border pl-8 text-xs outline-none focus-visible:ring-2"
+            className="bg-input/50 focus-visible:border-ring focus-visible:ring-ring/30 h-(--ft-control-h-sm) w-full rounded-3xl border border-transparent pl-8 text-xs outline-none focus-visible:ring-[3px]"
           />
         </div>
         <Dropdown rotulo="Tipo" valor={f.tipo} largura={116} onEscolher={(v) => mudar({ tipo: v as Filtros['tipo'] })}
@@ -158,7 +159,7 @@ export function Clientes() {
         )}
       </div>
 
-      <div className="bg-card rounded-lg border" data-density="compacta">
+      <div className={cn(cardSuperficie, 'rounded-4xl')} data-density="compacta">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[880px] border-collapse text-[12.5px]">
             <thead>
@@ -182,7 +183,7 @@ export function Clientes() {
               <Vazio
                 titulo="Nenhum cliente encontrado"
                 descricao="Ajuste a busca ou limpe os filtros para ver a base completa."
-                acao={<button onClick={limpar} className="hover:bg-accent h-(--ft-control-h-sm) rounded-lg border px-3 text-xs font-medium">Limpar filtros</button>}
+                acao={<button onClick={limpar} className="hover:bg-accent h-(--ft-control-h-sm) rounded-3xl border px-3 text-xs font-medium">Limpar filtros</button>}
               />
             </div>
           )}
@@ -317,7 +318,7 @@ function BotaoPag({ children, onClick, ativo, desabilitado }: { children: React.
       onClick={onClick}
       disabled={desabilitado}
       className={cn(
-        'inline-flex h-(--ft-control-h-sm) min-w-(--ft-control-h-sm) items-center justify-center rounded-lg border px-2 text-xs',
+        'inline-flex h-(--ft-control-h-sm) min-w-(--ft-control-h-sm) items-center justify-center rounded-2xl border px-2 text-xs',
         ativo ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-accent',
         desabilitado && 'cursor-not-allowed opacity-40',
       )}

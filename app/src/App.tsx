@@ -12,7 +12,7 @@ import { MODULOS } from '@/lib/modulos'
 
 export default function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
       <PrefsProvider>
         <ToastProvider>
         <BrowserRouter>

@@ -35,21 +35,21 @@ export function Shell() {
         )}
       >
         <div className="border-sidebar-border flex h-14 items-center gap-2.5 border-b px-3.5">
-          <div className="bg-chart-3 grid size-7 shrink-0 place-items-center rounded-lg font-heading text-[13px] font-bold text-white">
+          <div className="bg-chart-3 grid size-7 shrink-0 place-items-center rounded-xl font-heading text-[13px] font-bold text-white">
             F
           </div>
           <span className={cn('font-heading truncate text-sm font-semibold', mini && 'md:hidden')}>Fourtime</span>
           <button
             onClick={() => setMini((m) => !m)}
             aria-label={mini ? 'Expandir menu' : 'Recolher menu'}
-            className="hover:bg-sidebar-accent ml-auto hidden size-7 shrink-0 place-items-center rounded-md md:grid"
+            className="hover:bg-sidebar-accent ml-auto hidden size-7 shrink-0 place-items-center rounded-xl md:grid"
           >
             <Menu className="size-4" />
           </button>
           <button
             onClick={() => setGaveta(false)}
             aria-label="Fechar menu"
-            className="hover:bg-sidebar-accent ml-auto grid size-7 shrink-0 place-items-center rounded-md md:hidden"
+            className="hover:bg-sidebar-accent ml-auto grid size-7 shrink-0 place-items-center rounded-xl md:hidden"
           >
             <X className="size-4" />
           </button>
@@ -74,7 +74,7 @@ export function Shell() {
                   title={mini ? m.nome : undefined}
                   className={({ isActive }) =>
                     cn(
-                      'text-sidebar-foreground flex h-(--ft-control-h) items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors',
+                      'text-sidebar-foreground flex h-(--ft-control-h) items-center gap-2.5 rounded-2xl px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors',
                       'hover:bg-sidebar-accent',
                       isActive && 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary',
                     )
@@ -113,7 +113,7 @@ export function Shell() {
           <button
             onClick={() => setGaveta(true)}
             aria-label="Abrir menu"
-            className="hover:bg-accent grid size-8 shrink-0 place-items-center rounded-md md:hidden"
+            className="hover:bg-accent grid size-8 shrink-0 place-items-center rounded-xl md:hidden"
           >
             <Menu className="size-[18px]" />
           </button>
@@ -122,7 +122,7 @@ export function Shell() {
             <input
               aria-label="Busca global"
               placeholder="Buscar pedido PD####, cliente, referência…"
-              className="border-input bg-background focus-visible:ring-ring h-(--ft-control-h) w-full rounded-lg border pl-8 text-[13px] outline-none focus-visible:ring-2"
+              className="bg-input/50 focus-visible:border-ring focus-visible:ring-ring/30 h-(--ft-control-h) w-full rounded-3xl border border-transparent pl-8 text-[13px] outline-none focus-visible:ring-[3px]"
             />
           </div>
           <div className="flex-1" />
@@ -153,7 +153,7 @@ function BotaoTopo({ onClick, icone, rotulo }: { onClick: () => void; icone: Rea
   return (
     <button
       onClick={onClick}
-      className="hover:bg-accent flex h-(--ft-control-h) items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors"
+      className="hover:bg-accent flex h-(--ft-control-h) items-center gap-1.5 rounded-3xl border px-3 text-xs font-medium transition-colors"
     >
       {icone}
       <span className="hidden md:inline">{rotulo}</span>

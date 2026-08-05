@@ -95,12 +95,12 @@ export function Kanban() {
         descricao="As colunas são estações; as faixas são técnicas. Um pedido que mistura técnicas se fatia, e as fatias reconvergem na CD Costura."
       >
         {atrasados > 0 && (
-          <span className="border-destructive text-destructive flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold whitespace-nowrap">
+          <span className="border-destructive text-destructive flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-3xl border px-3 text-xs font-semibold whitespace-nowrap">
             <Clock className="size-3.5" /> {atrasados} atrasada(s)
           </span>
         )}
         {esperando > 0 && (
-          <span className="border-warning text-warning flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold whitespace-nowrap">
+          <span className="border-warning text-warning flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-3xl border px-3 text-xs font-semibold whitespace-nowrap">
             <Split className="size-3.5" /> {esperando} aguardando irmão
           </span>
         )}
@@ -114,7 +114,7 @@ export function Kanban() {
             value={f.busca}
             onChange={(e) => setF({ ...f, busca: e.target.value })}
             placeholder="Pedido, cliente ou referência…"
-            className="border-input bg-background focus-visible:ring-ring h-(--ft-control-h-sm) w-full rounded-lg border pl-8 text-xs outline-none focus-visible:ring-2"
+            className="bg-input/50 focus-visible:border-ring focus-visible:ring-ring/30 h-(--ft-control-h-sm) w-full rounded-3xl border border-transparent pl-8 text-xs outline-none focus-visible:ring-[3px]"
           />
         </div>
         <Dropdown
@@ -142,7 +142,7 @@ export function Kanban() {
         <button
           onClick={() => setF({ ...f, soAtrasados: !f.soAtrasados })}
           aria-pressed={f.soAtrasados}
-          className={`flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors ${
+          className={`flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-3xl border px-3 text-xs font-medium transition-colors ${
             f.soAtrasados ? 'border-destructive text-destructive font-semibold' : 'hover:bg-accent'
           }`}
         >
@@ -277,11 +277,11 @@ function Coluna({
         const arrastado = e.dataTransfer.getData('text/plain')
         if (arrastado) onSolta(arrastado)
       }}
-      className={`bg-secondary flex h-[430px] w-[188px] shrink-0 flex-col rounded-lg transition-opacity ${
+      className={`bg-secondary flex h-[430px] w-[188px] shrink-0 flex-col overflow-hidden rounded-3xl transition-opacity ${
         arrastando && !aceita ? 'opacity-35' : ''
       } ${sobre ? 'ring-primary ring-2' : ''}`}
     >
-      <div className="h-[3px] rounded-t-lg" style={{ background: cor }} />
+      <div className="h-[3px]" style={{ background: cor }} />
       <div className="flex items-center gap-1.5 border-b px-2.5 py-1.5">
         <span className="font-heading truncate text-[11.5px] font-semibold">{nome}</span>
         <span className="text-muted-foreground ml-auto font-mono text-[11px] tabular-nums">{cards.length}</span>
@@ -316,8 +316,8 @@ function CardPedido({ p, fatias, onClick }: { p: Pedido; fatias: KCard[]; onClic
   return (
     <button
       onClick={onClick}
-      className={`bg-card flex w-[212px] shrink-0 flex-col gap-1 rounded-lg border p-2.5 text-left transition-colors ${
-        atrasado ? 'border-destructive' : 'hover:border-ring'
+      className={`bg-card ring-foreground/5 dark:ring-foreground/10 flex w-[212px] shrink-0 flex-col gap-1 rounded-3xl p-3 text-left shadow-md ring-1 transition-shadow ${
+        atrasado ? 'ring-destructive ring-2' : 'hover:shadow-lg'
       }`}
     >
       <div className="flex items-center gap-1.5">

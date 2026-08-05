@@ -42,7 +42,7 @@ export function Dropdown({
         onClick={() => setAberto((a) => !a)}
         aria-expanded={aberto}
         className={cn(
-          'flex h-(--ft-control-h-sm) w-full items-center gap-1.5 rounded-lg border px-2.5 text-xs transition-colors',
+          'flex h-(--ft-control-h-sm) w-full items-center gap-1.5 rounded-3xl border px-3 text-xs transition-colors',
           filtrado ? 'border-primary text-primary font-semibold' : 'hover:bg-accent',
         )}
       >
@@ -54,7 +54,7 @@ export function Dropdown({
       {aberto && (
         <div
           role="listbox"
-          className="bg-popover absolute top-[calc(100%+4px)] left-0 z-50 max-h-72 min-w-full overflow-y-auto rounded-lg border p-1 shadow-lg"
+          className="bg-popover absolute top-[calc(100%+4px)] left-0 z-50 max-h-72 min-w-full overflow-y-auto rounded-2xl border p-1.5 shadow-lg"
         >
           {buscavel && (
             <input
@@ -62,7 +62,7 @@ export function Dropdown({
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Digite para filtrar…"
-              className="border-input bg-background mb-1 h-8 w-full rounded-md border px-2 text-xs"
+              className="bg-input/50 mb-1 h-8 w-full rounded-2xl border border-transparent px-2.5 text-xs outline-none"
             />
           )}
           {visiveis.map((o) => (
@@ -75,7 +75,7 @@ export function Dropdown({
                 setAberto(false)
                 setBusca('')
               }}
-              className="hover:bg-accent flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs whitespace-nowrap"
+              className="hover:bg-accent flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-xs whitespace-nowrap"
             >
               <span className="flex-1 truncate">{o.texto}</span>
               {o.contagem != null && <span className="text-muted-foreground font-mono text-[10px]">{o.contagem}</span>}

@@ -5,6 +5,7 @@ import { usePrefs } from '@/lib/prefs'
 import { CabecalhoPagina, Nota } from '@/components/fourtime/pagina'
 import { Cores, Forma, Icones, Movimento, Tipografia } from './Fundamentos'
 import { Superficie } from './Superficie'
+import { Composicao } from './Composicao'
 import { Botoes, Campos, Estados, Navegacao, Padroes } from './Componentes'
 import { Biblioteca, Dados, Fatia, Grade, Tecnicas } from './Negocio'
 
@@ -23,7 +24,7 @@ import { Biblioteca, Dados, Fatia, Grade, Tecnicas } from './Negocio'
 
 const INDICE = [
   { grupo: 'Fundamentos', itens: [['cores', 'Cor'], ['tipografia', 'Tipografia'], ['superficie', 'Superfície'], ['forma', 'Forma e densidade'], ['icones', 'Ícones'], ['movimento', 'Movimento']] },
-  { grupo: 'Componentes', itens: [['botoes', 'Botões'], ['campos', 'Campos'], ['navegacao', 'Abas · chips · KPI'], ['estados', 'Estados'], ['padroes', 'Padrões de tela']] },
+  { grupo: 'Componentes', itens: [['botoes', 'Botões'], ['campos', 'Campos'], ['navegacao', 'Abas · chips · KPI'], ['estados', 'Estados'], ['padroes', 'Padrões de tela'], ['composicao', 'Arranjos de módulo']] },
   { grupo: 'Fourtime', itens: [['tecnicas', 'Técnicas e estações'], ['fatia', 'Card de fatia'], ['grade', 'Grade de tamanhos'], ['biblioteca', 'Cores e tecidos'], ['dados', 'Dados']] },
 ] as const
 
@@ -115,6 +116,7 @@ export function Kit() {
           <Navegacao />
           <Estados />
           <Padroes />
+          <Composicao />
           <Tecnicas />
           <Fatia />
           <Grade />

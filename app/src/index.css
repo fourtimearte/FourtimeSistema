@@ -130,3 +130,24 @@
     @apply font-sans;
     }
 }
+/* ============================================================
+   DESVIOS DELIBERADOS DO PRESET
+   Tudo acima é o que o gerador do ui.shadcn produziu para o
+   preset b7AJGDOVg8. O que vem abaixo é decisão nossa, tomada
+   com o motivo escrito ao lado. Nada entra aqui sem motivo.
+   ============================================================ */
+:root {
+  /* O neutral entrega --background branco puro, igual ao --card.
+     Card branco sobre fundo branco não tem profundidade nenhuma: a
+     sombra macia do Luma precisa de um fundo mais escuro para ter o
+     que destacar. Usamos o mesmo cinza de --muted/--secondary, então
+     continua dentro da rampa do preset — não é uma cor nova.
+     Fica um passo ABAIXO de --secondary (0.97) de propósito: as colunas do
+     Kanban usam --secondary, e com o fundo igual a elas as colunas somem.
+     Escolha do Henrique, 05/08/2026. */
+  --background: oklch(0.955 0 0);
+}
+
+.dark {
+  /* No escuro o preset já separa: fundo 0.145 e card 0.205. Nada a fazer. */
+}

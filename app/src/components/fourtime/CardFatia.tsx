@@ -31,8 +31,8 @@ export function CardFatia({
         onArrasta?.(c)
       }}
       onDragEnd={() => onArrasta?.(null)}
-      className={`bg-card group relative flex cursor-grab flex-col gap-1 rounded-md border p-1.5 transition-[border-color,box-shadow] active:cursor-grabbing ${
-        atrasada ? 'border-destructive' : 'hover:border-ring'
+      className={`bg-card ring-foreground/5 dark:ring-foreground/10 group relative flex cursor-grab flex-col gap-1 rounded-2xl p-2 shadow-sm ring-1 transition-shadow active:cursor-grabbing ${
+        atrasada ? 'ring-destructive ring-2' : 'hover:shadow-md'
       } ${realce ? 'ring-primary ring-2' : ''}`}
     >
       <button onClick={onAbrir} className="flex flex-col gap-1 text-left">
@@ -78,7 +78,7 @@ export function CardFatia({
       <button
         onClick={onAvancar}
         aria-label={`Avançar ${c.pedido} ${TECNICAS[c.tecnica].rotulo}`}
-        className="border-input bg-card hover:bg-accent absolute right-1 -bottom-2 hidden size-6 place-items-center rounded-full border opacity-0 shadow-sm transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 sm:grid"
+        className="bg-card hover:bg-accent ring-foreground/10 absolute right-1 -bottom-2 hidden size-6 place-items-center rounded-full opacity-0 shadow-md ring-1 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 sm:grid"
       >
         <ArrowRight className="size-3" />
       </button>

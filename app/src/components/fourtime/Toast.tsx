@@ -39,7 +39,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {avisos.map((a) => (
           <div
             key={a.id}
-            className={`bg-card mov-crescer flex max-w-full items-center gap-2 rounded-lg border px-3.5 py-2 text-xs shadow-lg ${
+            className={`bg-card mov-crescer flex max-w-full items-center gap-2 rounded-3xl border px-4 py-2.5 text-xs shadow-lg ${
               a.tom === 'erro' ? 'border-destructive text-destructive' : ''
             }`}
           >

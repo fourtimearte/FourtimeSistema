@@ -29,7 +29,7 @@ export function Ficha({ cliente, duplicado, onFechar }: { cliente: Cliente; dupl
         role="dialog"
         aria-modal
         aria-label={`Ficha de ${nome}`}
-        className="bg-card fixed top-0 right-0 z-50 flex h-svh w-full max-w-[520px] flex-col border-l shadow-2xl"
+        className="bg-card fixed top-0 right-0 z-50 flex h-svh w-full max-w-[520px] flex-col rounded-l-4xl shadow-2xl ring-1 ring-foreground/5 dark:ring-foreground/10"
       >
         <header className="flex items-start gap-3 border-b p-(--ft-card-pad)">
           <span className={cn('grid size-11 shrink-0 place-items-center rounded-[10px]', pj ? 'bg-cat-6/15 text-cat-6' : 'bg-cat-5/15 text-cat-5')}>
@@ -44,7 +44,7 @@ export function Ficha({ cliente, duplicado, onFechar }: { cliente: Cliente; dupl
               {incompleto(cliente) && <Badge tom="alerta">CADASTRO INCOMPLETO</Badge>}
             </div>
           </div>
-          <button onClick={onFechar} aria-label="Fechar" className="hover:bg-accent grid size-8 shrink-0 place-items-center rounded-lg">
+          <button onClick={onFechar} aria-label="Fechar" className="hover:bg-accent grid size-8 shrink-0 place-items-center rounded-xl">
             <X className="size-4" />
           </button>
         </header>
@@ -113,17 +113,17 @@ export function Ficha({ cliente, duplicado, onFechar }: { cliente: Cliente; dupl
 
         <footer className="flex flex-wrap gap-2 border-t p-(--ft-pad-x)">
           {wa && (
-            <a href={wa} target="_blank" rel="noopener" className="hover:bg-accent flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium">
+            <a href={wa} target="_blank" rel="noopener" className="hover:bg-accent flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-3xl border px-3 text-xs font-medium">
               <MessageCircle className="size-3.5" /> WhatsApp
             </a>
           )}
           {cliente.email && (
-            <a href={`mailto:${cliente.email}`} className="hover:bg-accent flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium">
+            <a href={`mailto:${cliente.email}`} className="hover:bg-accent flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-3xl border px-3 text-xs font-medium">
               <Mail className="size-3.5" /> E-mail
             </a>
           )}
           <span className="flex-1" />
-          <button className="hover:bg-accent h-(--ft-control-h-sm) rounded-lg border px-2.5 text-xs font-medium">Editar</button>
+          <button className="hover:bg-accent h-(--ft-control-h-sm) rounded-3xl border px-3 text-xs font-medium">Editar</button>
         </footer>
       </aside>
     </>
