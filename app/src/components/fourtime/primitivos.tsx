@@ -71,3 +71,44 @@ export function Vazio({ titulo, descricao, acao }: { titulo: string; descricao: 
     </div>
   )
 }
+
+/* Os três estados que somem quando ninguém desenha: carregando, erro e
+   vazio. O caso feliz todo mundo faz; estes aparecem no dia em que o
+   cliente tem zero pedidos ou a rede cai. */
+
+export function Esqueleto({ className }: { className?: string }) {
+  return <span className={cn('esqueleto block h-3 w-full', className)} aria-hidden />
+}
+
+export function Carregando({ linhas = 3, rotulo = 'Carregando…' }: { linhas?: number; rotulo?: string }) {
+  return (
+    <div className="flex flex-col gap-2 p-1" role="status" aria-label={rotulo}>
+      {Array.from({ length: linhas }, (_, i) => (
+        <Esqueleto key={i} className={i === linhas - 1 ? 'w-3/5' : i % 2 ? 'w-4/5' : 'w-full'} />
+      ))}
+    </div>
+  )
+}
+
+export function Erro({
+  titulo = 'Não foi possível carregar', descricao, aoTentar,
+}: {
+  titulo?: string
+  descricao: string
+  aoTentar?: () => void
+}) {
+  return (
+    <div className="border-destructive/40 text-muted-foreground flex flex-col items-center gap-2 rounded-lg border border-dashed p-8 text-center">
+      <span className="text-destructive text-[13px] font-semibold">{titulo}</span>
+      <span className="max-w-[46ch] text-xs">{descricao}</span>
+      {aoTentar && (
+        <button
+          onClick={aoTentar}
+          className="hover:bg-accent mt-1 h-(--ft-control-h-sm) rounded-lg border px-3 text-xs font-medium"
+        >
+          Tentar de novo
+        </button>
+      )}
+    </div>
+  )
+}

@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, Split, User, X } from 'lucide-react'
 import { corEstacao, nomeCheio, nomeEstacao, TECNICAS } from '@/lib/pedidos/tipos'
+import { TagTecnica } from '@/components/fourtime/TagTecnica'
 import { moeda } from '@/lib/pedidos/regras'
 import { aguardaIrmao, cardAtrasado, diasCard, estacaoAnterior, proximaEstacao, type KCard } from '@/lib/pedidos/roteador'
 import { Badge } from '@/components/fourtime/primitivos'
@@ -45,12 +46,7 @@ export function FichaCard({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-mono text-[13px] font-semibold">{card.pedido}</span>
-              <span
-                className="inline-flex h-5 items-center rounded-full px-2 text-[10px] font-bold text-(--cat-foreground)"
-                style={{ background: card.corTecnica }}
-              >
-                {TECNICAS[card.tecnica].rotulo}
-              </span>
+              <TagTecnica tecnica={card.tecnica} />
               {atrasada && <Badge tom="alerta">{diasCard(card, hoje)} DIAS</Badge>}
             </div>
             <h2 className="font-heading mt-1 truncate text-[15px] font-semibold">{card.cliente}</h2>

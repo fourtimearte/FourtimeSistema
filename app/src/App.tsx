@@ -2,7 +2,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { ThemeProvider } from 'next-themes'
 import { Shell } from '@/components/layout/Shell'
 import { PrefsProvider } from '@/lib/prefs'
-import { Kit } from '@/routes/kit/Fundamentos'
+import { ToastProvider } from '@/components/fourtime/Toast'
+import { Kit } from '@/routes/kit/Kit'
 import { Clientes } from '@/routes/clientes/Clientes'
 import { Dashboard } from '@/routes/dashboard/Dashboard'
 import { Kanban } from '@/routes/kanban/Kanban'
@@ -13,6 +14,7 @@ export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
       <PrefsProvider>
+        <ToastProvider>
         <BrowserRouter>
           <Routes>
             <Route element={<Shell />}>
@@ -26,6 +28,7 @@ export default function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        </ToastProvider>
       </PrefsProvider>
     </ThemeProvider>
   )

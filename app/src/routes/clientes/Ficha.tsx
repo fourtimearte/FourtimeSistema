@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Building2, FileText, Mail, MapPin, MessageCircle, Phone, UserRound, X } from 'lucide-react'
+import { Abas } from '@/components/fourtime/Abas'
 import { Badge, Vazio } from '@/components/fourtime/primitivos'
 import { cidadeUf, ehPJ, incompleto, temDoc, tituloPt } from '@/lib/clientes/regras'
 import { linkWhats } from '@/lib/br'
@@ -70,24 +71,17 @@ export function Ficha({ cliente, duplicado, onFechar }: { cliente: Cliente; dupl
           <span className="flex items-center gap-1.5"><FileText className="size-3.5" /> nenhum pedido</span>
         </div>
 
-        <div role="tablist" className="flex gap-0.5 overflow-x-auto border-b px-(--ft-pad-x)">
-          {([
-            ['dados', 'Dados'], ['pedidos', 'Pedidos'], ['artes', 'Artes'], ['financeiro', 'Financeiro'],
-          ] as const).map(([k, t]) => (
-            <button
-              key={k}
-              role="tab"
-              aria-selected={aba === k}
-              onClick={() => setAba(k)}
-              className={cn(
-                'h-9 border-b-2 px-3 text-[12.5px] font-medium whitespace-nowrap transition-colors',
-                aba === k ? 'border-primary text-foreground' : 'text-muted-foreground border-transparent hover:text-foreground',
-              )}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
+        <Abas
+          className="px-(--ft-pad-x)"
+          abas={[
+            { id: 'dados', rotulo: 'Dados' },
+            { id: 'pedidos', rotulo: 'Pedidos' },
+            { id: 'artes', rotulo: 'Artes' },
+            { id: 'financeiro', rotulo: 'Financeiro' },
+          ]}
+          ativa={aba}
+          aoTrocar={(id: string) => setAba(id as Aba)}
+        />
 
         <div className="flex-1 overflow-y-auto">
           {aba === 'dados' && <AbaDados c={cliente} />}

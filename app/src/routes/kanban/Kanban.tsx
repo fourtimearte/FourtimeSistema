@@ -1,14 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, ArrowRight, Clock, Search, Split } from 'lucide-react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { AlertTriangle, Clock, Search, Split } from 'lucide-react'
 import { PEDIDOS_SEED } from '@/data/pedidosSeed'
 import { ESTACOES, ESTACAO_FINAL, FAIXAS, TECNICAS, ORDEM_TECNICAS, corEstacao, nomeEstacao, type Pedido, type TecnicaKey } from '@/lib/pedidos/tipos'
 import { moedaCurta } from '@/lib/pedidos/regras'
 import {
-  aguardaIrmao, avancar, cardAtrasado, diasCard, FILTROS_KANBAN_VAZIO, fila, filtrarCards,
+  aguardaIrmao, avancar, cardAtrasado, FILTROS_KANBAN_VAZIO, fila, filtrarCards,
   mover, porEstacao, rotear, vendedores, type FiltrosKanban, type KCard,
 } from '@/lib/pedidos/roteador'
-import { Badge, Vazio } from '@/components/fourtime/primitivos'
+import { Vazio } from '@/components/fourtime/primitivos'
+import { CabecalhoPagina, Nota } from '@/components/fourtime/pagina'
+import { useToast } from '@/components/fourtime/Toast'
 import { Dropdown } from '@/components/fourtime/Dropdown'
+import { CardFatia } from '@/components/fourtime/CardFatia'
 import { FichaCard } from './FichaCard'
 
 const HOJE = new Date()
@@ -22,7 +25,6 @@ export function Kanban() {
   const [aberta, setAberta] = useState<string | null>(null)
   const [arrastando, setArrastando] = useState<KCard | null>(null)
   const [destaque, setDestaque] = useState<string[]>([])
-  const [aviso, setAviso] = useState<{ texto: string; erro?: boolean } | null>(null)
   const quadro = useRef<HTMLDivElement>(null)
 
   const visiveis = useMemo(() => filtrarCards(cards, f, HOJE), [cards, f])
@@ -37,12 +39,8 @@ export function Kanban() {
     return m
   }, [cards])
 
-  const toast = useCallback((texto: string, erro?: boolean) => setAviso({ texto, erro }), [])
-  useEffect(() => {
-    if (!aviso) return
-    const t = setTimeout(() => setAviso(null), 3200)
-    return () => clearTimeout(t)
-  }, [aviso])
+  const avisar = useToast()
+  const toast = useCallback((texto: string, erro?: boolean) => avisar(texto, erro ? 'erro' : 'ok'), [avisar])
 
   const moverCard = useCallback(
     (id: string, destino: string) => {
@@ -92,15 +90,10 @@ export function Kanban() {
 
   return (
     <>
-      <div className="flex flex-wrap items-start gap-3">
-        <div>
-          <h1 className="font-heading text-xl font-semibold">Kanban de produção</h1>
-          <p className="text-muted-foreground mt-0.5 max-w-[80ch] text-[12.5px]">
-            As colunas são estações; as faixas são técnicas. Um pedido que mistura técnicas <b>se fatia</b> e as
-            fatias reconvergem na CD Costura.
-          </p>
-        </div>
-        <div className="flex-1" />
+      <CabecalhoPagina
+        titulo="Kanban de produção"
+        descricao="As colunas são estações; as faixas são técnicas. Um pedido que mistura técnicas se fatia, e as fatias reconvergem na CD Costura."
+      >
         {atrasados > 0 && (
           <span className="border-destructive text-destructive flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold whitespace-nowrap">
             <Clock className="size-3.5" /> {atrasados} atrasada(s)
@@ -111,7 +104,7 @@ export function Kanban() {
             <Split className="size-3.5" /> {esperando} aguardando irmão
           </span>
         )}
-      </div>
+      </CabecalhoPagina>
 
       {/* -------- filtros -------- */}
       <div className="flex flex-wrap items-center gap-2">
@@ -249,16 +242,6 @@ export function Kanban() {
         />
       )}
 
-      {aviso && (
-        <div
-          role="status"
-          className={`bg-card fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 rounded-lg border px-3.5 py-2 text-xs shadow-lg ${
-            aviso.erro ? 'border-destructive text-destructive' : ''
-          }`}
-        >
-          {aviso.texto}
-        </div>
-      )}
     </>
   )
 }
@@ -305,9 +288,10 @@ function Coluna({
       </div>
       <div className="flex flex-col gap-1.5 overflow-y-auto p-1.5">
         {cards.map((c) => (
-          <Card
+          <CardFatia
             key={c.id}
             c={c}
+            hoje={HOJE}
             espera={aguardaIrmao(c, todos)}
             realce={destaque.has(c.id)}
             onAbrir={() => onAbrir(c.id)}
@@ -320,80 +304,6 @@ function Coluna({
         )}
       </div>
     </section>
-  )
-}
-
-/* -------------------------------------------------------------------- card */
-
-function Card({
-  c, espera, realce, onAbrir, onAvancar, onArrasta,
-}: {
-  c: KCard; espera: boolean; realce: boolean
-  onAbrir: () => void; onAvancar: () => void; onArrasta: (c: KCard | null) => void
-}) {
-  const atrasada = cardAtrasado(c, HOJE)
-  return (
-    <article
-      id={`kc-${c.id}`}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData('text/plain', c.id)
-        e.dataTransfer.effectAllowed = 'move'
-        onArrasta(c)
-      }}
-      onDragEnd={() => onArrasta(null)}
-      className={`bg-card group relative flex cursor-grab flex-col gap-1 rounded-md border p-1.5 transition-[border-color,box-shadow] active:cursor-grabbing ${
-        atrasada ? 'border-destructive' : 'hover:border-ring'
-      } ${realce ? 'ring-primary ring-2' : ''}`}
-    >
-      <button onClick={onAbrir} className="flex flex-col gap-1 text-left">
-        <div className="flex items-center gap-1.5">
-          {/* o mockup é o que o operador reconhece antes do número */}
-          <span
-            className="text-muted-foreground/70 grid size-8 shrink-0 place-items-center rounded border border-dashed text-[8px]"
-            aria-hidden
-          >
-            arte
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1">
-              <span className="font-mono text-[10.5px] font-semibold">{c.pedido}</span>
-              <span
-                className="ml-auto size-2 shrink-0 rounded-full"
-                style={{ background: c.corTecnica }}
-                title={TECNICAS[c.tecnica].rotulo}
-              />
-            </div>
-            <div className="truncate text-[11.5px] font-medium">{c.cliente}</div>
-            <div className="text-muted-foreground truncate text-[10px]">
-              {c.ref} · {c.cor}
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-1">
-          {atrasada ? (
-            <Badge tom="alerta">
-              {diasCard(c, HOJE)} {diasCard(c, HOJE) === 1 ? 'DIA' : 'DIAS'}
-            </Badge>
-          ) : (
-            <span className="text-muted-foreground font-mono text-[10px]">{c.entrega.slice(0, 5)}</span>
-          )}
-          {espera && <Badge tom="aviso">AGUARDA IRMÃO</Badge>}
-          <span className="text-muted-foreground ml-auto font-mono text-[10px] tabular-nums">{c.pecas}p</span>
-        </div>
-      </button>
-
-      {/* Avançar é o gesto primário: a rota já é conhecida, ninguém precisa
-          escolher a coluna. O arrastar fica para a exceção — e funciona no
-          dedo, onde arrastar não funciona. */}
-      <button
-        onClick={onAvancar}
-        aria-label={`Avançar ${c.pedido} ${TECNICAS[c.tecnica].rotulo}`}
-        className="border-input bg-card hover:bg-accent absolute right-1 -bottom-2 hidden size-6 place-items-center rounded-full border opacity-0 shadow-sm transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 sm:grid"
-      >
-        <ArrowRight className="size-3" />
-      </button>
-    </article>
   )
 }
 
@@ -430,10 +340,3 @@ function CardPedido({ p, fatias, onClick }: { p: Pedido; fatias: KCard[]; onClic
   )
 }
 
-function Nota({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-muted-foreground border-info bg-secondary rounded-r-lg border-l-[3px] px-3 py-2 text-[11.5px]">
-      {children}
-    </p>
-  )
-}

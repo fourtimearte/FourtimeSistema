@@ -8,8 +8,10 @@ import { CLIENTES_BLING } from '@/data/clientesBling'
 import {
   diasDeAtraso, gargalos, giroPorTecnica, kpis, maisAtrasados, moeda, moedaCurta, tecnicas, totais,
 } from '@/lib/pedidos/regras'
-import { TECNICAS, nomeEstacao } from '@/lib/pedidos/tipos'
+import { nomeEstacao } from '@/lib/pedidos/tipos'
 import { Badge, KpiFiltro, Vazio } from '@/components/fourtime/primitivos'
+import { CabecalhoPagina, Nota, Painel } from '@/components/fourtime/pagina'
+import { TagTecnica } from '@/components/fourtime/TagTecnica'
 
 const HOJE = new Date()
 
@@ -25,19 +27,15 @@ export function Dashboard() {
 
   return (
     <>
-      <div className="flex flex-wrap items-start gap-3">
-        <div>
-          <h1 className="font-heading text-xl font-semibold">Dashboard</h1>
-          <p className="text-muted-foreground mt-0.5 max-w-[74ch] text-[12.5px]">
-            Lê de todas as páginas, não escreve em nenhuma. Todo número é clicável até a origem.
-          </p>
-        </div>
-        <div className="flex-1" />
+      <CabecalhoPagina
+        titulo="Dashboard"
+        descricao="Lê de todas as páginas, não escreve em nenhuma. Todo número é clicável até a origem."
+      >
         <span className="text-muted-foreground border-warning bg-secondary rounded-lg border-l-[3px] px-3 py-1.5 text-[11.5px]">
           Pedidos são <b className="text-foreground">seed</b> até o importador de <code>.ft</code> existir.
           Os <b className="text-foreground">1.901 clientes</b> são reais.
         </span>
-      </div>
+      </CabecalhoPagina>
 
       <div className="grid gap-(--ft-gap) [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
         <KpiFiltro
@@ -71,7 +69,7 @@ export function Dashboard() {
 
       <div className="grid gap-(--ft-gap) lg:grid-cols-2">
         {/* UMA grandeza variando intensidade → rampa SEQUENCIAL */}
-        <Painel titulo="Gargalos por estação" nota="cards parados" aoVer={() => ir('/kanban')}>
+        <Painel titulo="Gargalos por estação" nota="cards parados" acao={<VerNo aoVer={() => ir('/kanban')} />}>
           {gar.length ? (
             <>
               <ul className="flex flex-col gap-2.5">
@@ -98,7 +96,7 @@ export function Dashboard() {
         </Painel>
 
         {/* CATEGORIAS distintas → paleta CATEGÓRICA */}
-        <Painel titulo="Giro por técnica" nota="agrega as tags de Design" aoVer={() => ir('/kanban')}>
+        <Painel titulo="Giro por técnica" nota="agrega as tags de Design" acao={<VerNo aoVer={() => ir('/kanban')} />}>
           {giro.length ? (
             <>
               <ul className="flex flex-col gap-2.5">
@@ -126,7 +124,7 @@ export function Dashboard() {
         </Painel>
       </div>
 
-      <Painel titulo="Pedidos atrasados" nota={`${k.atrasados} no total`} aoVer={() => ir('/kanban')} semPadding>
+      <Painel titulo="Pedidos atrasados" nota={`${k.atrasados} no total`} acao={<VerNo aoVer={() => ir('/kanban')} />} semPadding>
         {atrasados.length ? (
           <div className="overflow-x-auto" data-density="compacta">
             <table className="w-full min-w-[720px] border-collapse text-[12.5px]">
@@ -157,13 +155,7 @@ export function Dashboard() {
                       <td className="h-(--ft-row-h) border-b px-(--ft-pad-x) whitespace-nowrap">
                         <span className="flex gap-1">
                           {tecnicas(p).map((tc) => (
-                            <span
-                              key={tc}
-                              className="inline-flex h-5 items-center rounded-full px-2 text-[10px] font-bold text-(--cat-foreground)"
-                              style={{ background: TECNICAS[tc].cor }}
-                            >
-                              {TECNICAS[tc].rotulo}
-                            </span>
+                            <TagTecnica key={tc} tecnica={tc} />
                           ))}
                         </span>
                       </td>
@@ -195,35 +187,11 @@ export function Dashboard() {
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0)
 
-function Painel({
-  titulo, nota, aoVer, semPadding, children,
-}: {
-  titulo: string; nota?: string; aoVer?: () => void; semPadding?: boolean; children: React.ReactNode
-}) {
-  return (
-    <section className="bg-card rounded-lg border">
-      <div className="flex items-center gap-2 border-b px-(--ft-pad-x) py-(--ft-pad-y)">
-        <h2 className="font-heading text-[13px] font-semibold">{titulo}</h2>
-        <span className="flex-1" />
-        {nota && <span className="text-muted-foreground text-[11px]">{nota}</span>}
-        {aoVer && (
-          <button
-            onClick={aoVer}
-            className="hover:bg-accent flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium"
-          >
-            ver <ArrowRight className="size-3" />
-          </button>
-        )}
-      </div>
-      <div className={semPadding ? '' : 'flex flex-col gap-3 p-(--ft-card-pad)'}>{children}</div>
-    </section>
-  )
-}
 
-function Nota({ children }: { children: React.ReactNode }) {
+function VerNo({ aoVer }: { aoVer: () => void }) {
   return (
-    <p className="text-muted-foreground border-info bg-secondary mt-1 rounded-r-lg border-l-[3px] px-3 py-2 text-[11.5px]">
-      {children}
-    </p>
+    <button onClick={aoVer} className="hover:bg-accent flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium">
+      ver <ArrowRight className="size-3" />
+    </button>
   )
 }
