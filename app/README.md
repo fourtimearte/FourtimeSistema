@@ -19,8 +19,14 @@ src/
 │                         cores de estado, WhatsApp e a camada de densidade
 ├─ lib/prefs.tsx          densidade (localStorage + data-density no <html>)
 ├─ lib/modulos.ts         registro único de módulo → rota, ícone, grupo, cor
+├─ lib/br.ts              máscaras e validação BR — portado do v5
+├─ lib/clientes/          regras.ts (funções PURAS + testes) e tipos.ts
+├─ data/clientesBling.ts  base real: 1.901 clientes do Bling
 ├─ components/layout/     Shell (rail + topbar)
-└─ routes/kit/            a rota /kit
+├─ components/fourtime/   peças de negócio (KpiFiltro, Badge, Dropdown)
+└─ routes/
+   ├─ kit/                a rota /kit
+   └─ clientes/           tela de Clientes + Ficha (drawer com abas)
 ```
 
 ## Configuração aplicada
@@ -39,5 +45,11 @@ npx shadcn@latest preset decode b7AJGDOVg8
 3. `/kit` renderiza os componentes **reais**. Componente novo só está pronto
    quando tem sua seção lá.
 4. Nada de visual do `frontend/` antigo atravessa. Só lógica, como função pura.
+
+5. Lógica portada do v5 entra como **função pura** em `lib/`, com teste.
+
+```bash
+npx vitest run     # 21 testes; os números batem com o relatório do banco
+```
 
 Detalhes em `.claude/skills/fourtime-crm-v6/`.

@@ -3,6 +3,7 @@ import { ThemeProvider } from 'next-themes'
 import { Shell } from '@/components/layout/Shell'
 import { PrefsProvider } from '@/lib/prefs'
 import { Kit } from '@/routes/kit/Fundamentos'
+import { Clientes } from '@/routes/clientes/Clientes'
 import { EmBreve } from '@/routes/EmBreve'
 import { MODULOS } from '@/lib/modulos'
 
@@ -14,7 +15,8 @@ export default function App() {
           <Routes>
             <Route element={<Shell />}>
               <Route path="/kit" element={<Kit />} />
-              {MODULOS.filter((m) => m.rota !== '/kit').map((m) => (
+              <Route path="/clientes" element={<Clientes />} />
+              {MODULOS.filter((m) => !['/kit', '/clientes'].includes(m.rota)).map((m) => (
                 <Route key={m.rota} path={m.rota} element={<EmBreve nome={m.nome} />} />
               ))}
             </Route>
