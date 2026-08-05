@@ -166,7 +166,7 @@ export function Forma() {
   return (
     <SecaoKit
       id="forma"
-      numero="03"
+      numero="04"
       titulo="Forma · espaço · densidade"
       lead={
         <>
@@ -238,7 +238,7 @@ export function Icones() {
   return (
     <SecaoKit
       id="icones"
-      numero="04"
+      numero="05"
       titulo="Ícones"
       lead={
         <>
@@ -273,7 +273,7 @@ export function Movimento() {
   return (
     <SecaoKit
       id="movimento"
-      numero="05"
+      numero="06"
       titulo="Movimento"
       lead={
         <>

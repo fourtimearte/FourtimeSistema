@@ -18,7 +18,7 @@ export function Botoes() {
   return (
     <SecaoKit
       id="botoes"
-      numero="06"
+      numero="07"
       titulo="Botões"
       lead={
         <>
@@ -100,7 +100,7 @@ export function Campos() {
   return (
     <SecaoKit
       id="campos"
-      numero="07"
+      numero="08"
       titulo="Campos"
       lead={
         <>
@@ -179,7 +179,7 @@ export function Navegacao() {
   return (
     <SecaoKit
       id="navegacao"
-      numero="08"
+      numero="09"
       titulo="Abas · chips · KPI"
       lead="Abas com a semântica ARIA correta e navegação por seta — não são botões que trocam display. O KPI é filtro, não enfeite: clicar aplica."
     >
@@ -241,7 +241,7 @@ export function Estados() {
   return (
     <SecaoKit
       id="estados"
-      numero="09"
+      numero="10"
       titulo="Estados: vazio, carregando, erro"
       lead="O caso feliz todo mundo desenha. Estes três aparecem no dia em que o cliente tem zero pedidos ou a rede cai — e se o kit não os mostra, ninguém os desenha."
     >
@@ -300,7 +300,7 @@ export function Padroes() {
   return (
     <SecaoKit
       id="padroes"
-      numero="10"
+      numero="11"
       titulo="Padrões de tela"
       lead="Combinações recorrentes resolvidas uma vez. É aqui que a consistência acontece de verdade — nos componentes base ela já vem de graça do shadcn."
     >

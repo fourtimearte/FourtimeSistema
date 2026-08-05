@@ -18,7 +18,7 @@ export function Tecnicas() {
   return (
     <SecaoKit
       id="tecnicas"
-      numero="11"
+      numero="12"
       titulo="Técnicas e estações"
       lead={
         <>
@@ -82,7 +82,7 @@ export function Fatia() {
   return (
     <SecaoKit
       id="fatia"
-      numero="12"
+      numero="13"
       titulo="Card de fatia"
       lead={
         <>
@@ -113,7 +113,7 @@ export function Grade() {
   return (
     <SecaoKit
       id="grade"
-      numero="13"
+      numero="14"
       titulo="Grade de tamanhos"
       lead="O coração comercial do orçamento. O cálculo vive em funções puras (lib/grade.ts) e a tabela só desenha — é o que permite testar o total sem abrir navegador."
     >
@@ -150,7 +150,7 @@ export function Biblioteca() {
   return (
     <SecaoKit
       id="biblioteca"
-      numero="14"
+      numero="15"
       titulo="Biblioteca visual — cores e tecidos"
       lead={
         <>
@@ -188,7 +188,7 @@ export function Dados() {
   return (
     <SecaoKit
       id="dados"
-      numero="15"
+      numero="16"
       titulo="Dados: qual paleta em qual gráfico"
       lead="A decisão que erra mais: usar a rampa sequencial para categorias. As duas ao lado uma da outra, com o mesmo dado real do Dashboard."
     >

@@ -4,6 +4,7 @@ import { Moon, Rows3, Rows4, Sun } from 'lucide-react'
 import { usePrefs } from '@/lib/prefs'
 import { CabecalhoPagina, Nota } from '@/components/fourtime/pagina'
 import { Cores, Forma, Icones, Movimento, Tipografia } from './Fundamentos'
+import { Superficie } from './Superficie'
 import { Botoes, Campos, Estados, Navegacao, Padroes } from './Componentes'
 import { Biblioteca, Dados, Fatia, Grade, Tecnicas } from './Negocio'
 
@@ -21,7 +22,7 @@ import { Biblioteca, Dados, Fatia, Grade, Tecnicas } from './Negocio'
  *  botão. Componente novo só está pronto quando tem a sua seção aqui. */
 
 const INDICE = [
-  { grupo: 'Fundamentos', itens: [['cores', 'Cor'], ['tipografia', 'Tipografia'], ['forma', 'Forma e densidade'], ['icones', 'Ícones'], ['movimento', 'Movimento']] },
+  { grupo: 'Fundamentos', itens: [['cores', 'Cor'], ['tipografia', 'Tipografia'], ['superficie', 'Superfície'], ['forma', 'Forma e densidade'], ['icones', 'Ícones'], ['movimento', 'Movimento']] },
   { grupo: 'Componentes', itens: [['botoes', 'Botões'], ['campos', 'Campos'], ['navegacao', 'Abas · chips · KPI'], ['estados', 'Estados'], ['padroes', 'Padrões de tela']] },
   { grupo: 'Fourtime', itens: [['tecnicas', 'Técnicas e estações'], ['fatia', 'Card de fatia'], ['grade', 'Grade de tamanhos'], ['biblioteca', 'Cores e tecidos'], ['dados', 'Dados']] },
 ] as const
@@ -105,6 +106,7 @@ export function Kit() {
         <div className="flex min-w-0 flex-col gap-8">
           <Cores />
           <Tipografia />
+          <Superficie />
           <Forma />
           <Icones />
           <Movimento />
