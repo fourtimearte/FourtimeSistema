@@ -7,6 +7,7 @@ import { Kit } from '@/routes/kit/Kit'
 import { Clientes } from '@/routes/clientes/Clientes'
 import { Dashboard } from '@/routes/dashboard/Dashboard'
 import { Kanban } from '@/routes/kanban/Kanban'
+import { Orcamentos } from '@/routes/orcamentos/Orcamentos'
 import { EmBreve } from '@/routes/EmBreve'
 import { MODULOS } from '@/lib/modulos'
 
@@ -22,7 +23,8 @@ export default function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/clientes" element={<Clientes />} />
               <Route path="/kanban" element={<Kanban />} />
-              {MODULOS.filter((m) => !['/kit', '/clientes', '/', '/kanban'].includes(m.rota)).map((m) => (
+              <Route path="/orcamentos" element={<Orcamentos />} />
+              {MODULOS.filter((m) => !['/kit', '/clientes', '/', '/kanban', '/orcamentos'].includes(m.rota)).map((m) => (
                 <Route key={m.rota} path={m.rota} element={<EmBreve nome={m.nome} />} />
               ))}
             </Route>

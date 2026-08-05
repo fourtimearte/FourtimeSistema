@@ -19,6 +19,9 @@ export interface Pedido {
   entrega: string          // dd/mm/aaaa
   status: StatusPedido
   estacao?: string         // id da estação no Kanban
+  /** etapa do ciclo comercial. Opcional porque o seed ainda não tem: quem
+   *  lê usa `etapaDe()`, que deriva quando o campo falta. */
+  etapa?: string
   layouts: Layout[]
   /* cabeçalho do orçamento — vem do `.ft` e hoje ainda não está no seed.
      Campo ausente vira "—" na tela, nunca erro: é a mesma regra do `.ft`. */
