@@ -60,7 +60,7 @@ describe('atrasado', () => {
   it('entrega HOJE ainda não é atraso', () =>
     expect(atrasado(P({ entrega: '05/08/2026' }), new Date(HOJE))).toBe(false))
   it('conta os dias certos', () =>
-    expect(diasDeAtraso(P({ entrega: '01/08/2026' }), HOJE)).toBe(4))
+    expect(diasDeAtraso('01/08/2026', HOJE)).toBe(4))
 })
 
 describe('noMes', () => {
@@ -116,7 +116,7 @@ describe('drill-down', () => {
   })
   it('maisAtrasados vem do pior para o menos pior', () => {
     const m = maisAtrasados(PEDIDOS_SEED, HOJE)
-    const d = m.map((p) => diasDeAtraso(p, HOJE))
+    const d = m.map((p) => diasDeAtraso(p.entrega, HOJE))
     expect(d).toEqual([...d].sort((a, b) => b - a))
   })
 })

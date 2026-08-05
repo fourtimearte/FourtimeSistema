@@ -41,17 +41,31 @@ export function tecnicas(p: Pedido): TecnicaKey[] {
 
 export const emProducao = (p: Pedido) => p.status === 'producao'
 
+/** Meia-noite de hoje, como número.
+ *
+ *  Escrito assim por causa de um erro que já estava no código: a versão
+ *  anterior fazia `hoje.setHours(0,0,0,0)` — e `setHours` **muda o Date que
+ *  recebeu**. Quem chamasse `atrasado()` zerava o relógio do `hoje` do
+ *  chamador, e a função seguinte media o atraso a partir de outra hora. O
+ *  resultado dependia da ORDEM das chamadas. Aqui nada é mutado. */
+export const meiaNoite = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+
+/** Prazo vencido, olhando só a data — hora não entra em prazo de entrega. */
+export function venceu(entrega: string, hoje: Date): boolean {
+  const d = dataBr(entrega)
+  return !!d && d.getTime() < meiaNoite(hoje)
+}
+
 /** Atrasado = prazo vencido e ainda não entregue. Entregue nunca é atraso. */
 export function atrasado(p: Pedido, hoje: Date): boolean {
   if (p.status === 'entregue' || p.status === 'rascunho') return false
-  const d = dataBr(p.entrega)
-  return !!d && d.getTime() < hoje.setHours(0, 0, 0, 0)
+  return venceu(p.entrega, hoje)
 }
 
-export function diasDeAtraso(p: Pedido, hoje: Date): number {
-  const d = dataBr(p.entrega)
+export function diasDeAtraso(entrega: string, hoje: Date): number {
+  const d = dataBr(entrega)
   if (!d) return 0
-  return Math.max(0, Math.floor((hoje.getTime() - d.getTime()) / 864e5))
+  return Math.max(0, Math.floor((meiaNoite(hoje) - d.getTime()) / 864e5))
 }
 
 export function noMes(p: Pedido, hoje: Date): boolean {
@@ -71,7 +85,7 @@ export interface KpisDashboard {
 
 export function kpis(pedidos: Pedido[], hoje: Date): KpisDashboard {
   const prod = pedidos.filter(emProducao)
-  const atras = pedidos.filter((p) => atrasado(p, new Date(hoje)))
+  const atras = pedidos.filter((p) => atrasado(p, hoje))
   const entregues = pedidos.filter((p) => p.status === 'entregue' && noMes(p, hoje))
   const abertos = pedidos.filter((p) => p.status !== 'rascunho' && p.status !== 'entregue')
   const doMes = pedidos.filter((p) => noMes(p, hoje))
@@ -117,8 +131,8 @@ export function giroPorTecnica(pedidos: Pedido[]): { tecnica: TecnicaKey; rotulo
 
 export function maisAtrasados(pedidos: Pedido[], hoje: Date, limite = 6): Pedido[] {
   return pedidos
-    .filter((p) => atrasado(p, new Date(hoje)))
-    .sort((a, b) => diasDeAtraso(b, hoje) - diasDeAtraso(a, hoje))
+    .filter((p) => atrasado(p, hoje))
+    .sort((a, b) => diasDeAtraso(b.entrega, hoje) - diasDeAtraso(a.entrega, hoje))
     .slice(0, limite)
 }
 

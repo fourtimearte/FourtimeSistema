@@ -145,7 +145,7 @@ export function Dashboard() {
               <tbody>
                 {atrasados.map((p) => {
                   const t = totais(p)
-                  const dias = diasDeAtraso(p, HOJE)
+                  const dias = diasDeAtraso(p.entrega, HOJE)
                   return (
                     <tr
                       key={p.pedido}
