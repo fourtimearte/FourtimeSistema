@@ -78,7 +78,11 @@ export function historico(p: Pedido, hoje: Date): Evento[] {
     (k) => ordemEtapa(k) <= ordemEtapa(atual) && (k !== 'perdido' || atual === 'perdido'),
   )
   const passo = 1 + Math.floor(hash(p.pedido + 'passo') * 4) /* 1 a 4 dias entre etapas */
-  const naEtapa = Math.floor(hash(p.pedido + 'dias') * 9) /* 0 a 8 dias na atual */
+  /* o quadrado enviesa para baixo: a maioria entrou há pouco e uma
+     minoria está encalhada. Distribuição uniforme fazia metade do funil
+     nascer com tarja de "parado", e tarja em todo mundo não avisa nada. */
+  const h = hash(p.pedido + 'dias')
+  const naEtapa = Math.floor(h * h * 12) /* 0 a 11 dias na atual, enviesado */
   const base = new Date(meiaNoite(hoje))
   const total = percorridas.length
   return percorridas.map((k, i) => ({

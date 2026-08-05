@@ -1,20 +1,21 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  AlertTriangle, CalendarDays, FileText, Layers, Plus, Search, ThumbsDown, ThumbsUp, TrendingUp, Wallet,
+  AlertTriangle, ArrowRight, CalendarDays, FileText, Factory, Layers, PencilLine, Plus, Search,
+  ThumbsDown, ThumbsUp, TrendingUp, Wallet,
 } from 'lucide-react'
 import { ORCAMENTOS_SEED } from '@/data/orcamentosSeed'
 import { ETAPAS, ETAPAS_FUNIL, corEtapa, nomeEtapa, type EtapaKey } from '@/lib/orcamentos/tipos'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
 import {
   diasNaEtapa, etapaDe, FILTROS_ORCAMENTO_VAZIO, filtrarOrcamentos, kpisComercial, moverEtapa,
-  ordenarOrcamentos, parado, pecasDe, porEtapa, valorDe, vendedoresDe,
-  type ColunaArquivo, type FiltrosOrcamento,
+  parado, porEtapa, valorDe, vendedoresDe, type FiltrosOrcamento,
 } from '@/lib/orcamentos/regras'
-import { moeda, moedaCurta } from '@/lib/pedidos/regras'
+import { moedaCurta } from '@/lib/pedidos/regras'
 import type { Pedido } from '@/lib/pedidos/tipos'
 import { CabecalhoPagina, Nota } from '@/components/fourtime/pagina'
-import { KpiFiltro, Vazio } from '@/components/fourtime/primitivos'
-import { Abas, PainelAba } from '@/components/fourtime/Abas'
+import { KpiFiltro } from '@/components/fourtime/primitivos'
 import { Dropdown } from '@/components/fourtime/Dropdown'
 import { cardSuperficie } from '@/components/fourtime/superficie'
 import { useToast } from '@/components/fourtime/Toast'
@@ -37,18 +38,14 @@ export function Orcamentos() {
   const ir = useNavigate()
   const avisar = useToast()
   const [pedidos, setPedidos] = useState<Pedido[]>(ORCAMENTOS_SEED)
-  const [aba, setAba] = useState('funil')
   const [f, setF] = useState<FiltrosOrcamento>(FILTROS_ORCAMENTO_VAZIO)
   const [aberto, setAberto] = useState<string | null>(null)
   const [arrastando, setArrastando] = useState<Pedido | null>(null)
-  const [coluna, setColuna] = useState<ColunaArquivo>('entrega')
-  const [desc, setDesc] = useState(true)
 
   const visiveis = useMemo(() => filtrarOrcamentos(pedidos, f, HOJE), [pedidos, f])
   const colunas = useMemo(() => porEtapa(visiveis), [visiveis])
   const k = useMemo(() => kpisComercial(pedidos, HOJE), [pedidos])
   const listaVend = useMemo(() => vendedoresDe(pedidos), [pedidos])
-  const ordenados = useMemo(() => ordenarOrcamentos(visiveis, coluna, desc), [visiveis, coluna, desc])
 
   const mover = useCallback(
     (numero: string, destino: EtapaKey) => {
@@ -58,10 +55,7 @@ export function Orcamentos() {
     [avisar],
   )
 
-  const filtrarPor = (etapa: EtapaKey | null) => {
-    setF({ ...f, etapa: f.etapa === etapa ? null : etapa })
-    setAba('arquivo')
-  }
+  const filtrarPor = (etapa: EtapaKey | null) => setF({ ...f, etapa: f.etapa === etapa ? null : etapa })
 
   const pedidoAberto = pedidos.find((p) => p.pedido === aberto) ?? null
 
@@ -73,10 +67,7 @@ export function Orcamentos() {
       >
         {k.parados > 0 && (
           <button
-            onClick={() => {
-              setF({ ...FILTROS_ORCAMENTO_VAZIO, soParados: true })
-              setAba('arquivo')
-            }}
+            onClick={() => setF({ ...FILTROS_ORCAMENTO_VAZIO, soParados: true })}
             className="border-warning text-warning flex h-(--ft-control-h-sm) items-center gap-1.5 rounded-3xl border px-3 text-xs font-semibold whitespace-nowrap"
           >
             <AlertTriangle className="size-3.5" /> {k.parados} parados
@@ -91,13 +82,13 @@ export function Orcamentos() {
         <KpiFiltro
           rotulo="Em aberto" valor={k.emAberto} nota={`R$ ${moedaCurta(k.valorEmAberto)} em jogo`}
           proporcao={pct(k.emAberto, pedidos.length)} ativo={false}
-          onClick={() => { setF(FILTROS_ORCAMENTO_VAZIO); setAba('funil') }}
+          onClick={() => setF(FILTROS_ORCAMENTO_VAZIO)}
           icone={<FileText className="size-3.5" />}
         />
         <KpiFiltro
           rotulo="Parados" valor={k.parados} nota="passaram do prazo da etapa"
           proporcao={pct(k.parados, pedidos.length)} ativo={f.soParados}
-          onClick={() => { setF({ ...FILTROS_ORCAMENTO_VAZIO, soParados: !f.soParados }); setAba('arquivo') }}
+          onClick={() => setF({ ...FILTROS_ORCAMENTO_VAZIO, soParados: !f.soParados })}
           icone={<AlertTriangle className="size-3.5" />} cor="var(--warning)"
         />
         <KpiFiltro
@@ -119,7 +110,7 @@ export function Orcamentos() {
         />
         <KpiFiltro
           rotulo="Ticket médio" valor={`R$ ${moedaCurta(k.ticketMedio)}`} nota="só dos orçamentos ganhos"
-          proporcao={62} ativo={false} onClick={() => setAba('arquivo')} icone={<Wallet className="size-3.5" />}
+          proporcao={62} ativo={false} onClick={() => filtrarPor('entregue')} icone={<Wallet className="size-3.5" />}
         />
       </div>
 
@@ -173,51 +164,28 @@ export function Orcamentos() {
         </span>
       </div>
 
-      <Abas
-        abas={[
-          { id: 'funil', rotulo: 'Funil', contagem: k.emAberto },
-          { id: 'arquivo', rotulo: 'Arquivo', contagem: pedidos.length },
-        ]}
-        ativa={aba}
-        aoTrocar={setAba}
+      <Funil
+        colunas={colunas}
+        pedidos={pedidos}
+        etapaFiltrada={f.etapa}
+        arrastando={arrastando}
+        onArrasta={setArrastando}
+        onSolta={mover}
+        onAbrir={setAberto}
+        onFiltrar={filtrarPor}
+        onKanban={() => ir('/kanban')}
       />
 
-      <PainelAba id="funil" ativa={aba}>
-        <Funil
-          colunas={colunas}
-          arrastando={arrastando}
-          onArrasta={setArrastando}
-          onSolta={mover}
-          onAbrir={setAberto}
-        />
-        <div className="mt-(--ft-gap) grid gap-(--ft-gap) lg:grid-cols-2">
-          <Nota>
-            <b>O funil para no aprovado.</b> Dali em diante quem manda é a rota de produção — duas telas mandando no
-            mesmo pedido é como se perde o rastro dele.
-          </Nota>
-          <Nota tom="aviso">
-            Aqui <b>não há rota fixa</b>, ao contrário da produção. O comercial volta atrás, pula o briefing quando o
-            cliente já sabe o que quer, e às vezes um perdido volta a viver. Travar isso atrapalharia mais que ajudaria.
-          </Nota>
-        </div>
-      </PainelAba>
-
-      <PainelAba id="arquivo" ativa={aba}>
-        <Arquivo
-          pedidos={ordenados}
-          coluna={coluna}
-          desc={desc}
-          onOrdenar={(c) => {
-            if (c === coluna) setDesc(!desc)
-            else {
-              setColuna(c)
-              setDesc(false)
-            }
-          }}
-          onAbrir={setAberto}
-          onLimpar={() => setF(FILTROS_ORCAMENTO_VAZIO)}
-        />
-      </PainelAba>
+      <div className="grid gap-(--ft-gap) lg:grid-cols-2">
+        <Nota>
+          <b>O funil para no aprovado.</b> Dali em diante quem manda é a rota de produção — duas telas mandando no
+          mesmo pedido é como se perde o rastro dele.
+        </Nota>
+        <Nota tom="aviso">
+          Aqui <b>não há rota fixa</b>, ao contrário da produção. O comercial volta atrás, pula o briefing quando o
+          cliente já sabe o que quer, e às vezes um perdido volta a viver. Travar isso atrapalharia mais que ajudaria.
+        </Nota>
+      </div>
 
       {pedidoAberto && (
         <FichaOrcamento
@@ -237,18 +205,108 @@ const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0)
 
 /* ------------------------------------------------------------------ funil */
 
+/** O quadro. A primeira coluna não é uma etapa: são os DOIS cartões que
+ *  dividem o mundo em duas — o que ainda está sendo decidido e o que já
+ *  passou para a produção.
+ *
+ *  Antes isso era uma aba "Arquivo" com tudo numa lista só. Aba esconde, e
+ *  lista de 90 linhas não responde nada de relance. Os dois cartões ficam
+ *  ao lado do funil, sempre à vista, e cada linha deles é um filtro. */
 function Funil({
-  colunas, arrastando, onArrasta, onSolta, onAbrir,
+  colunas, pedidos, etapaFiltrada, arrastando, onArrasta, onSolta, onAbrir, onFiltrar, onKanban,
 }: {
   colunas: Record<EtapaKey, Pedido[]>
+  pedidos: Pedido[]
+  etapaFiltrada: EtapaKey | null
   arrastando: Pedido | null
   onArrasta: (p: Pedido | null) => void
   onSolta: (numero: string, destino: EtapaKey) => void
   onAbrir: (numero: string) => void
+  onFiltrar: (e: EtapaKey | null) => void
+  onKanban: () => void
 }) {
+  const todas = porEtapa(pedidos)
+  const conta = (ks: EtapaKey[]) => ks.reduce((s, k) => s + (todas[k]?.length ?? 0), 0)
+  const soma = (ks: EtapaKey[]) => ks.reduce((s, k) => s + (todas[k] ?? []).reduce((a, p) => a + valorDe(p), 0), 0)
+
+  const ABERTAS = ETAPAS_FUNIL.filter((e) => e.key !== 'aprovado').map((e) => e.key)
+  const NA_PRODUCAO: EtapaKey[] = ['aprovado', 'producao', 'entregue']
+
+  const nRascunho = conta(ABERTAS)
+  const nProducao = conta(NA_PRODUCAO)
+  const total = nRascunho + nProducao || 1
+  const parados = pedidos.filter((p) => parado(p, HOJE)).length
+
   return (
     <div className="-mx-(--ft-gap) overflow-x-auto px-(--ft-gap) pb-3">
-      <div className="flex min-w-max gap-3">
+      <div className="flex min-w-max items-start gap-3">
+        {/* ---- os dois cartões, antes do funil ---- */}
+        <div className="flex w-[292px] shrink-0 flex-col gap-3">
+          <CartaoEstado
+            titulo="Rascunhos"
+            descricao="Ainda sendo feitos e negociados — vivem no funil ao lado."
+            icone={<PencilLine className="size-4" />}
+            n={nRascunho}
+            valor={soma(ABERTAS)}
+            proporcao={(nRascunho / total) * 100}
+            cor="var(--cat-6)"
+            linhas={ETAPAS_FUNIL.filter((e) => e.key !== 'aprovado').map((e) => ({
+              key: e.key,
+              nome: e.nome,
+              cor: e.cor,
+              n: todas[e.key]?.length ?? 0,
+              valor: (todas[e.key] ?? []).reduce((a, p) => a + valorDe(p), 0),
+            }))}
+            selecionada={etapaFiltrada}
+            onLinha={onFiltrar}
+            rodape={
+              <div className="flex flex-wrap items-center gap-2">
+                {parados > 0 && (
+                  <span className="border-warning text-warning inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10.5px] font-bold">
+                    <AlertTriangle className="size-3" /> {parados} PARADOS
+                  </span>
+                )}
+                <button
+                  onClick={() => onFiltrar('perdido')}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10.5px] font-bold transition-colors',
+                    etapaFiltrada === 'perdido'
+                      ? 'border-destructive text-destructive'
+                      : 'text-muted-foreground hover:text-destructive hover:border-destructive',
+                  )}
+                >
+                  <ThumbsDown className="size-3" /> {todas.perdido?.length ?? 0} PERDIDOS
+                </button>
+              </div>
+            }
+          />
+
+          <CartaoEstado
+            titulo="Em produção"
+            descricao="Aprovados e enviados para o Kanban do MARK42."
+            icone={<Factory className="size-4" />}
+            n={nProducao}
+            valor={soma(NA_PRODUCAO)}
+            proporcao={(nProducao / total) * 100}
+            cor="var(--cat-1)"
+            linhas={NA_PRODUCAO.map((k) => ({
+              key: k,
+              nome: nomeEtapa(k),
+              cor: corEtapa(k),
+              n: todas[k]?.length ?? 0,
+              valor: (todas[k] ?? []).reduce((a, p) => a + valorDe(p), 0),
+            }))}
+            selecionada={etapaFiltrada}
+            onLinha={onFiltrar}
+            rodape={
+              <Button size="sm" variant="outline" className="w-full" onClick={onKanban}>
+                Abrir o Kanban de produção <ArrowRight />
+              </Button>
+            }
+          />
+        </div>
+
+        {/* ---- o funil ---- */}
         {ETAPAS_FUNIL.map((e) => (
           <ColunaFunil
             key={e.key}
@@ -265,6 +323,84 @@ function Funil({
         ))}
       </div>
     </div>
+  )
+}
+
+interface LinhaEstado { key: EtapaKey; nome: string; cor: string; n: number; valor: number }
+
+/** Um dos dois cartões. Segue o arranjo "métrica" do /kit: rótulo micro,
+ *  número grande em mono, barra fina, e uma caixa interna com a divisão —
+ *  cada linha clicável, porque um número que não leva a lugar nenhum é
+ *  decoração. */
+function CartaoEstado({
+  titulo, descricao, icone, n, valor, proporcao, cor, linhas, selecionada, onLinha, rodape,
+}: {
+  titulo: string
+  descricao: string
+  icone: React.ReactNode
+  n: number
+  valor: number
+  proporcao: number
+  cor: string
+  linhas: LinhaEstado[]
+  selecionada: EtapaKey | null
+  onLinha: (e: EtapaKey) => void
+  rodape?: React.ReactNode
+}) {
+  return (
+    <Card size="sm" className="gap-3">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-[14px]">
+          <span className="grid size-7 shrink-0 place-items-center rounded-xl" style={{ background: `color-mix(in oklch, ${cor} 18%, transparent)`, color: cor }}>
+            {icone}
+          </span>
+          {titulo}
+        </CardTitle>
+        <CardDescription className="text-[11.5px]">{descricao}</CardDescription>
+        <CardAction>
+          <span className="font-mono text-2xl leading-none font-semibold tabular-nums">{n}</span>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2.5">
+        <div className="flex items-baseline justify-between">
+          <span className="text-muted-foreground text-[10.5px] font-semibold tracking-[0.06em] uppercase">
+            Valor somado
+          </span>
+          <span className="font-mono text-[13px] font-semibold tabular-nums">R$ {moedaCurta(valor)}</span>
+        </div>
+        <Progress
+          value={proporcao}
+          className="[&_[data-slot=progress-track]]:h-1.5"
+          style={{ ['--primary' as string]: cor }}
+        />
+
+        <div className="bg-secondary flex flex-col rounded-2xl p-1.5">
+          {linhas.map((l) => {
+            const on = selecionada === l.key
+            return (
+              <button
+                key={l.key}
+                onClick={() => onLinha(l.key)}
+                aria-pressed={on}
+                className={cn(
+                  'flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-[11.5px] transition-colors',
+                  on ? 'bg-card font-semibold shadow-sm' : 'hover:bg-card/60',
+                )}
+              >
+                <span className="size-2 shrink-0 rounded-full" style={{ background: l.cor }} />
+                <span className="min-w-0 flex-1 truncate">{l.nome}</span>
+                <span className="text-muted-foreground shrink-0 font-mono tabular-nums">
+                  R$ {moedaCurta(l.valor)}
+                </span>
+                <span className="w-6 shrink-0 text-right font-mono font-semibold tabular-nums">{l.n}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {rodape}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -382,101 +518,5 @@ function CardOrcamento({
         </div>
       </button>
     </article>
-  )
-}
-
-/* ---------------------------------------------------------------- arquivo */
-
-function Arquivo({
-  pedidos, coluna, desc, onOrdenar, onAbrir, onLimpar,
-}: {
-  pedidos: Pedido[]
-  coluna: ColunaArquivo
-  desc: boolean
-  onOrdenar: (c: ColunaArquivo) => void
-  onAbrir: (numero: string) => void
-  onLimpar: () => void
-}) {
-  const cols: [ColunaArquivo, string, boolean][] = [
-    ['pedido', 'Pedido', false],
-    ['cliente', 'Cliente', false],
-    ['etapa', 'Etapa', false],
-    ['entrega', 'Entrega', false],
-    ['pecas', 'Peças', true],
-    ['valor', 'Valor', true],
-  ]
-
-  if (!pedidos.length)
-    return (
-      <Vazio
-        titulo="Nenhum orçamento com estes filtros"
-        descricao="Limpe a busca ou escolha outra etapa para ver o arquivo inteiro."
-        acao={
-          <Button size="sm" variant="outline" className="mt-1" onClick={onLimpar}>
-            Limpar filtros
-          </Button>
-        }
-      />
-    )
-
-  return (
-    <div className={cn(cardSuperficie, 'rounded-4xl')} data-density="compacta">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[820px] border-collapse text-[12.5px]">
-          <thead>
-            <tr>
-              {cols.map(([c, t, dir]) => (
-                <th
-                  key={c}
-                  className={cn(
-                    'font-heading text-muted-foreground bg-card sticky top-0 border-b px-(--ft-pad-x) py-(--ft-pad-y) text-[11px] font-semibold tracking-[0.03em] uppercase',
-                    dir ? 'text-right' : 'text-left',
-                  )}
-                >
-                  <button onClick={() => onOrdenar(c)} className="hover:text-foreground inline-flex items-center gap-1">
-                    {t}
-                    {coluna === c && <span aria-hidden>{desc ? '▾' : '▴'}</span>}
-                  </button>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {pedidos.map((p) => {
-              const e = etapaDe(p)
-              const preso = parado(p, HOJE)
-              return (
-                <tr
-                  key={p.pedido}
-                  onClick={() => onAbrir(p.pedido)}
-                  className="hover:bg-accent cursor-pointer transition-colors last:[&>td]:border-b-0"
-                >
-                  <td className="h-(--ft-row-h) border-b px-(--ft-pad-x) font-mono whitespace-nowrap">{p.pedido}</td>
-                  <td className="h-(--ft-row-h) max-w-[280px] truncate border-b px-(--ft-pad-x)">{p.cliente}</td>
-                  <td className="h-(--ft-row-h) border-b px-(--ft-pad-x) whitespace-nowrap">
-                    <span
-                      className="inline-flex h-5 items-center rounded-full border px-2 text-[9.5px] font-bold"
-                      style={{ borderColor: corEtapa(e), color: corEtapa(e) }}
-                    >
-                      {nomeEtapa(e).toUpperCase()}
-                    </span>
-                    {preso && <span className="text-warning ml-1.5 text-[10px] font-semibold">parado</span>}
-                  </td>
-                  <td className="text-muted-foreground h-(--ft-row-h) border-b px-(--ft-pad-x) font-mono whitespace-nowrap">
-                    {p.entrega}
-                  </td>
-                  <td className="h-(--ft-row-h) border-b px-(--ft-pad-x) text-right font-mono tabular-nums">
-                    {pecasDe(p)}
-                  </td>
-                  <td className="h-(--ft-row-h) border-b px-(--ft-pad-x) text-right font-mono tabular-nums">
-                    {moeda(valorDe(p))}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
   )
 }
