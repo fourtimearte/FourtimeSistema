@@ -71,6 +71,14 @@ export function Superficie() {
           tempo.
         </Porque>
         <Porque>
+          <b>Consequência que já mordeu:</b> o <code>Card</code> traz{' '}
+          <code>overflow-hidden</code> para recortar o conteúdo no raio grande. Qualquer menu suspenso escrito como
+          filho <code>absolute</code> passa a ser cortado na borda do painel — na tela de Clientes sobrava uma tira de
+          15px do seletor de UF. Popover, dropdown e tooltip precisam sair da árvore por <b>portal</b> com{' '}
+          <code>position: fixed</code>. O <code>Select</code> do shadcn já faz isso; o nosso{' '}
+          <code>Dropdown</code> passou a fazer.
+        </Porque>
+        <Porque>
           A borda cheia é o que mais endurece. Ela desenha uma linha de contraste em volta de tudo; a sombra do Luma
           faz o cartão <b>subir</b> do fundo sem traçar contorno nenhum. É literalmente a diferença entre "caixa" e
           "cartão".
