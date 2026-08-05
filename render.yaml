@@ -1,18 +1,32 @@
-# Render Blueprint — Fourtime Sistema (frontend React, Static Site)
-# Fase 1: só o frontend. Sobe como site estático (dados fictícios, sem backend ainda).
-# Backend (Supabase) entra na Fase 3 e não passa pelo Render — é serviço gerenciado.
+# Render Blueprint — Fourtime
+#
+# Dois sites estáticos, de propósito:
+#   fourtime-sistema     → frontend/  = o app v5, EM PRODUÇÃO. Não mexer.
+#   fourtime-sistema-v6  → app/       = o V6 em construção, para acompanhar.
+#
+# Enquanto o V6 não alcança paridade, o v5 continua servindo a equipe.
+# A troca acontece um dia, num commit só: apontar o serviço de produção
+# para app/ e aposentar o frontend/.
 services:
+  # ---------- PRODUÇÃO (v5) ----------
   - type: web
     name: fourtime-sistema
     runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
-    # Sem rewrite custom: o Render serve o index.html na raiz por padrão.
-    # (A navegação do app é por estado, não por URL — não precisa de SPA fallback.)
-    # Quando o Supabase entrar (Fase 3), as chaves públicas vêm aqui:
-    # envVars:
-    #   - key: VITE_SUPABASE_URL
-    #     sync: false
-    #   - key: VITE_SUPABASE_ANON_KEY
-    #     sync: false
+    # Sem rewrite: a navegação do v5 é por estado, não por URL.
+
+  # ---------- PRÉVIA (V6) ----------
+  - type: web
+    name: fourtime-sistema-v6
+    runtime: static
+    rootDir: app
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    # ESTE precisa de rewrite: o V6 usa react-router com rotas reais
+    # (/clientes, /kit). Sem isso, dar F5 em /clientes devolve 404.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
