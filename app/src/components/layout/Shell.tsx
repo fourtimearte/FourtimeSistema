@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from 'next-themes'
 import { ChevronRight, Moon, Rows3, Rows4, Search, Sun } from 'lucide-react'
@@ -7,7 +7,7 @@ import { usePrefs } from '@/lib/prefs'
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader,
   SidebarGroupContent, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
-  SidebarProvider, SidebarRail, SidebarTrigger,
+  SidebarMenuSub, SidebarProvider, SidebarRail, SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Separator } from '@/components/ui/separator'
@@ -26,7 +26,11 @@ import { cn } from '@/lib/utils'
  *  tinha e que eu teria de reescrever pior. */
 export function Shell() {
   return (
-    <SidebarProvider>
+    /* 17rem em vez dos 16rem de fábrica: o recuo da linha do grupo come
+       24px de cada nome de página, e "Peças em estoque" passou a cortar.
+       Menu que trunca o próprio item obriga a passar o mouse para saber
+       o que é — mais barato dar o espaço. */
+    <SidebarProvider style={{ '--sidebar-width': '17rem' } as CSSProperties}>
       <RailFourtime />
       <SidebarInset className="min-w-0 overflow-x-clip">
         <CabecalhoFixo />
@@ -144,11 +148,29 @@ function GrupoDobravel({ g, pathname }: { g: GrupoNav; pathname: string }) {
             rail com cinco ícones de pasta e nenhuma página */}
         <CollapsibleContent className="group-data-[collapsible=icon]:!h-auto group-data-[collapsible=icon]:!overflow-visible">
           <SidebarGroupContent>
-            <SidebarMenu>
+            {/* `SidebarMenuSub` aqui é o RECIPIENTE, não um terceiro nível:
+                é ele que desenha a linha vertical e o recuo que amarram as
+                páginas ao setor. Sem a linha, cinco listas soltas encostadas
+                uma na outra — não dá para ver onde um grupo termina.
+
+                Dentro dele vão `SidebarMenuItem`/`SidebarMenuButton` normais,
+                não os `…SubButton`: são eles que trazem o tooltip e o
+                encolhimento para 32px no modo ícone. O Sub só empresta a
+                moldura. */}
+            <SidebarMenuSub
+              className={cn(
+                'gap-0.5 py-1',
+                /* no modo ícone não há recuo nem linha para desenhar: o rail
+                   tem 48px e a linha comeria metade */
+                'group-data-[collapsible=icon]:mx-0 group-data-[collapsible=icon]:flex',
+                'group-data-[collapsible=icon]:border-l-0 group-data-[collapsible=icon]:px-0',
+                'group-data-[collapsible=icon]:translate-x-0',
+              )}
+            >
               {g.paginas.map((p) => (
                 <ItemPagina key={p.rota} p={p} pathname={pathname} />
               ))}
-            </SidebarMenu>
+            </SidebarMenuSub>
           </SidebarGroupContent>
         </CollapsibleContent>
       </>
@@ -163,9 +185,22 @@ function ItemPagina({ p, pathname }: { p: Pagina; pathname: string }) {
   const naRota = pathname.startsWith(p.rota)
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton tooltip={p.nome} isActive={naRota} render={<NavLink to={p.rota} />}>
+      <SidebarMenuButton
+        tooltip={p.nome}
+        isActive={naRota}
+        /* h-7 em vez do h-8 padrão: dentro da linha do grupo as páginas são
+           subordinadas, e altura menor é o que diz isso sem precisar de
+           mais uma cor. No modo ícone volta a 32px, senão o alvo de toque
+           encolhe junto. */
+        className="h-7 group-data-[collapsible=icon]:h-8"
+        render={<NavLink to={p.rota} />}
+      >
         <p.icone />
-        <span>{p.nome}</span>
+        {/* `truncate` explícito: o `[&>span:last-child]:truncate` do
+            SidebarMenuButton não pega aqui porque o último filho é o ponto
+            do módulo, não o texto. Sem isso, "Peças em estoque" quebra em
+            duas linhas e vaza da altura do item. */}
+        <span className="truncate">{p.nome}</span>
         {p.cor && <PontoModulo cor={p.cor} />}
       </SidebarMenuButton>
     </SidebarMenuItem>

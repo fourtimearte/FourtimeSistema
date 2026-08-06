@@ -362,6 +362,14 @@ export function Padroes() {
           capacidade. O gancho é <code>useAncora</code>, e ele escuta a âncora a cada troca, não só na montagem.
         </Porque>
         <Porque>
+          <b>A linha vertical do grupo é estrutura, não enfeite.</b> As páginas ficam dentro de um{' '}
+          <code>SidebarMenuSub</code> — que aqui é só o recipiente (linha + recuo), não um terceiro nível. Sem ela,
+          cinco listas encostadas uma na outra e nenhuma pista de onde um setor termina e o outro começa. Dentro do
+          recipiente vão <code>SidebarMenuButton</code> normais, não os <code>…SubButton</code>: são eles que trazem o
+          tooltip e o encolhimento para 32px no modo ícone. No modo ícone a linha e o recuo somem — num rail de 48px a
+          linha comeria metade.
+        </Porque>
+        <Porque>
           <b>Armadilha do Base UI:</b> o estado aberto vem em <code>data-open</code> / <code>data-closed</code>, não
           em <code>data-state="open"</code> do Radix. Quase todo exemplo de shadcn que se acha na internet é da era
           Radix, então <code>group-data-[state=open]:rotate-90</code> compila sem erro e simplesmente nunca casa — a
