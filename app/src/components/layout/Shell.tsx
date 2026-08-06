@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from 'next-themes'
 import { ChevronRight, Moon, Rows3, Rows4, Search, Sun } from 'lucide-react'
-import { GRUPOS, MODULOS, moduloDaRota, type Modulo } from '@/lib/modulos'
+import { INICIO, NAV, grupoDaRota, paginaDaRota, type GrupoNav, type Pagina } from '@/lib/modulos'
 import { usePrefs } from '@/lib/prefs'
 import {
-  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader,
-  SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub,
-  SidebarMenuSubButton, SidebarMenuSubItem, SidebarProvider, SidebarRail, SidebarTrigger,
+  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarHeader,
+  SidebarGroupContent, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+  SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, SidebarProvider, SidebarRail,
+  SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Separator } from '@/components/ui/separator'
@@ -63,15 +64,24 @@ function RailFourtime() {
       </SidebarHeader>
 
       <SidebarContent>
-        {GRUPOS.map((grupo) => (
-          <SidebarGroup key={grupo}>
-            <SidebarGroupLabel>{grupo}</SidebarGroupLabel>
-            <SidebarMenu>
-              {MODULOS.filter((m) => m.grupo === grupo).map((m) => (
-                <ItemModulo key={m.rota} m={m} pathname={pathname} atualCompleta={atualCompleta} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
+        {/* o Dashboard fica fora dos grupos: ele lê de todos os setores */}
+        <SidebarGroup className="pb-0">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip={INICIO.nome}
+                isActive={pathname === '/'}
+                render={<NavLink to={INICIO.rota} />}
+              >
+                <INICIO.icone />
+                <span>{INICIO.nome}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+
+        {NAV.map((g) => (
+          <GrupoDobravel key={g.nome} g={g} pathname={pathname} atualCompleta={atualCompleta} />
         ))}
       </SidebarContent>
 
@@ -97,61 +107,104 @@ function RailFourtime() {
   )
 }
 
-function ItemModulo({ m, pathname, atualCompleta }: { m: Modulo; pathname: string; atualCompleta: string }) {
-  const naRota = m.rota === '/' ? pathname === '/' : pathname.startsWith(m.rota)
-  /* o submenu do módulo em que você está nasce aberto; os outros, fechados.
-     Abrir tudo transforma o rail numa lista de 40 linhas. */
+/** O GRUPO é o pai que abre e fecha. O rótulo inteiro é o gatilho — não
+ *  só a setinha: mirar num alvo de 20px para abrir uma pasta é o tipo de
+ *  atrito que faz todo mundo desistir do menu e usar só o histórico do
+ *  navegador. */
+function GrupoDobravel({ g, pathname, atualCompleta }: { g: GrupoNav; pathname: string; atualCompleta: string }) {
+  const dentro = g.paginas.some((p) => pathname.startsWith(p.rota))
+  const [aberto, setAberto] = useState(dentro)
+  useEffect(() => {
+    if (dentro) setAberto(true)
+  }, [dentro])
+
+  return (
+    <Collapsible open={aberto} onOpenChange={setAberto} className="group/grupo" render={<SidebarGroup />}>
+      <>
+        <CollapsibleTrigger
+          className={cn(
+            'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+            'flex h-7 w-full shrink-0 items-center gap-2 rounded-md px-2 text-[10.5px] font-semibold',
+            'tracking-[0.08em] uppercase transition-colors outline-none',
+            'focus-visible:ring-sidebar-ring focus-visible:ring-2',
+            'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0',
+          )}
+        >
+          <g.icone className="size-3.5 shrink-0" />
+          <span className="truncate group-data-[collapsible=icon]:hidden">{g.nome}</span>
+          <ChevronRight
+            className="ml-auto size-3.5 shrink-0 transition-transform group-data-[state=open]/grupo:rotate-90 group-data-[collapsible=icon]:hidden"
+            aria-hidden
+          />
+        </CollapsibleTrigger>
+
+        {/* no modo ícone o grupo fica sempre aberto: escondê-lo deixaria o
+            rail com cinco ícones de pasta e nenhuma página */}
+        <CollapsibleContent className="group-data-[collapsible=icon]:!h-auto group-data-[collapsible=icon]:!overflow-visible">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {g.paginas.map((p) => (
+                <ItemPagina key={p.rota} p={p} pathname={pathname} atualCompleta={atualCompleta} />
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </CollapsibleContent>
+      </>
+    </Collapsible>
+  )
+}
+
+/** A PÁGINA navega. Se tiver atalhos, o clique no nome também abre e
+ *  fecha a lista — navegar e explorar no mesmo gesto, que é o que se
+ *  espera quando o item é ao mesmo tempo destino e pasta. */
+function ItemPagina({ p, pathname, atualCompleta }: { p: Pagina; pathname: string; atualCompleta: string }) {
+  const naRota = pathname.startsWith(p.rota)
   const [aberto, setAberto] = useState(naRota)
   useEffect(() => {
     if (naRota) setAberto(true)
   }, [naRota])
 
-  if (!m.itens)
+  if (!p.itens)
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton tooltip={m.nome} isActive={naRota} render={<NavLink to={m.rota} />}>
-          <m.icone />
-          <span>{m.nome}</span>
-          {m.cor && <PontoModulo cor={m.cor} />}
+        <SidebarMenuButton tooltip={p.nome} isActive={naRota} render={<NavLink to={p.rota} />}>
+          <p.icone />
+          <span>{p.nome}</span>
+          {p.cor && <PontoModulo cor={p.cor} />}
         </SidebarMenuButton>
       </SidebarMenuItem>
     )
 
   return (
-    <Collapsible open={aberto} onOpenChange={setAberto} className="group/collapsible" render={<SidebarMenuItem />}>
+    <Collapsible open={aberto} onOpenChange={setAberto} className="group/pagina" render={<SidebarMenuItem />}>
       <>
-        {/* o `pr-7` abre espaço para a seta absoluta do gatilho: sem ele o
-            ponto colorido do módulo e a seta ocupam o mesmo pixel */}
         <SidebarMenuButton
-          tooltip={m.nome}
+          tooltip={p.nome}
           isActive={naRota}
           className="pr-7"
-          render={<NavLink to={m.rota} />}
+          onClick={() => setAberto((a) => !a)}
+          render={<NavLink to={p.rota} />}
         >
-          <m.icone />
-          <span>{m.nome}</span>
-          {m.cor && <PontoModulo cor={m.cor} />}
+          <p.icone />
+          <span>{p.nome}</span>
+          {p.cor && <PontoModulo cor={p.cor} />}
         </SidebarMenuButton>
 
-        {/* o gatilho do submenu é SEPARADO do link: clicar no nome navega,
-            clicar na seta só abre. Juntar os dois obriga a escolher entre
-            navegar e explorar, e o usuário sempre acerta o errado. */}
         <CollapsibleTrigger
           className={cn(
-            'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+            'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground',
             'absolute top-1.5 right-1 flex size-5 items-center justify-center rounded-md transition-transform',
-            'opacity-60 hover:opacity-100',
+            'group-data-[state=open]/pagina:rotate-90',
             'group-data-[collapsible=icon]:hidden',
-            'group-data-[state=open]/collapsible:rotate-90',
           )}
-          aria-label={`${aberto ? 'Recolher' : 'Expandir'} ${m.nome}`}
+          aria-label={`${aberto ? 'Recolher' : 'Expandir'} ${p.nome}`}
         >
           <ChevronRight className="size-3.5" />
         </CollapsibleTrigger>
 
         <CollapsibleContent>
           <SidebarMenuSub>
-            {m.itens.map((s) => (
+            {p.itens.map((s) => (
               <SidebarMenuSubItem key={s.rota}>
                 <SidebarMenuSubButton isActive={atualCompleta === s.rota} render={<NavLink to={s.rota} />}>
                   <s.icone className="size-3.5" />
@@ -184,8 +237,9 @@ function CabecalhoFixo() {
   const escuro = theme === 'dark'
   const compacta = densidade === 'compacta'
 
-  const modulo = moduloDaRota(pathname)
-  const sub = modulo?.itens?.find((s) => s.rota === pathname + hash)
+  const pagina = paginaDaRota(pathname)
+  const grupo = grupoDaRota(pathname)
+  const sub = pagina?.itens?.find((s) => s.rota === pathname + hash)
 
   return (
     <header className="bg-card sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-3 transition-[width,height] ease-linear">
@@ -197,14 +251,20 @@ function CabecalhoFixo() {
           <BreadcrumbItem>
             <BreadcrumbLink render={<NavLink to="/" />}>Fourtime</BreadcrumbLink>
           </BreadcrumbItem>
-          {modulo && modulo.rota !== '/' && (
+          {grupo && (
+            <>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem className="text-muted-foreground hidden md:block">{grupo.nome}</BreadcrumbItem>
+            </>
+          )}
+          {pagina && pagina.rota !== '/' && (
             <>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 {sub ? (
-                  <BreadcrumbLink render={<NavLink to={modulo.rota} />}>{modulo.nome}</BreadcrumbLink>
+                  <BreadcrumbLink render={<NavLink to={pagina.rota} />}>{pagina.nome}</BreadcrumbLink>
                 ) : (
-                  <BreadcrumbPage>{modulo.nome}</BreadcrumbPage>
+                  <BreadcrumbPage>{pagina.nome}</BreadcrumbPage>
                 )}
               </BreadcrumbItem>
             </>

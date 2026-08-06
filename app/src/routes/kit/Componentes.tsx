@@ -348,8 +348,14 @@ export function Padroes() {
           ícone. Tudo isso eu teria de reescrever pior.
         </Porque>
         <Porque>
-          <b>O gatilho do submenu é separado do link.</b> Clicar no nome navega; clicar na seta só abre. Juntar os
-          dois obriga a escolher entre navegar e explorar, e o usuário sempre acerta o errado.
+          <b>Três níveis, e o grupo é o pai.</b> Setor (Comercial, Produção, Estoque…) → página → atalho. A primeira
+          versão tinha o grupo como rótulo decorativo e a página como pai; funcionava com duas páginas por setor, mas
+          com Estoque em quatro e Financeiro em três o rail virava uma lista corrida.
+        </Porque>
+        <Porque>
+          <b>O rótulo inteiro abre e fecha</b>, não só a setinha. Mirar num alvo de 20px para abrir uma pasta é o
+          atrito que faz o usuário desistir do menu e passar a navegar pelo histórico do navegador. Na página, o
+          clique no nome <i>navega e</i> abre a lista — destino e pasta no mesmo gesto.
         </Porque>
         <Porque>
           <b>Subitem que não filtra é enfeite.</b> Cada um carrega a âncora que a tela lê ao abrir

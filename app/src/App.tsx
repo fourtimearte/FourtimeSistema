@@ -9,7 +9,9 @@ import { Dashboard } from '@/routes/dashboard/Dashboard'
 import { Kanban } from '@/routes/kanban/Kanban'
 import { Orcamentos } from '@/routes/orcamentos/Orcamentos'
 import { EmBreve } from '@/routes/EmBreve'
-import { MODULOS } from '@/lib/modulos'
+import { PAGINAS } from '@/lib/modulos'
+
+const PRONTAS = ['/', '/clientes', '/orcamentos', '/kanban', '/kit']
 
 export default function App() {
   return (
@@ -24,8 +26,10 @@ export default function App() {
               <Route path="/clientes" element={<Clientes />} />
               <Route path="/kanban" element={<Kanban />} />
               <Route path="/orcamentos" element={<Orcamentos />} />
-              {MODULOS.filter((m) => !['/kit', '/clientes', '/', '/kanban', '/orcamentos'].includes(m.rota)).map((m) => (
-                <Route key={m.rota} path={m.rota} element={<EmBreve nome={m.nome} />} />
+              {/* toda página do menu vira rota. Sem isto, um item existe no
+                  rail e leva a lugar nenhum — e ninguém descobre até clicar. */}
+              {PAGINAS.filter((p) => !PRONTAS.includes(p.rota)).map((p) => (
+                <Route key={p.rota} path={p.rota} element={<EmBreve nome={p.nome} />} />
               ))}
             </Route>
           </Routes>
