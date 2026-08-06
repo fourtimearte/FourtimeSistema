@@ -334,6 +334,30 @@ export function Padroes() {
         </Painel>
       </Bloco>
 
+      <Bloco titulo="Rail e cabeçalho" nota="o esqueleto, montado sobre o Sidebar do shadcn">
+        <div className="text-muted-foreground flex flex-col gap-1.5 text-[12px]">
+          <p>
+            O rail é o <code>Sidebar</code> do shadcn em modo <code>collapsible="icon"</code>. Ele já está renderizado
+            à esquerda desta página — não faz sentido desenhar uma cópia aqui.
+          </p>
+        </div>
+        <Porque>
+          O que se ganha ao usar o componente em vez de escrever o rail à mão não é aparência: é o estado recolhido
+          gravado em cookie, o atalho <kbd className="bg-secondary rounded px-1 font-mono text-[10px]">⌘B</kbd>, a
+          gaveta no celular, a borda arrastável (<code>SidebarRail</code>) e o tooltip que aparece sozinho no modo
+          ícone. Tudo isso eu teria de reescrever pior.
+        </Porque>
+        <Porque>
+          <b>O gatilho do submenu é separado do link.</b> Clicar no nome navega; clicar na seta só abre. Juntar os
+          dois obriga a escolher entre navegar e explorar, e o usuário sempre acerta o errado.
+        </Porque>
+        <Porque>
+          <b>Subitem que não filtra é enfeite.</b> Cada um carrega a âncora que a tela lê ao abrir
+          (<code>/clientes#pj</code>, <code>/kanban#problema</code>) — o gancho é <code>useAncora</code>, e ele escuta a
+          âncora a cada troca, não só na montagem: ir de <code>#pf</code> para <code>#pj</code> não desmonta a tela.
+        </Porque>
+      </Bloco>
+
       <Bloco titulo="Aviso de ação (toast)">
         <Fileira>
           <Button size="sm" variant="outline" onClick={() => avisar('PD004168 · Patch → CD Costura')}>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { PEDIDOS_SEED } from '@/data/pedidosSeed'
-import { ESTACOES, ROTAS, type Pedido, type TecnicaKey } from './tipos'
+import { ESTACOES, ORDEM_TAGS, ROTAS, type Pedido, type TecnicaKey } from './tipos'
 import { meiaNoite, venceu } from './regras'
 import {
   aguardaIrmao, alternarTag, avancar, cardAtrasado, FILTROS_KANBAN_VAZIO, fila, filtrarCards,
@@ -62,7 +62,22 @@ describe('roteamento', () => {
   it('o id da fatia identifica pedido e técnica', () =>
     expect(rotear([P()])[0].id).toBe('PD000001-DTF'))
 
-  it('a fatia nasce sem etiqueta', () => expect(rotear([P()])[0].tags).toEqual([]))
+  /* o quadro nasce com algumas etiquetas semeadas — um quadro real nunca
+     está limpo, e sem nenhuma a tarja e o filtro nasceriam mortos. O que
+     importa é que toda etiqueta semeada seja uma etiqueta válida. */
+  it('as etiquetas de partida são todas válidas', () => {
+    for (const c of rotear(PEDIDOS_SEED)) for (const t of c.tags) expect(ORDEM_TAGS).toContain(t)
+  })
+
+  it('a maioria das fatias nasce sem etiqueta', () => {
+    const cs = rotear(PEDIDOS_SEED)
+    expect(cs.filter((c) => c.tags.length).length).toBeLessThan(cs.length / 2)
+  })
+
+  it('há pelo menos uma fatia de cada etiqueta semeada', () => {
+    const vistas = new Set(rotear(PEDIDOS_SEED).flatMap((c) => c.tags))
+    expect(vistas.size).toBeGreaterThanOrEqual(3)
+  })
 
   it('aprovado entra na Separação, não no meio da faixa', () =>
     expect(rotear([P({ status: 'aprovado', estacao: 'costura' })])[0].estacao).toBe('separacao'))
@@ -152,7 +167,9 @@ describe('aguarda irmão', () => {
 })
 
 describe('etiquetas do card', () => {
-  const cards = rotear([P()])
+  /* parte de uma fatia limpa: o que se testa aqui é o alternar, não o que
+     a semeadura escolheu */
+  const cards = rotear([P()]).map((c) => ({ ...c, tags: [] }))
 
   it('liga uma etiqueta', () => expect(alternarTag(cards, cards[0].id, 'pausado')[0].tags).toEqual(['pausado']))
 

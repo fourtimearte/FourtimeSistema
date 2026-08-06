@@ -13,6 +13,7 @@ import { useToast } from '@/components/fourtime/Toast'
 import { Dropdown } from '@/components/fourtime/Dropdown'
 import { CardFatia } from '@/components/fourtime/CardFatia'
 import { ModalFatia } from './ModalFatia'
+import { useAncora } from '@/lib/ancora'
 
 const HOJE = new Date()
 /* ENTREGUE não vira coluna: no Trello atual são 2.082 cards que ninguém
@@ -25,6 +26,17 @@ export function Kanban() {
   const [aberta, setAberta] = useState<string | null>(null)
   const [arrastando, setArrastando] = useState<KCard | null>(null)
   const [destaque, setDestaque] = useState<string[]>([])
+
+  /* o submenu do rail chega por âncora: /kanban#atrasados já abre filtrado */
+  useAncora<Partial<FiltrosKanban>>(
+    {
+      atrasados: { soAtrasados: true },
+      problema: { tag: 'problema' },
+      pausado: { tag: 'pausado' },
+      externo: { tag: 'externo' },
+    },
+    (v) => setF({ ...FILTROS_KANBAN_VAZIO, ...v }),
+  )
   const quadro = useRef<HTMLDivElement>(null)
 
   const visiveis = useMemo(() => filtrarCards(cards, f, HOJE), [cards, f])

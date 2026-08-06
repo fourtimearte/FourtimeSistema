@@ -15,6 +15,7 @@ import { Badge, KpiFiltro, Vazio } from '@/components/fourtime/primitivos'
 import { Dropdown } from '@/components/fourtime/Dropdown'
 import { Ficha } from './Ficha'
 import { cardSuperficie } from '@/components/fourtime/superficie'
+import { useAncora } from '@/lib/ancora'
 import { cn } from '@/lib/utils'
 
 const HOJE = new Date()
@@ -28,6 +29,17 @@ const ROTULO_PERIODO: Record<string, string> = { mes: 'Este mês', '90': 'Últim
 
 export function Clientes() {
   const [f, setF] = useState<Filtros>(FILTROS_VAZIOS)
+
+  /* o submenu do rail chega por âncora: /clientes#pj já abre filtrado */
+  useAncora<Partial<Filtros>>(
+    {
+      pf: { tipo: 'PF' },
+      pj: { tipo: 'PJ' },
+      novos: { cadastro: 'novo30' },
+      incompletos: { cadastro: 'incompleto' },
+    },
+    (v) => setF({ ...FILTROS_VAZIOS, ...v }),
+  )
   const [ordem, setOrdem] = useState<{ k: ChaveOrdem; dir: 1 | -1 }>({ k: 'desde', dir: -1 })
   const [pagina, setPagina] = useState(1)
   const [porPagina, setPorPagina] = useState(25)

@@ -106,13 +106,29 @@ export function rotear(pedidos: Pedido[]): KCard[] {
         anexos: layouts.length,
         pecas,
         valor,
-        tags: [],
+        tags: tagsIniciais(id),
         rota,
         estacao: p.status === 'aprovado' ? rota[0] : posicaoNaRota(rota, p.estacao, id),
       })
     }
   }
   return cards
+}
+
+/** Etiquetas de partida. Um quadro real nunca está limpo — sempre há um
+ *  card pausado e um com problema. Sem semear nada, o filtro por etiqueta
+ *  e a própria tarja no card nasceriam mortos, e ninguém saberia que a
+ *  função existe. Determinístico, e some quando o `.ft` trouxer as reais. */
+function tagsIniciais(id: string): TagKey[] {
+  const h = hash(id + 'tag')
+  /* ~1 em 4 leva etiqueta. Metade do quadro etiquetado não avisa nada —
+     tarja em todo mundo é o mesmo que tarja em ninguém. */
+  if (h > 0.95) return ['problema']
+  if (h > 0.89) return ['pausado']
+  if (h > 0.84) return ['externo']
+  if (h > 0.79) return ['aprovacao']
+  if (h > 0.75) return ['urgente']
+  return []
 }
 
 /** L-01, L-02 … O rótulo é o mesmo do editor e do A4; mudar aqui quebraria

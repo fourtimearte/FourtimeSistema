@@ -1,151 +1,249 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { useTheme } from 'next-themes'
-import { Menu, Search, Moon, Sun, Rows3, Rows4, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { MODULOS, GRUPOS } from '@/lib/modulos'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useTheme } from 'next-themes'
+import { ChevronRight, Moon, Rows3, Rows4, Search, Sun } from 'lucide-react'
+import { GRUPOS, MODULOS, moduloDaRota, type Modulo } from '@/lib/modulos'
 import { usePrefs } from '@/lib/prefs'
+import {
+  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader,
+  SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub,
+  SidebarMenuSubButton, SidebarMenuSubItem, SidebarProvider, SidebarRail, SidebarTrigger,
+} from '@/components/ui/sidebar'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Separator } from '@/components/ui/separator'
+import {
+  Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 import { cn } from '@/lib/utils'
 
+/** O esqueleto do sistema: rail à esquerda, cabeçalho grudado no topo.
+ *
+ *  Assenta no `Sidebar` do shadcn (bloco `sidebar-07`), e não num rail
+ *  escrito à mão como antes. O que se ganha com isso não é aparência: é o
+ *  estado recolhido em cookie, o atalho ⌘B, a gaveta no celular, o
+ *  `SidebarRail` que arrasta a borda, e o tooltip que aparece sozinho
+ *  quando o rail está em modo ícone — tudo coisa que a versão à mão não
+ *  tinha e que eu teria de reescrever pior. */
 export function Shell() {
-  const [mini, setMini] = useState(false)
-  /* No celular o rail não encolhe, ele SAI: 232px de menu num aparelho de
-     390px deixa 158px de conteúdo, e o sistema é usado no galpão. */
-  const [gaveta, setGaveta] = useState(false)
-  const rota = useLocation().pathname
-  useEffect(() => setGaveta(false), [rota])
-  const { theme, setTheme } = useTheme()
-  const { densidade, setDensidade } = usePrefs()
-  const escuro = theme === 'dark'
-  const compacta = densidade === 'compacta'
-
   return (
-    <div className="layout-grid grid min-h-svh grid-cols-1 md:grid-cols-[auto_1fr]">
-      {gaveta && (
-        <div className="bg-background/70 fixed inset-0 z-40 md:hidden" onClick={() => setGaveta(false)} aria-hidden />
-      )}
-
-      {/* ---------- rail ---------- */}
-      <nav
-        aria-label="Módulos"
-        className={cn(
-          'bg-sidebar border-sidebar-border fixed inset-y-0 left-0 z-50 flex w-[232px] flex-col border-r transition-transform duration-200',
-          'md:static md:z-auto md:translate-x-0 md:transition-[width]',
-          gaveta ? 'translate-x-0' : '-translate-x-full',
-          mini ? 'md:w-[60px]' : 'md:w-[232px]',
-        )}
-      >
-        <div className="border-sidebar-border flex h-14 items-center gap-2.5 border-b px-3.5">
-          <div className="bg-chart-3 grid size-7 shrink-0 place-items-center rounded-xl font-heading text-[13px] font-bold text-white">
-            F
-          </div>
-          <span className={cn('font-heading truncate text-sm font-semibold', mini && 'md:hidden')}>Fourtime</span>
-          <button
-            onClick={() => setMini((m) => !m)}
-            aria-label={mini ? 'Expandir menu' : 'Recolher menu'}
-            className="hover:bg-sidebar-accent ml-auto hidden size-7 shrink-0 place-items-center rounded-xl md:grid"
-          >
-            <Menu className="size-4" />
-          </button>
-          <button
-            onClick={() => setGaveta(false)}
-            aria-label="Fechar menu"
-            className="hover:bg-sidebar-accent ml-auto grid size-7 shrink-0 place-items-center rounded-xl md:hidden"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-
-        <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2">
-          {GRUPOS.map((grupo) => (
-            <div key={grupo} className="contents">
-              <div
-                className={cn(
-                  'text-muted-foreground px-2.5 pt-3 pb-1 text-[10px] font-semibold tracking-[0.08em] uppercase',
-                  mini && 'md:hidden',
-                )}
-              >
-                {grupo}
-              </div>
-              {MODULOS.filter((m) => m.grupo === grupo).map((m) => (
-                <NavLink
-                  key={m.rota}
-                  to={m.rota}
-                  end={m.rota === '/'}
-                  title={mini ? m.nome : undefined}
-                  className={({ isActive }) =>
-                    cn(
-                      'text-sidebar-foreground flex h-(--ft-control-h) items-center gap-2.5 rounded-2xl px-2.5 text-[13px] font-medium whitespace-nowrap transition-colors',
-                      'hover:bg-sidebar-accent',
-                      isActive && 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary',
-                    )
-                  }
-                >
-                  <m.icone className="size-[17px] shrink-0" />
-                  <span className={cn('truncate', mini && 'md:hidden')}>{m.nome}</span>
-                  {m.cor && (
-                    <span
-                      className={cn('ml-auto size-[7px] shrink-0 rounded-full', mini && 'md:hidden')}
-                      style={{ background: m.cor }}
-                    />
-                  )}
-                </NavLink>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        <div className="border-sidebar-border border-t p-2">
-          <div className="flex items-center gap-2.5 px-2.5 py-1.5">
-            <div className="bg-secondary grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-semibold">
-              HF
-            </div>
-            <div className={cn('min-w-0', mini && 'md:hidden')}>
-              <div className="truncate text-xs font-semibold">Henrique</div>
-              <div className="text-muted-foreground truncate text-[11px]">Administração</div>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* ---------- conteúdo ---------- */}
-      <div className="flex min-w-0 flex-col overflow-x-clip">
-        <header className="bg-card sticky top-0 z-30 flex h-14 items-center gap-2.5 border-b px-4">
-          <button
-            onClick={() => setGaveta(true)}
-            aria-label="Abrir menu"
-            className="hover:bg-accent grid size-8 shrink-0 place-items-center rounded-xl md:hidden"
-          >
-            <Menu className="size-[18px]" />
-          </button>
-          <div className="relative max-w-[420px] flex-1">
-            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-[15px] -translate-y-1/2" />
-            <input
-              aria-label="Busca global"
-              placeholder="Buscar pedido PD####, cliente, referência…"
-              className="bg-input/50 focus-visible:border-ring focus-visible:ring-ring/30 h-(--ft-control-h) w-full rounded-3xl border border-transparent pl-8 text-[13px] outline-none focus-visible:ring-[3px]"
-            />
-          </div>
-          <div className="flex-1" />
-          <span className="text-muted-foreground hidden items-center gap-1.5 text-xs sm:flex">
-            <span className="bg-success size-[7px] rounded-full" /> sincronizado
-          </span>
-          <BotaoTopo
-            onClick={() => setDensidade(compacta ? 'confortavel' : 'compacta')}
-            icone={compacta ? <Rows4 className="size-[15px]" /> : <Rows3 className="size-[15px]" />}
-            rotulo={compacta ? 'Compacta' : 'Confortável'}
-          />
-          <BotaoTopo
-            onClick={() => setTheme(escuro ? 'light' : 'dark')}
-            icone={escuro ? <Moon className="size-[15px]" /> : <Sun className="size-[15px]" />}
-            rotulo={escuro ? 'Escuro' : 'Claro'}
-          />
-        </header>
-
+    <SidebarProvider>
+      <RailFourtime />
+      <SidebarInset className="min-w-0 overflow-x-clip">
+        <CabecalhoFixo />
         <main className="flex flex-col gap-(--ft-gap) p-(--ft-gap) pb-12">
           <Outlet />
         </main>
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}
+
+/* ------------------------------------------------------------------- rail */
+
+function RailFourtime() {
+  const { pathname, hash } = useLocation()
+  const atualCompleta = pathname + hash
+
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" render={<NavLink to="/" />}>
+              <div className="bg-chart-3 grid aspect-square size-8 shrink-0 place-items-center rounded-xl font-heading text-[14px] font-bold text-white">
+                F
+              </div>
+              <div className="grid flex-1 text-left leading-tight">
+                <span className="font-heading truncate text-[13px] font-semibold">Fourtime</span>
+                <span className="text-muted-foreground truncate text-[11px]">CRM · ERP · MARK42</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent>
+        {GRUPOS.map((grupo) => (
+          <SidebarGroup key={grupo}>
+            <SidebarGroupLabel>{grupo}</SidebarGroupLabel>
+            <SidebarMenu>
+              {MODULOS.filter((m) => m.grupo === grupo).map((m) => (
+                <ItemModulo key={m.rota} m={m} pathname={pathname} atualCompleta={atualCompleta} />
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg">
+              <div className="bg-secondary grid aspect-square size-8 shrink-0 place-items-center rounded-full text-[11px] font-semibold">
+                HF
+              </div>
+              <div className="grid flex-1 text-left leading-tight">
+                <span className="truncate text-[12.5px] font-semibold">Henrique</span>
+                <span className="text-muted-foreground truncate text-[11px]">Administração</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+
+      {/* a borda arrastável: recolhe e abre sem precisar mirar no botão */}
+      <SidebarRail />
+    </Sidebar>
+  )
+}
+
+function ItemModulo({ m, pathname, atualCompleta }: { m: Modulo; pathname: string; atualCompleta: string }) {
+  const naRota = m.rota === '/' ? pathname === '/' : pathname.startsWith(m.rota)
+  /* o submenu do módulo em que você está nasce aberto; os outros, fechados.
+     Abrir tudo transforma o rail numa lista de 40 linhas. */
+  const [aberto, setAberto] = useState(naRota)
+  useEffect(() => {
+    if (naRota) setAberto(true)
+  }, [naRota])
+
+  if (!m.itens)
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip={m.nome} isActive={naRota} render={<NavLink to={m.rota} />}>
+          <m.icone />
+          <span>{m.nome}</span>
+          {m.cor && <PontoModulo cor={m.cor} />}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    )
+
+  return (
+    <Collapsible open={aberto} onOpenChange={setAberto} className="group/collapsible" render={<SidebarMenuItem />}>
+      <>
+        {/* o `pr-7` abre espaço para a seta absoluta do gatilho: sem ele o
+            ponto colorido do módulo e a seta ocupam o mesmo pixel */}
+        <SidebarMenuButton
+          tooltip={m.nome}
+          isActive={naRota}
+          className="pr-7"
+          render={<NavLink to={m.rota} />}
+        >
+          <m.icone />
+          <span>{m.nome}</span>
+          {m.cor && <PontoModulo cor={m.cor} />}
+        </SidebarMenuButton>
+
+        {/* o gatilho do submenu é SEPARADO do link: clicar no nome navega,
+            clicar na seta só abre. Juntar os dois obriga a escolher entre
+            navegar e explorar, e o usuário sempre acerta o errado. */}
+        <CollapsibleTrigger
+          className={cn(
+            'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+            'absolute top-1.5 right-1 flex size-5 items-center justify-center rounded-md transition-transform',
+            'opacity-60 hover:opacity-100',
+            'group-data-[collapsible=icon]:hidden',
+            'group-data-[state=open]/collapsible:rotate-90',
+          )}
+          aria-label={`${aberto ? 'Recolher' : 'Expandir'} ${m.nome}`}
+        >
+          <ChevronRight className="size-3.5" />
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {m.itens.map((s) => (
+              <SidebarMenuSubItem key={s.rota}>
+                <SidebarMenuSubButton isActive={atualCompleta === s.rota} render={<NavLink to={s.rota} />}>
+                  <s.icone className="size-3.5" />
+                  <span>{s.nome}</span>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            ))}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </>
+    </Collapsible>
+  )
+}
+
+const PontoModulo = ({ cor }: { cor: string }) => (
+  <span
+    className="ml-auto size-[7px] shrink-0 rounded-full group-data-[collapsible=icon]:hidden"
+    style={{ background: cor }}
+    aria-hidden
+  />
+)
+
+/* -------------------------------------------------------------- cabeçalho */
+
+function CabecalhoFixo() {
+  const { theme, setTheme } = useTheme()
+  const { densidade, setDensidade } = usePrefs()
+  const { pathname, hash } = useLocation()
+  const ir = useNavigate()
+  const escuro = theme === 'dark'
+  const compacta = densidade === 'compacta'
+
+  const modulo = moduloDaRota(pathname)
+  const sub = modulo?.itens?.find((s) => s.rota === pathname + hash)
+
+  return (
+    <header className="bg-card sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b px-3 transition-[width,height] ease-linear">
+      <SidebarTrigger className="-ml-1" />
+      <Separator orientation="vertical" className="mr-1 h-4" />
+
+      <Breadcrumb className="hidden sm:block">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<NavLink to="/" />}>Fourtime</BreadcrumbLink>
+          </BreadcrumbItem>
+          {modulo && modulo.rota !== '/' && (
+            <>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                {sub ? (
+                  <BreadcrumbLink render={<NavLink to={modulo.rota} />}>{modulo.nome}</BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage>{modulo.nome}</BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+            </>
+          )}
+          {sub && (
+            <>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{sub.nome}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </>
+          )}
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <div className="relative ml-auto max-w-[300px] flex-1">
+        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-[15px] -translate-y-1/2" />
+        <input
+          aria-label="Busca global"
+          placeholder="Buscar PD####, cliente…"
+          onKeyDown={(e) => e.key === 'Enter' && ir('/orcamentos')}
+          className="bg-input/50 focus-visible:border-ring focus-visible:ring-ring/30 h-(--ft-control-h) w-full rounded-3xl border border-transparent pl-9 text-[13px] outline-none focus-visible:ring-[3px]"
+        />
       </div>
-    </div>
+
+      <span className="text-muted-foreground hidden items-center gap-1.5 text-xs lg:flex">
+        <span className="bg-success size-[7px] rounded-full" /> sincronizado
+      </span>
+      <BotaoTopo
+        onClick={() => setDensidade(compacta ? 'confortavel' : 'compacta')}
+        icone={compacta ? <Rows4 className="size-[15px]" /> : <Rows3 className="size-[15px]" />}
+        rotulo={compacta ? 'Compacta' : 'Confortável'}
+      />
+      <BotaoTopo
+        onClick={() => setTheme(escuro ? 'light' : 'dark')}
+        icone={escuro ? <Moon className="size-[15px]" /> : <Sun className="size-[15px]" />}
+        rotulo={escuro ? 'Escuro' : 'Claro'}
+      />
+    </header>
   )
 }
 
@@ -153,7 +251,7 @@ function BotaoTopo({ onClick, icone, rotulo }: { onClick: () => void; icone: Rea
   return (
     <button
       onClick={onClick}
-      className="hover:bg-accent flex h-(--ft-control-h) items-center gap-1.5 rounded-3xl border px-3 text-xs font-medium transition-colors"
+      className="hover:bg-accent flex h-(--ft-control-h) shrink-0 items-center gap-1.5 rounded-3xl border px-3 text-xs font-medium transition-colors"
     >
       {icone}
       <span className="hidden md:inline">{rotulo}</span>

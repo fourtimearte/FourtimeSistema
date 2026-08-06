@@ -22,6 +22,7 @@ import { useToast } from '@/components/fourtime/Toast'
 import { Button } from '@/components/ui/button'
 import { PontoTecnica } from '@/components/fourtime/TagTecnica'
 import { FichaOrcamento } from './FichaOrcamento'
+import { useAncora } from '@/lib/ancora'
 import { cn } from '@/lib/utils'
 
 const HOJE = new Date()
@@ -41,6 +42,17 @@ export function Orcamentos() {
   const [f, setF] = useState<FiltrosOrcamento>(FILTROS_ORCAMENTO_VAZIO)
   const [aberto, setAberto] = useState<string | null>(null)
   const [arrastando, setArrastando] = useState<Pedido | null>(null)
+
+  /* o submenu do rail chega por âncora: /orcamentos#parados já abre filtrado */
+  useAncora<Partial<FiltrosOrcamento>>(
+    {
+      parados: { soParados: true },
+      aprovacao: { etapa: 'aprovacao' },
+      producao: { etapa: 'producao' },
+      perdidos: { etapa: 'perdido' },
+    },
+    (v) => setF({ ...FILTROS_ORCAMENTO_VAZIO, ...v }),
+  )
 
   const visiveis = useMemo(() => filtrarOrcamentos(pedidos, f, HOJE), [pedidos, f])
   const colunas = useMemo(() => porEtapa(visiveis), [visiveis])
