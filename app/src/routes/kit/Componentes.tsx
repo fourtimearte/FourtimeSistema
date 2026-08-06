@@ -348,19 +348,27 @@ export function Padroes() {
           ícone. Tudo isso eu teria de reescrever pior.
         </Porque>
         <Porque>
-          <b>Três níveis, e o grupo é o pai.</b> Setor (Comercial, Produção, Estoque…) → página → atalho. A primeira
-          versão tinha o grupo como rótulo decorativo e a página como pai; funcionava com duas páginas por setor, mas
-          com Estoque em quatro e Financeiro em três o rail virava uma lista corrida.
+          <b>Dois níveis, e o grupo é o pai.</b> Setor (Comercial, Produção, Estoque…) → página. Houve um terceiro
+          nível de atalhos filtrados; foi removido. Menu de três andares obriga a caçar em profundidade o que deveria
+          estar na tela — e filtro é assunto da tela, que já tem os KPIs clicáveis para isso.
         </Porque>
         <Porque>
           <b>O rótulo inteiro abre e fecha</b>, não só a setinha. Mirar num alvo de 20px para abrir uma pasta é o
-          atrito que faz o usuário desistir do menu e passar a navegar pelo histórico do navegador. Na página, o
-          clique no nome <i>navega e</i> abre a lista — destino e pasta no mesmo gesto.
+          atrito que faz o usuário desistir do menu e passar a navegar pelo histórico do navegador.
         </Porque>
         <Porque>
-          <b>Subitem que não filtra é enfeite.</b> Cada um carrega a âncora que a tela lê ao abrir
-          (<code>/clientes#pj</code>, <code>/kanban#problema</code>) — o gancho é <code>useAncora</code>, e ele escuta a
-          âncora a cada troca, não só na montagem: ir de <code>#pf</code> para <code>#pj</code> não desmonta a tela.
+          As âncoras continuam valendo: <code>/clientes#pj</code> e <code>/kanban#problema</code> abrem a tela já
+          filtrada, dá para guardar e compartilhar o link. O que saiu foi o <b>menu</b> que as listava, não a
+          capacidade. O gancho é <code>useAncora</code>, e ele escuta a âncora a cada troca, não só na montagem.
+        </Porque>
+        <Porque>
+          <b>Armadilha do Base UI:</b> o estado aberto vem em <code>data-open</code> / <code>data-closed</code>, não
+          em <code>data-state="open"</code> do Radix. Quase todo exemplo de shadcn que se acha na internet é da era
+          Radix, então <code>group-data-[state=open]:rotate-90</code> compila sem erro e simplesmente nunca casa — a
+          seta fica apontando para o lado com o grupo aberto. O certo aqui é{' '}
+          <code>group-data-open/grupo:rotate-90</code>. E <code>rotate</code> no Tailwind v4 é propriedade própria, não{' '}
+          <code>transform</code>: quem for testar isso lendo <code>getComputedStyle().transform</code> vai ver{' '}
+          <code>none</code> mesmo quando está funcionando.
         </Porque>
       </Bloco>
 
