@@ -101,6 +101,26 @@ export function Cores() {
           de menu ativo em roxo. Trocado pelo neutro claro, coerente com o <code>:root</code>.
         </Porque>
       </Bloco>
+
+      <Bloco titulo="A ordem dos blocos é regra, não estilo" nota="a armadilha que fez o escuro ficar claro">
+        <Token nome=":root:not(.dark)" valor="var(--background)" uso="o desvio de fundo, travado no tema claro" />
+        <Porque>
+          <code>:root</code> e <code>.dark</code> têm a <b>mesma especificidade</b> (0,1,0) e caem no <b>mesmo
+          elemento</b> — o <code>&lt;html&gt;</code>. Empate resolve por ordem de escrita. Um desvio escrito como{' '}
+          <code>:root</code> no fim do arquivo, depois do <code>.dark</code> do preset, <b>ganha do tema escuro</b>.
+        </Porque>
+        <Porque>
+          Foi o que aconteceu com <code>--background</code>: o escuro ficou com a tela cinza-clara e os cartões pretos
+          por cima. O olho lê como "algumas cores ficaram no light" e ninguém suspeita da ordem do arquivo — o
+          navegador não avisa e o build passa limpo.
+        </Porque>
+        <Porque>
+          Duas travas. Todo desvio de cor no fim do arquivo se escreve <code>:root:not(.dark)</code>, e o valor do
+          escuro fica <b>escrito</b> no <code>.dark</code> mesmo quando é igual ao do preset — escrito, ele sobrevive a
+          qualquer regra que venha depois. Quem cobra isso é <code>src/lib/tema.test.ts</code>, que lê os dois CSS e
+          quebra se um <code>:root</code> que declara token aparecer depois de um <code>.dark</code>.
+        </Porque>
+      </Bloco>
     </SecaoKit>
   )
 }

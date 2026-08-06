@@ -136,7 +136,14 @@
    preset b7AJGDOVg8. O que vem abaixo é decisão nossa, tomada
    com o motivo escrito ao lado. Nada entra aqui sem motivo.
    ============================================================ */
-:root {
+/* IMPORTANTE — por que `:root:not(.dark)` e não `:root`.
+   `:root` e `.dark` têm a MESMA especificidade (0,1,0) e caem no MESMO
+   elemento (<html>). Como este bloco vem depois do `.dark` do preset,
+   um `:root` puro ganhava por ordem de escrita e o fundo claro vazava
+   para o tema escuro: o app inteiro ficava com a tela cinza-claro e só
+   os cartões escuros. Sintoma clássico de "algumas cores ficaram no
+   light". O `:not(.dark)` é a trava — o desvio não alcança o escuro. */
+:root:not(.dark) {
   /* O neutral entrega --background branco puro, igual ao --card.
      Card branco sobre fundo branco não tem profundidade nenhuma: a
      sombra macia do Luma precisa de um fundo mais escuro para ter o
@@ -149,5 +156,8 @@
 }
 
 .dark {
-  /* No escuro o preset já separa: fundo 0.145 e card 0.205. Nada a fazer. */
+  /* No escuro o preset já separa sozinho: fundo 0.145, card 0.205,
+     coluna 0.269. O valor está repetido aqui de propósito — escrito,
+     ele sobrevive a qualquer regra que venha depois neste arquivo. */
+  --background: oklch(0.145 0 0);
 }
